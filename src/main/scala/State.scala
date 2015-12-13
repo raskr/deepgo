@@ -15,7 +15,7 @@ case class State(board: Array[Char] = Array.fill(Constants.all)(Empty),
 
   lazy val invalidChannel = {
     val dst = zeros(Constants.all)
-    (0 until Constants.all).foreach{ i => if (board(i) != Empty) dst(i) = '1' }
+    (0 until Constants.all) foreach { i => if (board(i) != Empty) dst(i) = '1' }
     if (invalidPosByKo != -1) dst(invalidPosByKo) = '1'
     dst.mkString
   }
@@ -49,15 +49,15 @@ case class State(board: Array[Char] = Array.fill(Constants.all)(Empty),
   }
 
   /** concrete implementation is in Implicits */
-  def createNext(move: Move): State = {
+  def createNextBy(move: Move): State = {
     // 1. update board
-    val newBoard = board.createNextBy(move)
+    val newBoard = board createNextBy move
     // 2. find `ko`
-    val ko = board.findKoBy(move)
+    val ko = board findKoBy move
     // 3. turns since
     val ls = lifeSpans.nextLifespans(board, newBoard)
     // return
-    new State(newBoard, ko, ls, rank)
+    State(newBoard, ko, ls, rank)
   }
 
 }

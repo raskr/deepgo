@@ -10,6 +10,7 @@ object GtpCmdHandler {
 
     loop()
 
+    // recursive func
     def loop() {
       var line = readLine()
       while (line == null) line = readLine()
@@ -29,23 +30,20 @@ object GtpCmdHandler {
       else if (cmd == "komi")         	  Komi(args)
       else if (cmd == "quit")             return
       else {
-        throw new RuntimeException("Error!! Unknown Command: " + cmd + "\n\n")
+        throw new RuntimeException("Error!! Unsupported Command: " + cmd + "\n\n")
       }
       // ok response from script
-      if (readLine() == "") loop()
+      if (readLine().isEmpty) loop()
     }
   }
 
 }
 
 object GameState {
-
   val states: ArrayBuffer[State] = ArrayBuffer()
-
-  def updateBy(move: Move) = states.append(states.last.createNext(move))
+  def updateBy(move: Move) = states.append(states.last.createNextBy(move))
   def currentState = states.last
   def reset() = { states.clear(); states.append(State(rank="1d")) }
-
 }
 
 object CmdList {
@@ -56,9 +54,10 @@ object CmdList {
 }
 
 sealed abstract class Cmd {
-  // stateful function. the return value will be stdout
+  def sendEmptyOkResponse() = println("= \n")
+  def sendResponse(str: String) = println(s"= $str \n")
+  // This function has many side effect. the return value will be stdout
   def apply(args: Array[String])
-  def emptyOkResponse() = println("= \n")
 }
 
 
@@ -85,7 +84,7 @@ object Play extends Cmd {
   def apply(args: Array[String]) = {
     val move = createMove(args.head, args(1))
     GameState updateBy move
-    emptyOkResponse()
+    sendEmptyOkResponse()
   }
 
   def createMove(color: String, pos: String): Move = {
@@ -114,7 +113,7 @@ object Play extends Cmd {
 object ClearBoard extends Cmd {
   def apply(args: Array[String]) = {
     GameState.reset()
-    emptyOkResponse()
+    sendEmptyOkResponse()
   }
 }
 
@@ -124,7 +123,7 @@ object ClearBoard extends Cmd {
 // fails never
 // string* name - Name of the engine
 object Name extends Cmd {
-  def apply(args: Array[String]) = println("= deepgo\n")
+  def apply(args: Array[String]) = sendResponse("deepgo")
 }
 
 // arguments none
@@ -132,7 +131,7 @@ object Name extends Cmd {
 // output version number
 // int version number - Version of the GTP Protocol
 object ProtocolVersion extends Cmd {
-  def apply(args: Array[String]) = println("= 2\n")
+  def apply(args: Array[String]) = sendResponse("2")
 }
 
 // arguments size
@@ -149,7 +148,7 @@ object BoardSize extends Cmd {
   var dia = -1
   def apply(args: Array[String]) = {
     dia = args.head.toInt
-    emptyOkResponse()
+    sendEmptyOkResponse()
   }
 }
 
@@ -160,7 +159,7 @@ object Komi extends Cmd {
   var komi = 0f
   def apply(args: Array[String]) = {
     komi = args.head.toFloat
-    emptyOkResponse()
+    sendEmptyOkResponse()
   }
 }
 // arguments none
@@ -169,7 +168,7 @@ object Komi extends Cmd {
 // string& commands - List of commands, one per row
 object ListCommands extends Cmd {
   def apply(args: Array[String]) =
-    println("= " + CmdList().mkString(" ") + "\n")
+    sendResponse(CmdList().mkString(" "))
 }
 
 // arguments color
@@ -191,7 +190,8 @@ object GenMove extends Cmd {
     val color = args.head
     val state = GameState.states.last
 
-    val cmd = s"python scripts/eval_net.py -b ${state.toChannels} -i ${state.invalidChannel} -c $color"
+    val cmd = s"python scripts/predict_move.py -b ${state.toChannels} -i ${state.invalidChannel} -c $color"
+    // TODO: reduce the command execution (For now execute every time genmove called)
     val pos = execCmd(cmd).init.toInt
 
     val (x, y) = pos.toCoordinate
@@ -201,7 +201,7 @@ object GenMove extends Cmd {
 
     // return to stderr
     val (xGtp, yGtp) = (if (xAlpha < 'i') xAlpha else (xAlpha+1).toChar, Constants.dia - y)
-    println(s"= ${Character.toUpperCase(xGtp)}$yGtp\n")
+    sendResponse(s"${Character.toUpperCase(xGtp)}$yGtp")
   }
 }
 
@@ -213,7 +213,7 @@ object GenMove extends Cmd {
 // engine, “false” otherwise
 object KnownCommand extends Cmd {
   def apply(args: Array[String]) =
-    println(s"= ${CmdList().contains(args.head)}\n")
+    sendResponse(s"${CmdList().contains(args.head)}")
 }
 
 // arguments none
@@ -221,7 +221,7 @@ object KnownCommand extends Cmd {
 // output version
 // string* version - Version of the engine
 object Version extends Cmd {
-  def apply(args: Array[String]) = println("= 1\n")
+  def apply(args: Array[String]) = sendResponse("1")
 }
 
 // arguments none

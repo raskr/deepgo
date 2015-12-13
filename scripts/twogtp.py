@@ -67,7 +67,6 @@ class GTP_connection:
 
     def __init__(self, command):
         try:
-            # command をサブプロセスとして起動する
             # (child_stdout, child_stdin)
             base = os.path.dirname(os.path.abspath(__file__))
             os.chdir(os.path.normpath(os.path.join(base, '../')))
@@ -78,17 +77,14 @@ class GTP_connection:
         self.infile  = infile
         self.outfile = outfile
 
-    # result を返す
     def exec_cmd(self, cmd):
         global debug
 
         if debug:
             sys.stderr.write("GTP command: " + cmd + "\n")
-        # engine にコマンドを通知
         self.outfile.write(cmd + "\n\n")
         self.outfile.flush()
         result = ""
-        # engine から返事を取得
         line = self.infile.readline()
         while line != "\n":
             result = result + line
@@ -125,7 +121,6 @@ class GTP_player:
     def is_known_command(self, command):
         return self.connection.exec_cmd("known_command " + command) == "true"
 
-    # move を返す
     def genmove(self, color):
         if color[0] in ["b", "B"]:
             command = "black"
@@ -138,15 +133,12 @@ class GTP_player:
 
         return self.connection.exec_cmd(command)
 
-    # play command (通知)
     def black(self, move):
         if self.protocol_version == "1":
             self.connection.exec_cmd("black " + move)
         else:
             self.connection.exec_cmd("play black " + move)
 
-    # play command (通知)
-    # self.blackplayer.white(move) などとして呼ばれる
     def white(self, move):
         if self.protocol_version == "1":
             self.connection.exec_cmd("white " + move)
@@ -268,7 +260,7 @@ class GTP_game:
         else:
             self.first_to_play = "B"
 
-    # sgf に書き込むのに使われる
+    # used for writing to sgf
     def get_position_from_engine(self, engine):
         black_stones = engine.list_stones("black")
         white_stones = engine.list_stones("white")
@@ -382,7 +374,6 @@ class GTP_game:
                         print "Black resigns"
                     won_by_resignation = "W+Resign"
                     break
-                # 正常な move が得られた場合
                 else:
                     self.moves.append(move)
                     if string.lower(move[:4]) == "pass":
@@ -391,7 +382,7 @@ class GTP_game:
                             print "Black passes"
                     else:
                         passes = 0
-                        # white player に black を通知
+                        # notify white player a play of black
                         self.whiteplayer.black(move)
                         if verbose >= 1:
                             print "Black plays " + move
@@ -410,7 +401,7 @@ class GTP_game:
                 else:
                     self.moves.append(move)
                     if string.lower(move[:4]) == "pass":
-                        passes = passes + 1
+                        passes += 1
                         if verbose >= 1:
                             print "White passes"
                     else:
@@ -473,7 +464,7 @@ class GTP_match:
         self.streak_length = streak_length
         self.endgamefilelist = endgamefilelist
 
-    # Game がコンストラクトされた後、実際に Game をプレイするのはこのメソッド
+    # this method plays the actual game after Game constructed
     def endgame_contest(self, sgfbase):
         results = []
         i = 1

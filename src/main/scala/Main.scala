@@ -89,7 +89,7 @@ object Main extends App {
                   case List(Property(PropIdent(col: String), List(PropValue(Point(a: Char, b: Char))))) =>
                     val mv = Move(col.head, a, b)
                     if (mv.isInvalid) (states, moves)
-                    else (states.head.createNext(mv) :: states, mv :: moves)
+                    else (states.head.createNextBy(mv) :: states, mv :: moves)
                   // not a move
                   case _ => (states, moves)
                 }

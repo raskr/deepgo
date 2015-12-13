@@ -1,9 +1,6 @@
 import argparse
 from utils import *
-
-import os
 import numpy as np
-
 import six
 import chainer.functions as F
 import chainer
@@ -15,12 +12,12 @@ parser.add_argument('--invalids', '-i', default='', type=str, help='invalid posi
 parser.add_argument('--color', '-c', default='', type=str, help='my color')
 args = parser.parse_args()
 
-base = os.path.dirname(os.path.abspath(__file__))
-db_name = os.path.normpath(os.path.join(base, '../deepgo.db'))
+model = six.moves.cPickle.load(open("{}.pkl".format(args.color), "rb"))
+n_channel = 22
 
 
-def forward_once(x, invalid, model):
-    x = chainer.Variable(np.asarray(x, dtype=np.float32).reshape(1, 22, 19, 19))
+def forward_once(x, invalid):
+    x = chainer.Variable(np.asarray(x, dtype=np.float32).reshape(1, n_channel, 19, 19))
     invalid = np.asarray(invalid, dtype=np.float32)
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
@@ -31,10 +28,6 @@ def forward_once(x, invalid, model):
     return np.argmax(y)
 
 
-def predict(x, invalids, color):
-    model = six.moves.cPickle.load(open("{}.pkl".format(color), "rb"))
-    return forward_once(x, invalids, model)
-
-
-result = predict(str2floats(args.board), str2floats(args.invalids), args.color)
+result = forward_once(str2floats(args.board), str2floats(args.invalids))
+# return result to stdout
 print(str(result))
