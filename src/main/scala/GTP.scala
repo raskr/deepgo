@@ -4,7 +4,7 @@ import scala.io.StdIn.readLine
 import Implicits._
 import Utils._
 
-object GtpCmdHandler {
+object GTP_CmdHandler {
 
   def listenAndServe(): Unit = {
 
@@ -40,7 +40,7 @@ object GtpCmdHandler {
 }
 
 object GameState {
-  val states: ArrayBuffer[State] = ArrayBuffer()
+  val states = ArrayBuffer[State]()
   def updateBy(move: Move) = states.append(states.last.createNextBy(move))
   def currentState = states.last
   def reset() = { states.clear(); states.append(State(rank="1d")) }
@@ -54,8 +54,8 @@ object CmdList {
 }
 
 sealed abstract class Cmd {
-  def sendEmptyOkResponse() = println("= \n")
-  def sendResponse(str: String) = println(s"= $str \n")
+  protected final def sendEmptyOkResponse() = println("= \n")
+  protected final def sendResponse(str: String) = println(s"= $str \n")
   // This function has many side effect. the return value will be stdout
   def apply(args: Array[String])
 }

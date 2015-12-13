@@ -40,7 +40,7 @@ object Main extends App {
 
       // auto play with gtp
       case head :: _ if head == "gtp" =>
-        GtpCmdHandler.listenAndServe()
+        GTP_CmdHandler.listenAndServe()
 
     }
 

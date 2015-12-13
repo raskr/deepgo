@@ -3,19 +3,17 @@ import java.io.{FileWriter, File}
 object Implicits {
 
   import Colors._
-  import Utils._
-  import scala.collection.mutable
 
   implicit class RichString(val x: String) extends AnyVal {
 
     // 9ch
     def toRankChannel: String =
       (x.charAt(0).getNumericValue, x.charAt(1)) match {
-        case (_, 'p') => ones(Constants.all*9).mkString
-        case (r, 'd') if r == 9 => ones(Constants.all*9).mkString
+        case (_, 'p') => Utils.ones(Constants.all*9).mkString
+        case (r, 'd') if r == 9 => Utils.ones(Constants.all*9).mkString
         case (r, 'd') =>
           val (start, end) = (Constants.all*(r-1), Constants.all*(r-1) + Constants.all)
-          val dst = zeros(Constants.all * 9); (start until end).foreach{ dst(_) = '1' }
+          val dst = Utils.zeros(Constants.all * 9); (start until end).foreach{ dst(_) = '1' }
           assert(dst.length/Constants.all == 9)
           dst.mkString
         case _ => throw new RuntimeException("should not happen")
@@ -49,20 +47,12 @@ object Implicits {
     // 1ch (tested with rand. simply int to char conversion)
     def toLifespanChannel: String = {
       val dst = x.map{ a => if (a > 9) '9' else ('0'+a).toChar }
-      assert(dst.length/Constants.all == 1)
+      // assert(dst.length/Constants.all == 1)
       dst.mkString
     }
 
-    // 1ch
-    def nextLifespans(prevBoard: Array[Char], curBoard: Array[Char]) = {
-      val dst = (0 until Constants.all).toArray map { i =>
-        val prev = prevBoard(i)
-        val cur = curBoard(i)
-        if (prev == cur && prev != Empty) x(i)+1 else 0
-      }
-       assert(dst.length/Constants.all == 1)
-      dst
-    }
+    def nextLifespans(prevBoard: Array[Char], curBoard: Array[Char]) =
+      Rules.nextLifespans(x, prevBoard, curBoard)
 
     def printState(row: Int, col: Int) = {
       assert(x.length == row * col)
@@ -74,22 +64,8 @@ object Implicits {
       println("\n")
     }
 
-    def clip(row: Int, col: Int, borderWidth: Int) = {
-      assert(x.length == row * col)
-      val dstRow = row - borderWidth * 2
-      val dstCol = col - borderWidth * 2
-      val dst = Array.fill(dstRow * dstCol)(0)
-      var i, j = 0
-      while (i < dstRow) {
-        j = 0
-        while (j < dstCol) {
-          dst(dstCol*i+ j) = x((i+borderWidth) * col + (j + borderWidth))
-          j += 1
-        }
-        i += 1
-      }
-      dst
-    }
+    def clip(row: Int, col: Int, borderWidth: Int): Array[Int] =
+      Utils.clip(x, row, col, borderWidth)
 
   }
 
@@ -112,19 +88,15 @@ object Implicits {
       println()
     }
 
-    def findKoBy(move: Move): Int = {
-      val padded = in.pad(Constants.dia, Constants.dia, 1, Outside)
-      val movePos = (move.y+1)*21 + (move.x+1)
-      val around = Seq(movePos + 1, movePos - 1, movePos + 21, movePos - 21)
-      val surrounded = around forall { padded(_) isOpponentOf move.color }
-      val empty4 = around.filter { padded(_) == Empty }
-      val ko21 = if (surrounded && empty4.size == 1) empty4.head else -1
-      ko21.rectify(1, from = Constants.dia+2, to = Constants.dia)
-    }
+    def findKoBy(move: Move): Int = Rules.findKo(move, in)
 
     // 3ch
     def toBoardChannel: String = {
-      val (empty, white, black) = (zeros(Constants.all), zeros(Constants.all), zeros(Constants.all))
+      val (empty, white, black) = (
+        Utils.zeros(Constants.all),
+        Utils.zeros(Constants.all),
+        Utils.zeros(Constants.all)
+        )
       (0 until Constants.all) foreach { i =>
         val color = in(i)
         if (color == Empty) empty(i) = '1'
@@ -136,9 +108,22 @@ object Implicits {
       dst.mkString
     }
 
+    def toGroupSizeChannel: String = {
+      val gSizes = Rules.groupSizes(in)
+      val dst = Array.fill(Constants.all * 2)('0')
+      in.indices foreach { i =>
+        if (gSizes(i) > 3) {
+          if (in(i) == White) dst(i) = '1'
+          if (in(i) == Black) dst(i + 361) = '1'
+        }
+      }
+      // assert(dst.length/Constants.all == 2)
+      dst.mkString
+    }
+
     // 6ch
     def toLibertyChannel = {
-      val liberties = in.liberties
+      val liberties = Rules.liberties(in)
       val dst = Array.fill(Constants.all * 6)('0')
 
       (0 until Constants.all) foreach { i =>
@@ -163,8 +148,8 @@ object Implicits {
 
     // 1ch
     def toBorderChannel = {
-      val borderState = zeros(Constants.all)
-      borderPositions(Constants.dia) foreach { i =>
+      val borderState = Utils.zeros(Constants.all)
+      Utils.borderPositions(Constants.dia) foreach { i =>
         val a = in(i)
         if (a != Empty) borderState(i) = '1'
       }
@@ -172,96 +157,12 @@ object Implicits {
       borderState.mkString
     }
 
-    def liberties: Array[Int] = {
-      val padded = in.pad(Constants.dia, Constants.dia, 1, Outside)
-      val dst = Array.fill(21*21)(0)
-
-      dst.indices foreach { idx =>
-        if (padded(idx).isStone) {
-          val blo, skip = mutable.Set[Int]()
-          val lib = new MutableInt(0)
-          loop(idx, padded(idx), lib, skip, blo)
-          blo foreach { x => dst(x) = lib.value }
-        }
-      }
-
-      // recursive func
-      def loop(i: Int, checkColor: Char, lib: MutableInt,
-               shouldSkip: mutable.Set[Int], block: mutable.Set[Int]): Unit =
-      {
-        if (shouldSkip(i) || dst(i) > 0) return
-        shouldSkip.add(i)
-        val col = padded(i)
-        if (col == Empty) lib += 1
-        else if (col == checkColor) { // same color
-          block.add(i)
-          Seq(i+1, i-1, i+21, i-21).filterNot(shouldSkip.contains)
-            .foreach {loop(_, checkColor, lib, shouldSkip, block)}
-        }
-      }
-      dst.clip(21, 21, 1)
-    }
-
     // delete stones by move and return new board
-    def createNextBy(move: Move) = {
-      // pad the input board for convenience
-      val padded = in.pad(Constants.dia, Constants.dia, 1, Outside)
-      val movePos = (move.y+1)*21 + (move.x+1)
-      val booleans: Array[Option[Boolean]] = Array.fill(21 * 21)(None)
-      val shouldSkip = mutable.Set[Int]()
+    def createNextBoardBy(move: Move): Array[Char] =
+      Rules.boardAfterCaptured(move, in)
 
-      // recursive func
-      def loop(i: Int): Boolean = {
-        val color = padded(i)
-        if (booleans(i).isEmpty) {
-          booleans(i) = Some(
-            if (color == move.color) true
-            else if (color == Outside) true
-            else if (color == Empty) false
-            else {
-              val around = Seq(i+1, i-1, i+21, i-21)
-                .filterNot{ shouldSkip.contains }
-                .map(x => booleans(x).getOrElse { shouldSkip.add(i); loop(x) })
-
-              val shouldKill = around forall (_ == true)
-              if (shouldKill) padded(i) = Empty
-              shouldKill
-            })
-        }
-        booleans(i).get
-      }
-
-      // 1. Reflect the move itself
-      padded(movePos) = move.color
-      booleans(movePos) = Some(true)
-
-      // 2. Start inspection around the move-point and remove stones if possible
-      Seq(movePos+1, movePos-1, movePos+21, movePos-21) foreach loop
-
-      padded.clip(21, 21, 1)
-    }
-
-    def pad(row: Int, col: Int, padSize: Int, padElem: Char) = {
-      assert(in.length == row * col)
-      val allNum = row * col
-
-      def zeros(n: Int) = Array.fill(n)(padElem)
-      def chunk = zeros((col + padSize * 2) * padSize)
-
-      // 1 (chunk + 2)
-      var dst: Array[Char] = chunk ++ zeros(padSize)
-
-      var i = 0
-      while (i <= allNum - col * 2) {
-        // slice one row
-        val a = in.slice(i, i + col)
-        val b = a ++ zeros(padSize * 2)
-        dst = dst ++ b
-        i += col
-      }
-      dst = dst ++ (in.slice(i, i + col) ++ (zeros(padSize) ++ chunk.clone()))
-      dst
-    }
+    def pad(row: Int, col: Int, padSize: Int, padElem: Char) =
+      Utils.pad(in, row, col, padSize, padElem)
 
     def printState(row: Int, col: Int, emphasize: Option[Move], ko: Option[Int]) = {
       assert(in.length == row * col)
@@ -284,22 +185,8 @@ object Implicits {
       println("\n")
     }
 
-    def clip(row: Int, col: Int, borderWidth: Int) = {
-      assert(in.length == row * col)
-      val dstRow = row - borderWidth * 2
-      val dstCol = col - borderWidth * 2
-      val dst = Array.fill(dstRow * dstCol)(Empty)
-      var i, j = 0
-      while (i < dstRow) {
-        j = 0
-        while (j < dstCol) {
-          dst(dstCol*i+ j) = in((i+borderWidth) * col + (j + borderWidth))
-          j += 1
-        }
-        i += 1
-      }
-      dst
-    }
+    def clip(row: Int, col: Int, borderWidth: Int): Array[Char] =
+      Utils.clip(in, row, col, borderWidth)
 
   }
 
@@ -329,21 +216,25 @@ object Implicits {
 
     // 1ch
     def toKoChannel = {
-      val dst = zeros(Constants.all)
+      val dst = Utils.zeros(Constants.all)
       if (value != -1) dst(value) = 1
       assert(dst.length/Constants.all == 1)
       dst.mkString
     }
 
     /**
-     * @param borderW width of clip
+     * If the side length of the square changed, for example 21 -> 19,
+     * position in the square will change. This method return that changed position.
+     * I could'nt come up with the reasonable method name.
+     *
      * @param from current diameter
      * @param to diameter after clipped
-     * @return
+     * @return position after that
      */
-    def rectify(borderW: Int, from: Int, to: Int): Int = {
+    def rectify(from: Int, to: Int): Int = {
       assert(from > to)
       if (value < 0) return -1
+      val borderW = (from - to ) / 2
       var paddedY = 0
       var t = from
       while (t - 1 < value) {

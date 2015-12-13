@@ -114,4 +114,48 @@ object Utils {
     Process(cmd).!!
   }
 
+  // pad the array around with the provide element
+  def pad[@specialized(Int, Char) A]
+  (in: Array[A], row: Int, col: Int, padSize: Int, padElem: A): Array[A] = {
+    assert(in.length == row * col)
+    val allNum = row * col
+
+    def fill(n: Int) = Array.fill[A](n)(padElem)
+    def chunk: Array[A] = fill((col + padSize * 2) * padSize)
+
+    // 1 (chunk + 2)
+    var dst = Array.concat(chunk, fill(padSize))
+
+    var i = 0
+    while (i <= allNum - col * 2) {
+      // slice one row
+      val a = in.slice(i, i + col)
+      val b = Array.concat(a, fill(padSize * 2))
+      dst = Array.concat(dst, b)
+      i += col
+    }
+    dst = dst ++ (in.slice(i, i + col) ++ (fill(padSize) ++ chunk.clone()))
+    dst
+  }
+
+  // clip the array with the provided border
+  def clip[@specialized(Int, Char) A](in:Array[A],
+                                      row: Int,
+                                      col: Int,
+                                      borderWidth: Int): Array[A] = {
+    assert(in.length == row * col)
+    val dstRow = row - borderWidth * 2
+    val dstCol = col - borderWidth * 2
+    val dst = new Array[A](dstRow * dstCol)
+    var i, j = 0
+    while (i < dstRow) {
+      j = 0
+      while (j < dstCol) {
+        dst(dstCol*i+ j) = in((i+borderWidth) * col + (j + borderWidth))
+        j += 1
+      }
+      i += 1
+    }
+    dst
+  }
 }
