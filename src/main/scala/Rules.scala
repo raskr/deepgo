@@ -19,7 +19,7 @@ object Rules {
 
   def groupSizes(in: Array[Char]) = {
     val padded = in.pad(Constants.dia, Constants.dia, 1, Outside)
-    val dst = Array.fill(21*21)(0)
+    val dst = Array.fill(21*21)(-1)
 
     dst.indices foreach { idx =>
       if (padded(idx).isStone) {
@@ -34,7 +34,7 @@ object Rules {
     def loop(i: Int, checkColor: Char,
              shouldSkip: mutable.Set[Int], block: mutable.Set[Int]): Unit =
     {
-      if (shouldSkip(i) || dst(i) > 0) return
+      if (shouldSkip(i) || dst(i) > -1) return
       shouldSkip.add(i)
       val col = padded(i)
       if (col == checkColor) { // same color

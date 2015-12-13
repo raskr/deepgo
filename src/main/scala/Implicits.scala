@@ -65,7 +65,7 @@ object Implicits {
     }
 
     def clip(row: Int, col: Int, borderWidth: Int): Array[Int] =
-      Utils.clip(x, row, col, borderWidth)
+      Utils.clip(x, row, col, borderWidth).asInstanceOf[Array[Int]]
 
   }
 
@@ -186,7 +186,7 @@ object Implicits {
     }
 
     def clip(row: Int, col: Int, borderWidth: Int): Array[Char] =
-      Utils.clip(in, row, col, borderWidth)
+      Utils.clip(in, row, col, borderWidth).asInstanceOf[Array[Char]]
 
   }
 

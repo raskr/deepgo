@@ -31,7 +31,7 @@ case class State(board: Array[Color] = Array.fill(Constants.all)(Empty),
     .append(lifeSpans.toLifespanChannel)
     .toString()
 
-  // concrete implementation is in Implicits
+  // concrete implementation is in Rules.scala
   def createNextBy(move: Move): State = {
     // 1. update board
     val newBoard = board createNextBoardBy move

@@ -17,16 +17,16 @@ if use_gpu:
     cuda.check_cuda_available()
 
 base = os.path.dirname(os.path.abspath(__file__))
-name = os.path.normpath(os.path.join(base, '../../deepgo.db'))
+name = os.path.normpath(os.path.join(base, '../deepgo.db'))
 
 # data provider
 data = Data(use_gpu=use_gpu,
             db_path=name,
-            b_size=1,
-            n_ch=22,
-            n_train_data=1,
-            n_test_data=1,
-            n_epoch=1)
+            b_size=128,
+            n_ch=24,
+            n_train_data=40000,
+            n_test_data=8000,
+            n_epoch=3)
 
 # Prepare data set
 model = chainer.FunctionSet(
@@ -95,7 +95,7 @@ def train():
 
 def save_net(color):
     print("save network...")
-    six.moves.cPickle.dump(model.to_cpu(), open("{}.pkl".format("../../" + color), "wb"), -1)
+    six.moves.cPickle.dump(model.to_cpu(), open("{}.pkl".format("../" + color), "wb"), -1)
 
 
 train()

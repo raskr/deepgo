@@ -1,4 +1,4 @@
-import java.io.{InputStreamReader, BufferedReader, File}
+import java.io.File
 
 import scala.collection.mutable
 import scala.util.Random
@@ -42,9 +42,6 @@ object Utils {
   def charArr2intArr(x: Array[Char]) = x.map{ _.asDigit }
 
   def zipMap[T, U, V](list1: Seq[T], list2: Seq[U])(f: Function2[T, U, V]) = {
-    if (list1.isEmpty)throw new RuntimeException("list1.isEmpty")
-    if ( list1.size != list2.size) throw new RuntimeException("list1.size != list2.size")
-
     val iter1 = list1.iterator
     val iter2 = list2.iterator
 
@@ -55,12 +52,8 @@ object Utils {
   }
 
   def zipEach[T, U](list1: Seq[T], list2: Seq[U])(f: Function2[T, U, Unit]) = {
-    if (list1.isEmpty ) throw new RuntimeException("list1.isEmpty")
-    if ( list1.size != list2.size) throw new RuntimeException("list1.size != list2.size")
-
     val iter1 = list1.iterator
     val iter2 = list2.iterator
-
     while (iter1.hasNext) f(iter1.next(), iter2.next())
   }
 
@@ -76,7 +69,7 @@ object Utils {
 
 
     { // left side
-    var (i, n) = (dia, 1)
+      var (i, n) = (dia, 1)
       while (n <= dia-2) {
         set.add(i)
         i += dia
@@ -85,7 +78,7 @@ object Utils {
     }
 
     { // right side
-    var (i, n) = (2*dia-1, 1)
+      var (i, n) = (2*dia-1, 1)
       while (n <= dia-2) {
         set.add(i)
         i += dia
@@ -115,38 +108,33 @@ object Utils {
   }
 
   // pad the array around with the provide element
-  def pad[@specialized(Int, Char) A]
-  (in: Array[A], row: Int, col: Int, padSize: Int, padElem: A): Array[A] = {
+  def pad(in: Array[Char], row: Int, col: Int, padSize: Int, padElem: Char) = {
     assert(in.length == row * col)
     val allNum = row * col
 
-    def fill(n: Int) = Array.fill[A](n)(padElem)
-    def chunk: Array[A] = fill((col + padSize * 2) * padSize)
+    def zeros(n: Int) = Array.fill(n)(padElem)
+    def chunk = zeros((col + padSize * 2) * padSize)
 
     // 1 (chunk + 2)
-    var dst = Array.concat(chunk, fill(padSize))
+    var dst: Array[Char] = chunk ++ zeros(padSize)
 
     var i = 0
     while (i <= allNum - col * 2) {
       // slice one row
       val a = in.slice(i, i + col)
-      val b = Array.concat(a, fill(padSize * 2))
-      dst = Array.concat(dst, b)
+      val b = a ++ zeros(padSize * 2)
+      dst = dst ++ b
       i += col
     }
-    dst = dst ++ (in.slice(i, i + col) ++ (fill(padSize) ++ chunk.clone()))
+    dst = dst ++ (in.slice(i, i + col) ++ (zeros(padSize) ++ chunk.clone()))
     dst
   }
 
-  // clip the array with the provided border
-  def clip[@specialized(Int, Char) A](in:Array[A],
-                                      row: Int,
-                                      col: Int,
-                                      borderWidth: Int): Array[A] = {
+  def clip(in: Array[Char], row: Int, col: Int, borderWidth: Int) = {
     assert(in.length == row * col)
     val dstRow = row - borderWidth * 2
     val dstCol = col - borderWidth * 2
-    val dst = new Array[A](dstRow * dstCol)
+    val dst = Array.fill(dstRow * dstCol)(' ')
     var i, j = 0
     while (i < dstRow) {
       j = 0
@@ -158,4 +146,71 @@ object Utils {
     }
     dst
   }
+
+  def clip(x: Array[Int], row: Int, col: Int, borderWidth: Int) = {
+      assert(x.length == row * col)
+      val dstRow = row - borderWidth * 2
+      val dstCol = col - borderWidth * 2
+      val dst = Array.fill(dstRow * dstCol)(0)
+      var i, j = 0
+      while (i < dstRow) {
+        j = 0
+        while (j < dstCol) {
+          dst(dstCol*i+ j) = x((i+borderWidth) * col + (j + borderWidth))
+          j += 1
+        }
+        i += 1
+      }
+      dst
+    }
+
+
+  //  def pad[@specialized(Int, Char) A](in: Array[A],
+  //                                     row: Int,
+  //                                     col: Int,
+  //                                     padSize: Int,
+  //                                     padElem: A): Array[A] = {
+  //    assert(in.length == row * col)
+  //    val allNum = row * col
+  //
+  //    def fill(n: Int) = Array.fill(n)(padElem)
+  //    def chunk: Array[A] = fill((col + padSize * 2) * padSize)
+  //
+  //    // 1 (chunk + 2)
+  //    var dst = Array.concat(chunk, fill(padSize))
+  //
+  //    var i = 0
+  //    while (i <= allNum - col * 2) {
+  //      // slice one row
+  //      val a = in.slice(i, i + col)
+  //      val b = Array.concat(a, fill(padSize * 2))
+  //      dst = Array.concat(dst, b)
+  //      i += col
+  //    }
+  //    dst = dst ++ (in.slice(i, i + col) ++ (fill(padSize) ++ chunk.clone()))
+  //    dst
+  //  }
+
+  // clip the array with the provided border
+  //  def clip1[@specialized(Int, Char) A](in:Array[A],
+  //                                      row: Int,
+  //                                      col: Int,
+  //                                      borderWidth: Int): Array[A] = {
+  //    assert(in.length == row * col)
+  //    val dstRow = row - borderWidth * 2
+  //    val dstCol = col - borderWidth * 2
+  //    val dst = new Array[A](dstRow * dstCol)
+  //    var i, j = 0
+  //    while (i < dstRow) {
+  //      j = 0
+  //      while (j < dstCol) {
+  //        dst(dstCol*i+ j) = in((i+borderWidth) * col + (j + borderWidth))
+  //        j += 1
+  //      }
+  //      i += 1
+  //    }
+  //    dst
+  //  }
+
+  // clip the array with the provided border
 }

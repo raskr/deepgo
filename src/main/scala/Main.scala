@@ -5,23 +5,8 @@ import scala.io.Source
 import Utils._
 
 /**
-  * [usual]
-  *
   * sbt "run create-db path_to_sgf_dir"
   * sbt "run test path_to_sgf_dir"
-  * sbt "run gtp"
-  *
-  * ============================================================================
-  *
-  * [jar]
-  *
-  * First, Launch sbt console and execute `assembly`, then the jar file will be created. And then ...
-  *
-  * java -jar deepgo-assembly-1.0.jar create-db path_to_sgf_dir
-  * java -jar deepgo-assembly-1.0.jar test path_to_sgf_dir
-  * java -jar deepgo-assembly-1.0.jar gtp
-  *
-  *
   */
 object Main extends App {
 

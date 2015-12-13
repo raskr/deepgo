@@ -13,7 +13,7 @@ parser.add_argument('--color', '-c', default='', type=str, help='my color')
 args = parser.parse_args()
 
 model = six.moves.cPickle.load(open("{}.pkl".format(args.color), "rb"))
-n_channel = 22
+n_channel = 24
 
 
 def forward_once(x, invalid):
