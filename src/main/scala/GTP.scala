@@ -28,7 +28,7 @@ object GTP_CmdHandler {
       else if (cmd == "known_command")    KnownCommand(args)
       else if (cmd == "boardsize")        BoardSize(args)
       else if (cmd == "komi")         	  Komi(args)
-      else if (cmd == "quit")             return
+      else if (cmd == "quit")             { Quit(args); return }
       else {
         throw new RuntimeException("Error!! Unsupported Command: " + cmd + "\n\n")
       }
@@ -191,7 +191,7 @@ object GenMove extends Cmd {
     val state = GameState.states.last
 
     val cmd = s"python scripts/predict_move.py -b ${state.toChannels} -i ${state.invalidChannel} -c $color"
-    // TODO: reduce the command execution (For now execute every time genmove called)
+    // TODO: reduce the command execution (For now execute python sctipt every time genmove called)
     val pos = execCmd(cmd).init.toInt
 
     val (x, y) = pos.toCoordinate
@@ -228,6 +228,5 @@ object Version extends Cmd {
 // effects The session is terminated and the connection is closed.
 // output none
 object Quit extends Cmd {
-  def apply(args: Array[String]) =
-    throw new NotImplementedError("Quit process without calling this method.")
+  def apply(args: Array[String]) = sendEmptyOkResponse()
 }

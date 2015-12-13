@@ -28,6 +28,6 @@ def forward_once(x, invalid):
     return np.argmax(y)
 
 
-result = forward_once(str2floats(args.board), str2floats(args.invalids))
+result = forward_once(str2floats(args.board), str2floats_simple(args.invalids))
 # return result to stdout
 print(str(result))

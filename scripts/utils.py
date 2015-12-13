@@ -9,3 +9,7 @@ def str2floats(string):
     others.extend(lifespans)
     return others
 
+
+def str2floats_simple(string):
+    a = list(string)
+    return [1.0 if x == '1' else 0.0 for x in a]
