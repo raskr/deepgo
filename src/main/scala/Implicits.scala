@@ -37,6 +37,7 @@ object Implicits {
 
   implicit class RichFile(val f: File) {
     def write(str: String): Unit = {
+      if (!f.exists()) f.createNewFile()
       val file = new FileWriter(f, true)
       file.write(str)
       file.close()
@@ -46,7 +47,7 @@ object Implicits {
   implicit class RichIntArray(val x: Array[Int]) extends AnyVal {
 
     // 1ch (tested with rand. simply int to char conversion)
-    def toLifespanChannel = {
+    def toLifespanChannel: String = {
       val dst = x.map{ a => if (a > 9) '9' else ('0'+a).toChar }
       assert(dst.length/Constants.all == 1)
       dst.mkString
@@ -313,7 +314,19 @@ object Implicits {
   }
   
   implicit class RichInt(val value: Int) extends AnyVal {
-    
+
+    // tested
+    // (x, y)
+    // top-left is 0. pos is based on this
+    def toCoordinate: (Int, Int) = {
+      val y = value / Constants.dia
+      val x = value - (Constants.dia * y)
+      (x, y)
+    }
+    // 0 => a
+    // 1 => b
+    def toAlpha: Char = ('a' + value).toChar
+
     // 1ch
     def toKoChannel = {
       val dst = zeros(Constants.all)
@@ -329,7 +342,6 @@ object Implicits {
      * @return
      */
     def rectify(borderW: Int, from: Int, to: Int): Int = {
-      // TODO: test
       assert(from > to)
       if (value < 0) return -1
       var paddedY = 0

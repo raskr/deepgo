@@ -114,17 +114,4 @@ object Utils {
     Process(cmd).!!
   }
 
-
-  // tested
-  // (x, y)
-  // top-left is 0. pos is based on this
-  def num2coordinate(num: Int): (Int, Int) = {
-    val y = num / Constants.dia
-    val x = num - (Constants.dia * y)
-    (x, y)
-  }
-  // 0 => a
-  // 1 => b
-  def num2alpha(num: Int): Char = ('a' + num).toChar
-
 }

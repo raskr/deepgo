@@ -1,5 +1,3 @@
-import java.io.File
-
 import Colors._
 import scala.collection.mutable.ArrayBuffer
 import scala.io.StdIn.readLine
@@ -46,7 +44,7 @@ object GameState {
 
   def updateBy(move: Move) = states.append(states.last.createNext(move))
   def currentState = states.last
-  def clear() = { states.clear(); states.append(State(rank="1d")) }
+  def reset() = { states.clear(); states.append(State(rank="1d")) }
 
 }
 
@@ -87,7 +85,7 @@ object Play extends Cmd {
   def apply(args: Array[String]) = {
     val move = createMove(args.head, args(1))
     GameState updateBy move
-    super.emptyOkResponse()
+    emptyOkResponse()
   }
 
   def createMove(color: String, pos: String): Move = {
@@ -102,23 +100,21 @@ object Play extends Cmd {
   def convertY(y: String): Char = {
     // simply str2int
     val num = {
-      val len = y.length
-      if (len != 1 && len != 2) throw new RuntimeException("len" + len)
-      if (len == 1) y.head.toNum // ex) 5
+      if (y.length == 1) y.head.toNum // ex) 5
       else 10 + y(1).toNum // ex) 13
     }
     // 1. change the origin of y-axis
     // 2. make zero origin
     // 3. to alphabet
-    num2alpha(19 - num - 1)
+    (19 - num - 1).toAlpha
   }
 
 }
 
 object ClearBoard extends Cmd {
   def apply(args: Array[String]) = {
-    GameState.clear()
-    super.emptyOkResponse()
+    GameState.reset()
+    emptyOkResponse()
   }
 }
 
@@ -153,7 +149,7 @@ object BoardSize extends Cmd {
   var dia = -1
   def apply(args: Array[String]) = {
     dia = args.head.toInt
-    super.emptyOkResponse()
+    emptyOkResponse()
   }
 }
 
@@ -164,7 +160,7 @@ object Komi extends Cmd {
   var komi = 0f
   def apply(args: Array[String]) = {
     komi = args.head.toFloat
-    super.emptyOkResponse()
+    emptyOkResponse()
   }
 }
 // arguments none
@@ -195,17 +191,17 @@ object GenMove extends Cmd {
     val color = args.head
     val state = GameState.states.last
 
-    val cmd = s"python scripts/nn/eval_net.py -b ${state.toChannels} -i ${state.invalidChannel} -c $color"
+    val cmd = s"python scripts/eval_net.py -b ${state.toChannels} -i ${state.invalidChannel} -c $color"
     val pos = execCmd(cmd).init.toInt
 
-    val (x, y) = num2coordinate(pos)
-    val (xAlpha, yAlpha) = (num2alpha(x), num2alpha(y))
+    val (x, y) = pos.toCoordinate
+    val (xAlpha, yAlpha) = (x.toAlpha, y.toAlpha)
     val move = Move(if (color == "white") White else Black, xAlpha, yAlpha)
     GameState updateBy move
 
     // return to stderr
-    val (xAlphaGtp, yGtp) = (if (xAlpha < 'i') xAlpha else (xAlpha+1).toChar, Constants.dia - y)
-    println(s"= ${Character.toUpperCase(xAlphaGtp)}$yGtp\n")
+    val (xGtp, yGtp) = (if (xAlpha < 'i') xAlpha else (xAlpha+1).toChar, Constants.dia - y)
+    println(s"= ${Character.toUpperCase(xGtp)}$yGtp\n")
   }
 }
 

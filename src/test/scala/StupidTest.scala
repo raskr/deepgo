@@ -5,8 +5,8 @@ object StupidTest extends App {
 //  val a = 41.rectify(1, 21, 19)
 //  assert(a == 77)
 
-  assert(Utils.num2coordinate(12) == (12, 0))
-  assert(Utils.num2coordinate(0) == (0, 0))
-  assert(Utils.num2coordinate(25) == (6, 1))
-  assert(Utils.num2coordinate(40) == (2, 2))
+  assert(12.toCoordinate == (12, 0))
+  assert(0.toCoordinate == (0, 0))
+  assert(25.toCoordinate == (6, 1))
+  assert(40.toCoordinate == (2, 2))
 }

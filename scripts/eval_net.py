@@ -1,9 +1,8 @@
 import argparse
+from utils import *
 
-import sys
 import os
 import numpy as np
-from math import exp
 
 import six
 import chainer.functions as F
@@ -35,14 +34,6 @@ def forward_once(x, invalid, model):
 def predict(x, invalids, color):
     model = six.moves.cPickle.load(open("{}.pkl".format(color), "rb"))
     return forward_once(x, invalids, model)
-
-
-def str2floats(string):
-    a = list(string)
-    lifespans = [exp(-0.1 * int(c)) for c in a[-361:]]
-    others = [1.0 if x == '1' else 0.0 for x in a[:-361]]
-    others.extend(lifespans)
-    return others
 
 
 result = predict(str2floats(args.board), str2floats(args.invalids), args.color)

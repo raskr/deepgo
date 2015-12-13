@@ -1,21 +1,12 @@
 import sqlite3 as db
+from utils import *
 import random
 import numpy as np
-from math import exp
 from chainer import cuda
 
 
-query = "SELECT state, target FROM white WHERE _id BETWEEN {} AND {} ORDER BY random()"
-query_test = "SELECT state, target, invalid FROM white WHERE _id BETWEEN {} AND {} ORDER BY random()"
-
-
-# convert string consist of channels to float array
-def str2floats(string):
-    a = list(string)
-    lifespans = [exp(-0.1 * int(c)) for c in a[-361:]]
-    others = [1.0 if x == '1' else 0.0 for x in a[:-361]]
-    others.extend(lifespans)
-    return others
+query = "SELECT state, target FROM white WHERE _id BETWEEN {} AND {} ORDER BY RANDOM()"
+query_test = "SELECT state, target, invalid FROM white WHERE _id BETWEEN {} AND {} ORDER BY RANDOM()"
 
 
 class Data:
@@ -48,8 +39,6 @@ class Data:
             for row in self.cur.fetchall():
                 xs.extend(str2floats(row[0]))
                 ys.append(row[1])
-                print(len(row[0]))
-                print(19*19*self.b_size*self.n_ch)
             return self.xp.asarray(xs, dtype=self.xp.float32).reshape(self.b_size, self.n_ch, 19, 19), \
                    self.xp.asarray(ys, dtype=self.xp.int32)
         else:
