@@ -9,6 +9,8 @@
 *.txt
 
 *.iml
+*.DS_Store
+*target/
 
 ## Directory-based project format:
 .idea/
