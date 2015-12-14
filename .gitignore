@@ -8,6 +8,7 @@
 *.zip
 *.txt
 *.pyc
+__pycache__/
 
 *.iml
 *.DS_Store

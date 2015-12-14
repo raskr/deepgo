@@ -1,10 +1,7 @@
-import java.io.File
-
 import Colors._
 import scala.collection.mutable.ArrayBuffer
 import scala.io.StdIn.readLine
 import Implicits._
-import Utils._
 
 object GTP_CmdHandler {
 
@@ -203,7 +200,7 @@ object GenMove extends Cmd {
 
     val cmd = s"python scripts/predict_move.py -b ${state.toChannels} -i ${state.invalidChannel} -c $color"
     // TODO: reduce the command execution (For now execute python script every time genmove called)
-    val pos = execCmd(cmd).init.toInt
+    val pos = Utils.execCmd(cmd).init.toInt
 
     val (x, y) = pos.toCoordinate
     val (xAlpha, yAlpha) = (x.toAlpha, y.toAlpha)
