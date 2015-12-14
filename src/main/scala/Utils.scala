@@ -102,12 +102,9 @@ object Utils {
     }.toArray
   }
 
-  def execCmd(cmd: String): String = {
-    import scala.sys.process._
-    Process(cmd).!!
-  }
+  def execCmd(cmd: String): String = scala.sys.process.Process(cmd).!!
 
-  // pad the array around with the provide element
+  // pad the array around with the provided element
   def pad(in: Array[Char], row: Int, col: Int, padSize: Int, padElem: Char) = {
     assert(in.length == row * col)
     val allNum = row * col

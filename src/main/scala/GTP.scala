@@ -1,3 +1,5 @@
+import java.io.File
+
 import Colors._
 import scala.collection.mutable.ArrayBuffer
 import scala.io.StdIn.readLine
@@ -27,6 +29,7 @@ object GTP_CmdHandler {
       else if (cmd == "protocol_version") ProtocolVersion(args)
       else if (cmd == "known_command")    KnownCommand(args)
       else if (cmd == "boardsize")        BoardSize(args)
+      else if (cmd == "showboard")        ShowBoard(args)
       else if (cmd == "komi")         	  Komi(args)
       else if (cmd == "quit")             { Quit(args); return }
       else {
@@ -87,14 +90,18 @@ object Play extends Cmd {
     sendEmptyOkResponse()
   }
 
+  // ex) color ... white
+  // ex) pos ... L19
   def createMove(color: String, pos: String): Move = {
     val x = convertX(pos.head.toLower)
     val y = convertY(pos.tail)
     Move(if (color == "white") White else Black, x, y)
   }
 
+  // gtp => sgf alpha
   def convertX(x: Char): Char = (if (x < 'i') x else x - 1).toChar
 
+  // gtp => sgf alpha
   // ex) "19": String => a: Char
   def convertY(y: String): Char = {
     // simply str2int
@@ -105,7 +112,7 @@ object Play extends Cmd {
     // 1. change the origin of y-axis
     // 2. make zero origin
     // 3. to alphabet
-    (19 - num - 1).toAlpha
+    (19 - num).toAlpha
   }
 
 }
@@ -124,6 +131,10 @@ object ClearBoard extends Cmd {
 // string* name - Name of the engine
 object Name extends Cmd {
   def apply(args: Array[String]) = sendResponse("deepgo")
+}
+
+object ShowBoard extends Cmd {
+  def apply(args: Array[String]) = sendResponse("stub!!!!")
 }
 
 // arguments none
@@ -191,14 +202,14 @@ object GenMove extends Cmd {
     val state = GameState.states.last
 
     val cmd = s"python scripts/predict_move.py -b ${state.toChannels} -i ${state.invalidChannel} -c $color"
-    // TODO: reduce the command execution (For now execute python sctipt every time genmove called)
+    // TODO: reduce the command execution (For now execute python script every time genmove called)
     val pos = execCmd(cmd).init.toInt
 
     val (x, y) = pos.toCoordinate
     val (xAlpha, yAlpha) = (x.toAlpha, y.toAlpha)
+
     val move = Move(if (color == "white") White else Black, xAlpha, yAlpha)
     GameState updateBy move
-
     // return to stderr
     val (xGtp, yGtp) = (if (xAlpha < 'i') xAlpha else (xAlpha+1).toChar, Constants.dia - y)
     sendResponse(s"${Character.toUpperCase(xGtp)}$yGtp")

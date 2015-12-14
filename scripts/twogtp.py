@@ -1,6 +1,9 @@
 #! /usr/bin/env python
 # coding=utf-8
 
+# use like
+# python twogtp.py --white 'sbt --error "run gtp"' --black 'gnugo --mode gtp'
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # This program is distributed with GNU Go, a Go program.            #
 #                                                                   #
@@ -361,8 +364,10 @@ class GTP_game:
 
         self.moves = []
         passes = 0
+        opponent_passes = 0
         won_by_resignation = ""
-        while passes < 2:
+        while passes < 2 and opponent_passes < 3:
+            ############## black
             if to_play == "B":
                 move = self.blackplayer.genmove("black")
                 if move[:5] == "ERROR":
@@ -377,16 +382,19 @@ class GTP_game:
                 else:
                     self.moves.append(move)
                     if string.lower(move[:4]) == "pass":
-                        passes = passes + 1
+                        passes += 1
+                        opponent_passes += 1
                         if verbose >= 1:
                             print "Black passes"
                     else:
                         passes = 0
+                        opponent_passes = 0
                         # notify white player a play of black
                         self.whiteplayer.black(move)
                         if verbose >= 1:
                             print "Black plays " + move
                 to_play = "W"
+            ############## white
             else:
                 move = self.whiteplayer.genmove("white")
                 if move[:5] == "ERROR":
@@ -412,22 +420,23 @@ class GTP_game:
                 to_play = "B"
 
             if verbose >= 2:
-                print self.whiteplayer.showboard() + "\n"
+                print self.blackplayer.showboard() + "\n"
 
         if won_by_resignation == "":
-            self.resultw = self.whiteplayer.final_score()
+            # ↓ initial ... self.resultw = self.whiteplayer.final_score()
+            self.resultw = self.blackplayer.final_score()
             self.resultb = self.blackplayer.final_score()
         else:
-            self.resultw = won_by_resignation;
-            self.resultb = won_by_resignation;
+            self.resultw = won_by_resignation
+            self.resultb = won_by_resignation
             #    if self.resultb == self.resultw:
             #        print "Result: ", self.resultw
             #    else:
             #        print "Result according to W: ", self.resultw
             #        print "Result according to B: ", self.resultb
         # FIXME:   $self->writesgf($sgffile) if defined $sgffile;
-        if sgffile != "":
-            self.writesgf(sgffile)
+        # if sgffile != "":
+        #     self.writesgf(sgffile)
 
     def result(self):
         return (self.resultw, self.resultb)
@@ -472,12 +481,15 @@ class GTP_match:
         for endgamefile in self.endgamefilelist:
             game1 = GTP_game(self.white, self.black, self.size, self.komi, 0, "", endgamefile)
             game2 = GTP_game(self.black, self.white, self.size, self.komi, 0, "", endgamefile)
-            if verbose:
-                print "Replaying", endgamefile
-                print "Black:", self.black
-                print "White:", self.white
+
+            print "Replaying", endgamefile
+            print "Black:", self.black
+            print "White:", self.white
+
             game1.play("")
-            result1 = game1.result()[0]
+
+            # result of white
+            result1 = game2.result()[0] # initial ... result1 = game2.result()[0]
             if result1 != "0":
                 plain_result1 = re.search(r"([BW]\+)([0-9]*\.[0-9]*)", result1)
                 result1_float = float(plain_result1.group(2))
@@ -492,7 +504,10 @@ class GTP_match:
                 print "Black:", self.white
                 print "White:", self.black
             game2.play("")
+
+            # result of black
             result2 = game2.result()[1]
+
             if verbose:
                 print "Result:", result2
             if result2 != "0":
@@ -585,7 +600,7 @@ handicap_type = "fixed"
 streak_length = -1
 endgame_start_at = 0
 
-games   = 1
+games   = 2
 sgfbase = "twogtp"
 
 verbose = 0

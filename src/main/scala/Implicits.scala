@@ -34,10 +34,22 @@ object Implicits {
   }
 
   implicit class RichFile(val f: File) {
-    def write(str: String): Unit = {
+    def appendChar(c: Char): Unit = {
       if (!f.exists()) f.createNewFile()
       val file = new FileWriter(f, true)
-      file.write(str)
+      file.write(c)
+      file.close()
+    }
+    def write(str: String): Unit = {
+      if (!f.exists()) f.createNewFile()
+      val file = new FileWriter(f, false)
+      file.write(str + "\n")
+      file.close()
+    }
+    def append(str: String): Unit = {
+      if (!f.exists()) f.createNewFile()
+      val file = new FileWriter(f, true)
+      file.write(str + "\n")
       file.close()
     }
   }
@@ -158,8 +170,9 @@ object Implicits {
     }
 
     // delete stones by move and return new board
-    def createNextBoardBy(move: Move): Array[Char] =
+    def createNextBoardBy(move: Move): Array[Char] = {
       Rules.boardAfterCaptured(move, in)
+    }
 
     def pad(row: Int, col: Int, padSize: Int, padElem: Char) =
       Utils.pad(in, row, col, padSize, padElem)
@@ -210,6 +223,7 @@ object Implicits {
       val x = value - (Constants.dia * y)
       (x, y)
     }
+
     // 0 => a
     // 1 => b
     def toAlpha: Char = ('a' + value).toChar

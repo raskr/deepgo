@@ -7,6 +7,7 @@
 /sgf_test
 *.zip
 *.txt
+*.pyc
 
 *.iml
 *.DS_Store
