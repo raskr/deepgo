@@ -9,12 +9,12 @@ object Implicits {
     // 9ch
     def toRankChannel: String =
       (x.charAt(0).getNumericValue, x.charAt(1)) match {
-        case (_, 'p') => Utils.ones(Constants.all*9).mkString
-        case (r, 'd') if r == 9 => Utils.ones(Constants.all*9).mkString
+        case (_, 'p') => Utils.ones(Config.all*9).mkString
+        case (r, 'd') if r == 9 => Utils.ones(Config.all*9).mkString
         case (r, 'd') =>
-          val (start, end) = (Constants.all*(r-1), Constants.all*(r-1) + Constants.all)
-          val dst = Utils.zeros(Constants.all * 9); (start until end).foreach{ dst(_) = '1' }
-          assert(dst.length/Constants.all == 9)
+          val (start, end) = (Config.all*(r-1), Config.all*(r-1) + Config.all)
+          val dst = Utils.zeros(Config.all * 9); (start until end).foreach{ dst(_) = '1' }
+          assert(dst.length/Config.all == 9)
           dst.mkString
         case _ => throw new RuntimeException("should not happen")
       }
@@ -77,7 +77,7 @@ object Implicits {
     }
 
     def clip(row: Int, col: Int, borderWidth: Int): Array[Int] =
-      Utils.clip(x, row, col, borderWidth).asInstanceOf[Array[Int]]
+      Utils.clip(x, row, col, borderWidth)
 
   }
 
@@ -100,29 +100,40 @@ object Implicits {
       println()
     }
 
+    def suicideMovePos: Array[Boolean] =
+      Array.range(0, in.length).map { i =>
+        val (x, y) = i.toCoordinate
+        if (in(i) == Empty) {
+          Rules.isSuicideMove(Move(Black, x.toAlpha, y.toAlpha), in) ||
+          Rules.isSuicideMove(Move(White, x.toAlpha, y.toAlpha), in)
+        } else {
+          false
+        }
+      }
+
     def findKoBy(move: Move): Int = Rules.findKo(move, in)
 
     // 3ch
     def toBoardChannel: String = {
       val (empty, white, black) = (
-        Utils.zeros(Constants.all),
-        Utils.zeros(Constants.all),
-        Utils.zeros(Constants.all)
+        Utils.zeros(Config.all),
+        Utils.zeros(Config.all),
+        Utils.zeros(Config.all)
         )
-      (0 until Constants.all) foreach { i =>
+      (0 until Config.all) foreach { i =>
         val color = in(i)
         if (color == Empty) empty(i) = '1'
         if (color == White) white(i) = '1'
         if (color == Black) black(i) = '1'
       }
       val dst = empty ++ (white ++ black)
-      assert(dst.length/Constants.all == 3)
+      assert(dst.length/Config.all == 3)
       dst.mkString
     }
 
     def toGroupSizeChannel: String = {
       val gSizes = Rules.groupSizes(in)
-      val dst = Array.fill(Constants.all * 2)('0')
+      val dst = Array.fill(Config.all * 2)('0')
       in.indices foreach { i =>
         if (gSizes(i) > 3) {
           if (in(i) == White) dst(i) = '1'
@@ -136,42 +147,42 @@ object Implicits {
     // 6ch
     def toLibertyChannel = {
       val liberties = Rules.liberties(in)
-      val dst = Array.fill(Constants.all * 6)('0')
+      val dst = Array.fill(Config.all * 6)('0')
 
-      (0 until Constants.all) foreach { i =>
+      (0 until Config.all) foreach { i =>
         val lib = liberties(i)
         val col = in(i)
         if (lib == 1) {
           if (col == 'W') dst(i) = '1'
-          if (col == 'B') dst(Constants.all * 3 + i) = '1'
+          if (col == 'B') dst(Config.all * 3 + i) = '1'
         }
         if (lib == 2) {
-          if (col == 'W') dst(Constants.all + i) = '1'
-          if (col == 'B') dst(Constants.all * 4 + i) = '1'
+          if (col == 'W') dst(Config.all + i) = '1'
+          if (col == 'B') dst(Config.all * 4 + i) = '1'
         }
         if (lib >= 3) {
-          if (col == 'W') dst(Constants.all * 2 + i) = '1'
-          if (col == 'B') dst(Constants.all * 5 + i) = '1'
+          if (col == 'W') dst(Config.all * 2 + i) = '1'
+          if (col == 'B') dst(Config.all * 5 + i) = '1'
         }
       }
-      assert(dst.length/Constants.all == 6)
+      assert(dst.length/Config.all == 6)
       dst.mkString
     }
 
     // 1ch
     def toBorderChannel = {
-      val borderState = Utils.zeros(Constants.all)
-      Utils.borderPositions(Constants.dia) foreach { i =>
+      val borderState = Utils.zeros(Config.all)
+      Utils.borderPositions(Config.dia) foreach { i =>
         val a = in(i)
         if (a != Empty) borderState(i) = '1'
       }
-      assert(borderState.length/Constants.all == 1)
+      assert(borderState.length/Config.all == 1)
       borderState.mkString
     }
 
     // delete stones by move and return new board
     def createNextBoardBy(move: Move): Array[Char] = {
-      Rules.boardAfterCaptured(move, in)
+      Rules.boardAfterCaptured(move, in)._1
     }
 
     def pad(row: Int, col: Int, padSize: Int, padElem: Char) =
@@ -199,7 +210,7 @@ object Implicits {
     }
 
     def clip(row: Int, col: Int, borderWidth: Int): Array[Char] =
-      Utils.clip(in, row, col, borderWidth).asInstanceOf[Array[Char]]
+      Utils.clip(in, row, col, borderWidth)
 
   }
 
@@ -207,7 +218,12 @@ object Implicits {
     def isOpponentOf(x: Char): Boolean = {
       if (x == White) a == Black || a == Outside
       else if (x == Black) a == White || a == Outside
-      else throw new RuntimeException
+      else throw new RuntimeException("should not occur!")
+    }
+    def opponentOf(x: Char): Char = {
+      if (x == White) Black
+      else if (x == Black) White
+      else throw new RuntimeException("should not occur!")
     }
     def isStone = a == White || a == Black
     def toNum = a - '0'.toInt
@@ -219,8 +235,8 @@ object Implicits {
     // (x, y)
     // top-left is 0. pos is based on this
     def toCoordinate: (Int, Int) = {
-      val y = value / Constants.dia
-      val x = value - (Constants.dia * y)
+      val y = value / Config.dia
+      val x = value - (Config.dia * y)
       (x, y)
     }
 
@@ -230,9 +246,9 @@ object Implicits {
 
     // 1ch
     def toKoChannel = {
-      val dst = Utils.zeros(Constants.all)
+      val dst = Utils.zeros(Config.all)
       if (value != -1) dst(value) = 1
-      assert(dst.length/Constants.all == 1)
+      assert(dst.length/Config.all == 1)
       dst.mkString
     }
 

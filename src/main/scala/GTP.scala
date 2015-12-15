@@ -1,49 +1,80 @@
 import Colors._
-import scala.collection.mutable.ArrayBuffer
-import scala.io.StdIn.readLine
 import Implicits._
 
-object GTP_CmdHandler {
-
-  def listenAndServe(): Unit = {
-
-    loop()
-
-    // recursive func
-    def loop() {
-      var line = readLine()
-      while (line == null) line = readLine()
-      val stdin = line.split(' ')
-
-      val (cmd, args) = (stdin.head, stdin.tail)
-
-      if      (cmd == "genmove")          GenMove(args)
-      else if (cmd == "version")          Version(args)
-      else if (cmd == "play")             Play(args)
-      else if (cmd == "name")             Name(args)
-      else if (cmd == "clear_board")      ClearBoard(args)
-      else if (cmd == "list_commands")    ListCommands(args)
-      else if (cmd == "protocol_version") ProtocolVersion(args)
-      else if (cmd == "known_command")    KnownCommand(args)
-      else if (cmd == "boardsize")        BoardSize(args)
-      else if (cmd == "showboard")        ShowBoard(args)
-      else if (cmd == "komi")         	  Komi(args)
-      else if (cmd == "quit")             { Quit(args); return }
-      else {
-        throw new RuntimeException("Error!! Unsupported Command: " + cmd + "\n\n")
-      }
-      // ok response from script
-      if (readLine().isEmpty) loop()
-    }
-  }
-
+sealed abstract class Cmd {
+  protected final def sendEmptyOkResponse() = println("= \n")
+  protected final def sendResponse(str: String) = println(s"= $str \n")
+  // Main task of the command.
+  // This function has many side effect. the return value will be stdout
+  def apply(args: Array[String])
 }
 
-object GameState {
-  val states = ArrayBuffer[State]()
-  def updateBy(move: Move) = states.append(states.last.createNextBy(move))
-  def currentState = states.last
-  def reset() = { states.clear(); states.append(State(rank="1d")) }
+
+// ====================================================================
+//
+//  Implementations of Gtp Commands subset
+//
+// ====================================================================
+
+object ProtocolVersion extends Cmd {
+  def apply(args: Array[String]) = sendResponse("2")
+}
+
+object Name extends Cmd {
+  def apply(args: Array[String]) = sendResponse("deepgo")
+}
+
+object Version extends Cmd {
+  def apply(args: Array[String]) = sendResponse("1")
+}
+
+object ClearBoard extends Cmd {
+  def apply(args: Array[String]) = {
+    GameState.reset()
+    sendEmptyOkResponse()
+  }
+}
+
+// Did'nt support showboard but this is required from protocol.
+// I leave it to the opponent engine...
+object ShowBoard extends Cmd {
+  def apply(args: Array[String]) = sendResponse("stub!!!!")
+}
+
+// argument: mew komi (float)
+// effect change komi
+// output none
+object Komi extends Cmd {
+  def apply(args: Array[String]) = {
+    Config.Komi = args.head.toFloat
+    sendEmptyOkResponse()
+  }
+}
+
+// arguments none
+// effects The session is terminated and the connection is closed.
+// output none
+object Quit extends Cmd {
+  def apply(args: Array[String]) = sendEmptyOkResponse()
+}
+
+// arguments none
+// effects none
+// output commands
+// string& commands - List of commands, one per row
+object ListCommands extends Cmd {
+  def apply(args: Array[String]) = sendResponse(CmdList().mkString(" "))
+}
+
+// arguments command name
+// effects none
+// output known
+// string command name - Name of a command
+// boolean known - “true” if the command is known by the
+// engine, “false” otherwise
+object KnownCommand extends Cmd {
+  def apply(args: Array[String]) =
+    sendResponse(s"${CmdList().contains(args.head)}")
 }
 
 object CmdList {
@@ -53,19 +84,22 @@ object CmdList {
   )
 }
 
-sealed abstract class Cmd {
-  protected final def sendEmptyOkResponse() = println("= \n")
-  protected final def sendResponse(str: String) = println(s"= $str \n")
-  // This function has many side effect. the return value will be stdout
-  def apply(args: Array[String])
+// arguments size
+// effects The board size is changed. The board configuration, number of captured stones, and move history become arbitrary.
+// output none
+// fails Syntax error. If the engine cannot handle the new size,
+// comments In GTP version 1 this command also did the work of
+// int size - New size of the board.
+// fails with the error message ”unacceptable size”.
+// clear board. This may or may not be true for implementations of GTP version 2. Thus the controller must
+// call clear board explicitly. Even if the new board size is
+// the same as the old one, the board configuration becomes arbitrary.
+object BoardSize extends Cmd {
+  def apply(args: Array[String]) = {
+    Config.dia = args.head.toInt
+    sendEmptyOkResponse()
+  }
 }
-
-
-// ====================================================================
-//
-//  Implementations of subset of Gtp Commands
-//
-// ====================================================================
 
 
 // arguments move
@@ -114,92 +148,26 @@ object Play extends Cmd {
 
 }
 
-object ClearBoard extends Cmd {
-  def apply(args: Array[String]) = {
-    GameState.reset()
-    sendEmptyOkResponse()
-  }
-}
-
-// arguments none
-// effects none
-// output name
-// fails never
-// string* name - Name of the engine
-object Name extends Cmd {
-  def apply(args: Array[String]) = sendResponse("deepgo")
-}
-
-object ShowBoard extends Cmd {
-  def apply(args: Array[String]) = sendResponse("stub!!!!")
-}
-
-// arguments none
-// effects none
-// output version number
-// int version number - Version of the GTP Protocol
-object ProtocolVersion extends Cmd {
-  def apply(args: Array[String]) = sendResponse("2")
-}
-
-// arguments size
-// effects The board size is changed. The board configuration, number of captured stones, and move history become arbitrary.
-// output none
-// fails Syntax error. If the engine cannot handle the new size,
-// comments In GTP version 1 this command also did the work of
-// int size - New size of the board.
-// fails with the error message ”unacceptable size”.
-// clear board. This may or may not be true for implementations of GTP version 2. Thus the controller must
-// call clear board explicitly. Even if the new board size is
-// the same as the old one, the board configuration becomes arbitrary.
-object BoardSize extends Cmd {
-  var dia = -1
-  def apply(args: Array[String]) = {
-    dia = args.head.toInt
-    sendEmptyOkResponse()
-  }
-}
-
-// argument: mew komi (float)
-// effect change komi
-// output none
-object Komi extends Cmd {
-  var komi = 0f
-  def apply(args: Array[String]) = {
-    komi = args.head.toFloat
-    sendEmptyOkResponse()
-  }
-}
-// arguments none
-// effects none
-// output commands
-// string& commands - List of commands, one per row
-object ListCommands extends Cmd {
-  def apply(args: Array[String]) =
-    sendResponse(CmdList().mkString(" "))
-}
-
-// arguments color
-// effects A stone of the requested color is played where the engine
-// output vertex
-// fails never
-// comments Notice that “pass” is a valid vertex and should be returned
+// arguments: my own color
+// effects: A stone of the requested color is played where the engine
+// output: vertex
+// comments: Notice that “pass” is a valid vertex and should be returned
 // color color - Color for which to generate a move.
 // chooses. The number of captured stones is updated if
 // needed and the move is added to the move history.
-// vertex|string vertex - Vertex where the move was
-// played or the string “resign”.
-// if the engine wants to pass. Use “resign” if you want to
-// give up the game. The controller is allowed to use this
-// command for either color, regardless who played the last move.
+// vertex|string vertex - Vertex where the move was played or the string “resign”.
+// If the engine wants to pass. Use “resign” if you want to give up the game.
+// The controller is allowed to use this command for either color,
+// regardless who played the last move.
 object GenMove extends Cmd {
   def apply(args: Array[String]) = {
     // update state
     val color = args.head
-    val state = GameState.states.last
+    val state = GameState.currentState
 
     val cmd = s"python scripts/predict_move.py -b ${state.toChannels} -i ${state.invalidChannel} -c $color"
     // TODO: reduce the command execution (For now execute python script every time genmove called)
+    // `init` get rid of the "\n"
     val pos = Utils.execCmd(cmd).init.toInt
 
     val (x, y) = pos.toCoordinate
@@ -208,33 +176,53 @@ object GenMove extends Cmd {
     val move = Move(if (color == "white") White else Black, xAlpha, yAlpha)
     GameState updateBy move
     // return to stderr
-    val (xGtp, yGtp) = (if (xAlpha < 'i') xAlpha else (xAlpha+1).toChar, Constants.dia - y)
+    val (xGtp, yGtp) = (if (xAlpha < 'i') xAlpha else (xAlpha+1).toChar, Config.dia - y)
     sendResponse(s"${Character.toUpperCase(xGtp)}$yGtp")
   }
 }
 
-// arguments command name
-// effects none
-// output known
-// string command name - Name of a command
-// boolean known - “true” if the command is known by the
-// engine, “false” otherwise
-object KnownCommand extends Cmd {
-  def apply(args: Array[String]) =
-    sendResponse(s"${CmdList().contains(args.head)}")
+object GTP_CmdHandler {
+
+  import scala.io.StdIn.readLine
+
+  def listenAndServe(): Unit = {
+
+    loop()
+
+    // recursive func
+    def loop() {
+      var line = readLine()
+      while (line == null) line = readLine()
+      val stdin = line.split(' ')
+
+      val (cmd, args) = (stdin.head, stdin.tail)
+
+      if      (cmd == "genmove")          GenMove(args)
+      else if (cmd == "version")          Version(args)
+      else if (cmd == "play")             Play(args)
+      else if (cmd == "name")             Name(args)
+      else if (cmd == "clear_board")      ClearBoard(args)
+      else if (cmd == "list_commands")    ListCommands(args)
+      else if (cmd == "protocol_version") ProtocolVersion(args)
+      else if (cmd == "known_command")    KnownCommand(args)
+      else if (cmd == "boardsize")        BoardSize(args)
+      else if (cmd == "showboard")        ShowBoard(args)
+      else if (cmd == "komi")         	  Komi(args)
+      else if (cmd == "quit")            {Quit(args); sys.exit(1)}
+      else {
+        throw new RuntimeException("Error!! Unsupported Command: " + cmd + "\n\n")
+      }
+      // ok response from script
+      if (readLine().isEmpty) loop()
+    }
+  }
+
 }
 
-// arguments none
-// effects none
-// output version
-// string* version - Version of the engine
-object Version extends Cmd {
-  def apply(args: Array[String]) = sendResponse("1")
-}
-
-// arguments none
-// effects The session is terminated and the connection is closed.
-// output none
-object Quit extends Cmd {
-  def apply(args: Array[String]) = sendEmptyOkResponse()
+object GameState {
+  import scala.collection.mutable.ArrayBuffer
+  val states = ArrayBuffer[State]()
+  def updateBy(move: Move) = states.append(states.last.createNextBy(move))
+  def currentState = states.last
+  def reset() = { states.clear(); states.append(State(rank="1d")) }
 }

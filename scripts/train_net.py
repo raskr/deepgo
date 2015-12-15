@@ -90,7 +90,7 @@ def train():
             sum_loss += float(loss.data) * len(y_batch)
             sum_accuracy += float(acc.data) * len(y_batch)
 
-        print('test  mean loss={}, accuracy={}'.format(sum_loss / data.n_test_data, sum_accuracy / data.n_test_data))
+        print('test mean loss={}, accuracy={}'.format(sum_loss / data.n_test_data, sum_accuracy / data.n_test_data))
 
 
 def save_net(color):

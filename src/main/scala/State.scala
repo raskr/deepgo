@@ -1,4 +1,3 @@
-import Utils._
 import Colors._
 import Implicits._
 
@@ -9,14 +8,22 @@ import Implicits._
  * @param board current board
  * @param invalidPosByKo position next player can't play
  */
-case class State(board: Array[Color] = Array.fill(Constants.all)(Empty),
-                 lifeSpans: Array[Int] = Array.fill(Constants.all)(0),
-                 invalidPosByKo: Int = -1, rank: String) {
+case class State(board: Array[Char] = Array.fill(Config.all)(Empty),
+                 lifeSpans: Array[Int] = Array.fill(Config.all)(0),
+                 invalidPosByKo: Int = -1,
+                 rank: String) {
 
   lazy val invalidChannel = {
-    val dst = zeros(Constants.all)
-    (0 until Constants.all) foreach { i => if (board(i) != Empty) dst(i) = '1' }
+    val dst = Utils.zeros(Config.all)
+    val suicide = board.suicideMovePos
+    (0 until Config.all) foreach { i =>
+      val occupied = board(i) != Empty
+      val invalid = occupied || suicide(i)
+      if (invalid) dst(i) = '1'
+    }
+    // ko
     if (invalidPosByKo != -1) dst(invalidPosByKo) = '1'
+
     dst.mkString
   }
 
@@ -31,12 +38,11 @@ case class State(board: Array[Color] = Array.fill(Constants.all)(Empty),
     .append(lifeSpans.toLifespanChannel)
     .toString()
 
-  // concrete implementation is in Rules.scala
   def createNextBy(move: Move): State = {
     // 1. update board
-    val newBoard = board createNextBoardBy move
+    val newBoard = board.createNextBoardBy(move)
     // 2. find `ko`
-    val ko = board findKoBy move
+    val ko = board.findKoBy(move)
     // 3. turns since
     val ls = lifeSpans.nextLifespans(board, newBoard)
     // return
