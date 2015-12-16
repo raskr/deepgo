@@ -3,7 +3,7 @@ import Implicits._
 
 /**
  * board(3ch), ko(1ch), liberty(6ch), border(1ch), groupSizes(2ch)
-  * rank(9ch), lifeTime(1ch), invalid(1ch) -> 24ch
+ * rank(9ch), lifeTime(1ch), invalid(1ch) -> 24ch
  *
  * @param board current board
  * @param invalidPosByKo position next player can't play
@@ -14,16 +14,13 @@ case class State(board: Array[Char] = Array.fill(Config.all)(Empty),
                  rank: String) {
 
   lazy val invalidChannel = {
-    val dst = Utils.zeros(Config.all)
-    val suicide = board.suicideMovePos
-    (0 until Config.all) foreach { i =>
-      val occupied = board(i) != Empty
-      val invalid = occupied || suicide(i)
-      if (invalid) dst(i) = '1'
+    val dst = Array.range(0, Config.all) map { i =>
+      // already occupied or suicide move
+      val cantPlay = board(i) != Empty || i.isSuicideMovePos(White, board)
+      if (cantPlay) '1' else '0'
     }
     // ko
     if (invalidPosByKo != -1) dst(invalidPosByKo) = '1'
-
     dst.mkString
   }
 

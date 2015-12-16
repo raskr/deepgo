@@ -72,7 +72,7 @@ object Main extends App {
                 node.props match {
                   // the move
                   case List(Property(PropIdent(col: String), List(PropValue(Point(a: Char, b: Char))))) =>
-                    val mv = Move(col.head, a, b)
+                    val mv = Move(col.head, a - 'a', b - 'a')
                     if (mv.isInvalid) (states, moves)
                     else (states.head.createNextBy(mv) :: states, mv :: moves)
                   // not a move

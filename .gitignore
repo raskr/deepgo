@@ -5,10 +5,11 @@
 *.sgf
 /sgf
 /sgf_test
+/__pycache__
+/tex
 *.zip
 *.txt
 *.pyc
-__pycache__/
 
 *.iml
 *.DS_Store

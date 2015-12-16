@@ -129,21 +129,19 @@ object Play extends Cmd {
     Move(if (color == "white") White else Black, x, y)
   }
 
-  // gtp => sgf alpha
-  def convertX(x: Char): Char = (if (x < 'i') x else x - 1).toChar
+  // gtp => sgf Int
+  // ex) 'a' => 0
+  def convertX(x: Char): Int = (if (x < 'i') x else x - 1) - 'a'
 
-  // gtp => sgf alpha
-  // ex) "19": String => a: Char
-  def convertY(y: String): Char = {
+  // gtp => sgf Int
+  // ex) "19": String => 0: Int
+  def convertY(y: String): Int = {
     // simply str2int
     val num = {
       if (y.length == 1) y.head.toNum // ex) 5
       else 10 + y(1).toNum // ex) 13
     }
-    // 1. change the origin of y-axis
-    // 2. make zero origin
-    // 3. to alphabet
-    (19 - num).toAlpha
+    19 - num
   }
 
 }

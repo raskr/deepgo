@@ -48,7 +48,7 @@ object Rules {
     dst
   }
 
-  def groupSizes(in: Array[Char]) = {
+  def groupSizes(in: Array[Char]): Array[Int] = {
     val paddedDia = Config.dia + 2
     val padded = in.pad(Config.dia, Config.dia, 1, Outside)
     val dst = Array.fill(paddedDia*paddedDia)(-1)
@@ -76,7 +76,7 @@ object Rules {
       }
     }
 
-    dst.clip(paddedDia, paddedDia, 1)
+    dst.clip(paddedDia, paddedDia, 1).map(x => if (x == -1) 0 else x)
   }
 
   def findKo(move: Move, in: Array[Char]): Int = {
@@ -95,40 +95,51 @@ object Rules {
     * @param curBoard current board
     * @return (new board, captured Stone count)
     */
-  def boardAfterCaptured(move: Move, curBoard: Array[Char]): (Array[Char], Int) = {
+  def boardAfterCaptured(move: Move, curBoard: Array[Char]): Array[Char] = {
     val paddedDia = Config.dia + 2
     // pad the input board for convenience
     val padded = curBoard.pad(Config.dia, Config.dia, 1, Outside)
     val movePos = (move.y+1)*paddedDia + (move.x+1)
     // (true, false) ... (enemy, live)
     val booleans = Array.fill(paddedDia * paddedDia)(None: Option[Boolean])
-    // Checked position in the recursive session.
-    // This is indispensable.
     val shouldSkip = mutable.Set[Int]()
-    val captured = new MutableInt(0)
+
+    // print
+    println("\n\n\nbefore...")
+    println(s"${move.color} (${if (move.color == White) 'X' else 'O'}) will play ...")
+    curBoard.printState(Config.dia, Config.dia, Some(move), None)
 
     // 1. Reflect the move itself
     padded(movePos) = move.color
     booleans(movePos) = Some(true)
 
+    killed = false
     // 2. Start inspection around the move-point and remove stones if possible
     Seq(movePos+1, movePos-1, movePos+paddedDia, movePos-paddedDia) foreach { i =>
       captureLoop(
         i = i,
-        moveColor = move.color,
+        attackColor = move.color,
         board = padded,
         booleans = booleans,
-        captured = captured,
         shouldSkip = shouldSkip
       )
     }
 
-    (padded.clip(paddedDia, paddedDia, 1), captured.value)
+    val a = padded.clip(paddedDia, paddedDia, 1)
+    println("after... ")
+    if (killed) {
+      println("killeddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd")
+      killed = false
+    }
+    a.printState(Config.dia, Config.dia, None, None)
+    a
   }
 
   def isSuicideMove(move: Move, curBoard: Array[Char]): Boolean = {
+    def opponentOf(x: Char) = if (x == White) Black else White
     val paddedDia = Config.dia + 2
     val movePos = (move.y+1) * paddedDia + (move.x+1)
+    val shouldSkip = mutable.Set[Int]()
 
     // pad the input board for convenience
     val padded = curBoard.pad(Config.dia, Config.dia, 1, Outside)
@@ -139,15 +150,13 @@ object Rules {
     // 2. Start inspection about the move-point
     captureLoop(
       i = movePos,
-      moveColor = move.color,
+      attackColor = opponentOf(move.color),
       board = padded,
       booleans = Array.fill(paddedDia * paddedDia)(None),
-      captured = new MutableInt(0),
-      shouldSkip = mutable.Set()
+      shouldSkip = shouldSkip
     )
 
-    val dst = padded.clip(paddedDia, paddedDia, 1)
-    dst(move.pos) == Empty
+    padded(movePos) == Empty
   }
 
   /**
@@ -158,23 +167,23 @@ object Rules {
     *  isSuicideMove()
     *
     * @param i check index
+    * @param attackColor literally...
     * @param board current board (should padded)
     * @param booleans the stone is a enemy or not)
     * @param shouldSkip prevent infinite loop
     * @return
     */
   def captureLoop(i: Int,
-                  moveColor: Char,
+                  attackColor: Char,
                   board: Array[Char],
                   booleans: Array[Option[Boolean]],
-                  captured: MutableInt,
                   shouldSkip:mutable.Set[Int]) : Boolean =
   {
     val paddedDia = Config.dia + 2
     val checkColor = board(i)
     if (booleans(i).isEmpty) {
       booleans(i) = Some(
-        if (checkColor == moveColor) true
+        if (checkColor == attackColor) true
         else if (checkColor == Outside) true
         else if (checkColor == Empty) false
         else {
@@ -182,17 +191,19 @@ object Rules {
             .filterNot{ shouldSkip.contains }
             .map(x => booleans(x).getOrElse {
               shouldSkip.add(i)
-              captureLoop(x, moveColor, board, booleans, captured, shouldSkip)
+              captureLoop(x, attackColor, board, booleans, shouldSkip)
             })
 
           val shouldKill = around forall (_ == true)
           if (shouldKill) {
+            killed =true
             board(i) = Empty
-            captured += 1
           }
           shouldKill
         })
     }
     booleans(i).get
   }
+
+  var killed = false
 }

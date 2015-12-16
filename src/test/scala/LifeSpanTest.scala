@@ -8,7 +8,7 @@ object LifeSpanTest extends App {
   val rand = new Random
   val prevLifeSpans: Array[Int] = Array.fill(Config.all)(rand.nextInt(9))
   val prevBoard = Utils.createRandomBoard
-  val curBoard = prevBoard.createNextBoardBy(Move(White, 'a', 'a'))._1
+  val curBoard = prevBoard.createNextBoardBy(Move(White, 'a', 'a'))
 
   // before
   prevBoard.printSelf(Config.dia, Config.dia)

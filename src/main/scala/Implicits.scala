@@ -100,17 +100,6 @@ object Implicits {
       println()
     }
 
-    def suicideMovePos: Array[Boolean] =
-      Array.range(0, in.length).map { i =>
-        val (x, y) = i.toCoordinate
-        if (in(i) == Empty) {
-          Rules.isSuicideMove(Move(Black, x.toAlpha, y.toAlpha), in) ||
-          Rules.isSuicideMove(Move(White, x.toAlpha, y.toAlpha), in)
-        } else {
-          false
-        }
-      }
-
     def findKoBy(move: Move): Int = Rules.findKo(move, in)
 
     // 3ch
@@ -182,7 +171,7 @@ object Implicits {
 
     // delete stones by move and return new board
     def createNextBoardBy(move: Move): Array[Char] = {
-      Rules.boardAfterCaptured(move, in)._1
+      Rules.boardAfterCaptured(move, in)
     }
 
     def pad(row: Int, col: Int, padSize: Int, padElem: Char) =
@@ -190,19 +179,25 @@ object Implicits {
 
     def printState(row: Int, col: Int, emphasize: Option[Move], ko: Option[Int]) = {
       assert(in.length == row * col)
-      val x = in.map(para => if (para == White) '●' else if (para == Black) '○' else if (para == Empty) '◎')
+      println("white ... X")
+      println("black ... O\n")
+      val x = in.map(a => if (a == White) 'X' else if (a == Black) 'O' else if (a == Empty) '.')
       assert(x.length == row * col)
 
       // ko
-      ko.foreach{ k => if (k != -1) x(k) = '※' }
+      ko.foreach{ k => if (k != -1) x(k) = 'Z' }
 
       // move
       emphasize.foreach{ move =>
-        x(move.pos) = if (move.color == White) '★' else '☆'
+        x(move.pos) = if (move.color == White) '◎' else '○'
       }
 
+      print("  ")
+      Array.range(0, Config.dia).foreach{i => print(('a' + i).toChar)}
+      println()
       // print
       for (i <- 0 until row) {
+        print(('a' + i).toChar + " ")
         for (j <- 0 until col) print(x(col * i + j))
         println()
       }
@@ -220,16 +215,18 @@ object Implicits {
       else if (x == Black) a == White || a == Outside
       else throw new RuntimeException("should not occur!")
     }
-    def opponentOf(x: Char): Char = {
-      if (x == White) Black
-      else if (x == Black) White
-      else throw new RuntimeException("should not occur!")
-    }
     def isStone = a == White || a == Black
-    def toNum = a - '0'.toInt
+    // ex) '9' => 9
+    // don'nt do  'a' => foo
+    def toNum: Int = a - '0'
   }
-  
+
   implicit class RichInt(val value: Int) extends AnyVal {
+
+    def isSuicideMovePos(color: Char, in: Array[Char]): Boolean = {
+      val (x, y) = value.toCoordinate
+      Rules.isSuicideMove(Move(color, x, y), in)
+    }
 
     // tested
     // (x, y)
@@ -240,6 +237,7 @@ object Implicits {
       (x, y)
     }
 
+    // tested
     // 0 => a
     // 1 => b
     def toAlpha: Char = ('a' + value).toChar

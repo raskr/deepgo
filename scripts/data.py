@@ -46,7 +46,7 @@ class Data:
             for row in self.cur.fetchall():
                 xs.extend(str2floats(row[0]))
                 ys.append(row[1])
-                invalids.extend(str2floats(row[2]))
+                invalids.extend(str2floats_simple(row[2]))
 
             return self.xp.asarray(xs, dtype=self.xp.float32).reshape(self.b_size, self.n_ch, 19, 19), \
                    self.xp.asarray(ys, dtype=self.xp.int32), \

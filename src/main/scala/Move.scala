@@ -1,5 +1,5 @@
-case class Move(color: Char, a: Char, b: Char) {
-  val (x, y) = (a - 97, b - 97)
+// top-left is origin
+case class Move(color: Char, x: Int, y: Int) {
   val pos = y * 19 + x
   // This method is needed because sgf file sometimes contains
   // strange board such as over 19 * 19.

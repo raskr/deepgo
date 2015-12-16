@@ -60,14 +60,14 @@ def train():
     optimizer = optimizers.Adam()
     optimizer.setup(model)
     for epoch in six.moves.range(1, data.n_epoch + 1):
-        print('epoch', epoch, '(', data.n_mb_train, 'mini batches )')
+        print('epoch: {} ({} mini batches)'.format(epoch, data.n_mb_train))
 
         sum_accuracy = 0
         sum_loss = 0
-        index = 0
+        mb_count = 0
         for i in data.mb_indices(True):
-            print('mini batch', index)
-            index += 1
+            print('mini batch: {} of {}'.format(mb_count, data.n_mb_train))
+            mb_count += 1
             x_batch, y_batch = data(True, i)
 
             optimizer.zero_grads()
@@ -78,19 +78,22 @@ def train():
             sum_loss += float(loss.data) * len(y_batch)
             sum_accuracy += float(acc.data) * len(y_batch)
 
-        print('train mean loss={}, accuracy={}'.format(sum_loss / data.n_train_data, sum_accuracy / data.n_train_data))
+        print('train mean loss = {}, accuracy = {}'.format(sum_loss / data.n_train_data, sum_accuracy / data.n_train_data))
 
         # evaluation (test)
         sum_accuracy = 0
         sum_loss = 0
+        mb_count = 0
         for i in data.mb_indices(False):
+            print('mini batch: {} of {}'.format(mb_count, data.n_mb_test))
+            mb_count += 1
             x_batch, y_batch, invalid_batch = data(False, i)
 
             loss, acc = forward(x_batch, y_batch, invalid_batch)
             sum_loss += float(loss.data) * len(y_batch)
             sum_accuracy += float(acc.data) * len(y_batch)
 
-        print('test mean loss={}, accuracy={}'.format(sum_loss / data.n_test_data, sum_accuracy / data.n_test_data))
+        print('test mean loss = {}, accuracy = {}'.format(sum_loss / data.n_test_data, sum_accuracy / data.n_test_data))
 
 
 def save_net(color):

@@ -3,13 +3,11 @@ from math import exp
 
 # convert string consist of channels to float array
 def str2floats(string):
-    a = list(string)
-    lifespans = [exp(-0.1 * int(c)) for c in a[-361:]]
-    others = [1.0 if x == '1' else 0.0 for x in a[:-361]]
+    lifespans = [exp(-0.1 * float(c)) for c in string[-361:]]
+    others = [1.0 if x == '1' else 0.0 for x in string[:-361]]
     others.extend(lifespans)
     return others
 
 
 def str2floats_simple(string):
-    a = list(string)
-    return [1.0 if x == '1' else 0.0 for x in a]
+    return [1.0 if x == '1' else 0.0 for x in string]
