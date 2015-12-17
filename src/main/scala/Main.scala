@@ -88,28 +88,34 @@ object Main extends App {
     }
   }
 
+  var fileCount = 0
   def parseAllIn(dir: String, db: Option[DB], limit: Option[Int]) = {
     if (db.isEmpty) println("run in test mode")
-    try { listFilesIn(dir, limit, Some(".sgf")).par foreach { f =>
-      try {
-        val res = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
-        if (res.successful) {
-          val pRes = processParseResult(res.get)
-          pRes foreach { case (states, moves) =>
-            zipEach(states, moves) { (state, move) =>
-              if (move.color == White) {
-                if (db.isEmpty) state.toChannels
-                else db foreach { _ insert (state.toChannels, move.pos, state.invalidChannel) }
+    try {
+      val files = listFilesIn(dir, limit, Some(".sgf")).par
+      val all = files.size
+      files foreach { f =>
+        fileCount += 1
+        if (fileCount % 1000 == 0) println(fileCount / all)
+        try {
+          val res = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
+          if (res.successful) {
+            val pRes = processParseResult(res.get)
+            pRes foreach { case (states, moves) =>
+              zipEach(states, moves) { (state, move) =>
+                if (move.color == White) {
+                  if (db.isEmpty) state.toChannels
+                  else db foreach { _ insert (state.toChannels, move.pos, state.invalidChannel) }
+                }
               }
             }
           }
+        } catch {
+          case e: java.nio.charset.MalformedInputException =>
+            println("ignore strange file " + f.getName)
         }
-      } catch {
-        case e: java.nio.charset.MalformedInputException =>
-          println("ignore strange file " + f.getName)
       }
-    }
-    db foreach { _.save() }
+      db foreach { _.save() }
     } finally db foreach { _.close() }
 
   }
