@@ -97,7 +97,7 @@ def train():
 
         print('test mean loss = {}, accuracy = {}'.format(sum_loss / data.n_test_data, sum_accuracy / data.n_test_data))
         with open('result.txt', 'w+a') as file:
-            file.write(('test train mean loss = {}, accuracy = {}\n'.format(sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)))
+            file.write(('test mean loss = {}, accuracy = {}\n'.format(sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)))
 
 
 def save_net(color):
