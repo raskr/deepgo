@@ -72,12 +72,17 @@ object Rules {
 
   def boardAfterCaptured(move: Move, board: Array[Char]): Array[Char] = {
     val dst = board.clone()
+    var flag = false
     dst(move.pos) = move.color
-    deadPositions(move, dst).foreach{ dst(_) = Empty }
+    deadPositions(move, dst).foreach{ x =>
+      dst(x) = Empty
+      flag = true
+    }
+    //if (flag) board.printState(19, 19, Some(move), None)
     dst
   }
 
-  // This is the same as boardAfterCaptured. Works perfectly but poor performance
+  // This is the same as boardAfterCaptured(). Works perfectly but poor performance
 //  def boardAfterCaptured1(move: Move, _board: Array[Char]): Array[Char] = {
 //    val board = _board.clone()
 //    board(move.pos) = move.color
@@ -88,16 +93,16 @@ object Rules {
 //    board
 //  }
 
-  def nextLifespans(x: Array[Int],
+  // 1ch
+  def nextLifespans(curLifespan: Array[Int],
                     prevBoard: Array[Char],
                     curBoard: Array[Char]): Array[Int] =
   {
     val dst = Array.range(0, Config.all) map { i =>
       val prev = prevBoard(i)
       val cur = curBoard(i)
-      if (prev == cur && prev != Empty) x(i)+1 else 0
+      if (prev == cur && prev != Empty) curLifespan(i)+1 else 0
     }
-    assert(dst.length/Config.all == 1)
     dst
   }
 
@@ -132,15 +137,17 @@ object Rules {
     dst.clip(paddedDia, paddedDia, 1).map(x => if (x == -1) 0 else x)
   }
 
-  def findKo(move: Move, in: Array[Char]): Int = {
-    val padded = in.pad(Config.dia, Config.dia, 1, Outside)
-    val paddedDia = Config.dia + 2
-    val movePos = (move.y+1)*paddedDia + (move.x+1)
-    val around = Seq(movePos + 1, movePos - 1, movePos + paddedDia, movePos - paddedDia)
-    val surrounded = around forall { padded(_) isOpponentOf move.color }
-    val empty4 = around.filter { padded(_) == Empty }
+  def findKo(move: Move, prevBoard: Array[Char], newBoard: Array[Char]): Int = {
+    val paddedPrev = prevBoard.pad(Config.dia, Config.dia, 1, Outside)
+    val paddedNew = newBoard.pad(Config.dia, Config.dia, 1, Outside)
+    val movePos = (move.y+1)*21 + (move.x+1)
+    val around = Seq(movePos+1, movePos-1, movePos+21, movePos-21)
+    val surrounded = around forall { paddedPrev(_) isOpponentOf move.color }
+
+    val empty4 = around.filter { paddedNew(_) == Empty }
     val ko21 = if (surrounded && empty4.size == 1) empty4.head else -1
-    ko21.rectify(from = paddedDia, to = Config.dia)
+    // ko21 = always is 21
+    ko21.rectify(from = 21, to = Config.dia)
   }
 
   def isSuicideMove(move: Move, curBoard: Array[Char]): Boolean = {

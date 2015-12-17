@@ -9,6 +9,9 @@ object GroupSizeTest extends App {
   board.printState(19, 19, None, None)
 
   val sizes = groupSizes(board)
-  sizes.printState(19, 19)
+  sizes.map{x => ('0' + x).toChar}.printState(19, 19, None, None)
+
+  // channel
+  board.toGroupSizeChannel.toCharArray.printSelf(2, 361)
 
 }

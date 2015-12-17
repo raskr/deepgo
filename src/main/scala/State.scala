@@ -26,21 +26,21 @@ case class State(board: Array[Char] = Array.fill(Config.all)(Empty),
   }
 
   def toChannels: String = new StringBuilder()
-    .append(board.toBoardChannel)
-    .append(board.toBorderChannel)
-    .append(board.toLibertyChannel)
-    .append(board.toGroupSizeChannel)
-    .append(invalidPosByKo.toKoChannel)
-    .append(rank.toRankChannel)
-    .append(invalidChannel)
-    .append(lifeSpans.toLifespanChannel)
+    .append(board.toBoardChannel)       // tested
+    .append(board.toBorderChannel)      // tested
+    .append(board.toLibertyChannel)     // tested
+    .append(board.toGroupSizeChannel)   // tested
+    .append(invalidPosByKo.toKoChannel) // tested
+    .append(rank.toRankChannel)         // tested
+    .append(invalidChannel)             // tested
+    .append(lifeSpans.toLifespanChannel)// tested
     .toString()
 
   def createNextBy(move: Move): State = {
     // 1. update board
     val newBoard = board.createNextBoardBy(move)
     // 2. find `ko`
-    val ko = board.findKoBy(move)
+    val ko = board.findKoBy(move, newBoard)
     // 3. turns since
     val ls = lifeSpans.nextLifespans(board, newBoard)
     // return

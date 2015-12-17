@@ -7,6 +7,7 @@ object Implicits {
   implicit class RichString(val x: String) extends AnyVal {
 
     // 9ch
+    // tested
     def toRankChannel: String =
       (x.charAt(0).getNumericValue, x.charAt(1)) match {
         case (_, 'p') => Utils.ones(Config.all*9).mkString
@@ -65,6 +66,16 @@ object Implicits {
     def nextLifespans(prevBoard: Array[Char], curBoard: Array[Char]) =
       Rules.nextLifespans(x, prevBoard, curBoard)
 
+    def printSelf(row: Int, col: Int) = {
+      assert(x.length == row * col)
+      // print
+      for (i <- 0 until row) {
+        for (j <- 0 until col) {
+        }
+      }
+      println("\n")
+    }
+
     def printState(row: Int, col: Int) = {
       assert(x.length == row * col)
       // print
@@ -93,7 +104,7 @@ object Implicits {
     def printSelf(row: Int, col: Int) = {
       assert(in.length == row * col)
       var n = 0
-      for (i <- 0 until row){
+      for (i <- 0 until row) {
         val a = in.slice(n, n + col)
         for (j <- 0 until col) print(a(j))
         println()
@@ -102,9 +113,13 @@ object Implicits {
       println()
     }
 
-    def findKoBy(move: Move): Int = Rules.findKo(move, in)
+    def findKoBy(move: Move, newBoard: Array[Char]): Int = {
+      val dst = Rules.findKo(move, in, newBoard)
+      dst
+    }
 
     // 3ch
+    // tested
     def toBoardChannel: String = {
       val (empty, white, black) = (
         Utils.zeros(Config.all),
@@ -121,6 +136,7 @@ object Implicits {
       dst.mkString
     }
 
+    // tested
     def toGroupSizeChannel: String = {
       val gSizes = Rules.groupSizes(in)
       val dst = Array.fill(Config.all * 2)('0')
@@ -158,6 +174,7 @@ object Implicits {
     }
 
     // 1ch
+    // tested
     def toBorderChannel = {
       val borderState = Utils.zeros(Config.all)
       Utils.borderPositions(Config.dia) foreach { i =>
@@ -184,7 +201,7 @@ object Implicits {
       ko.foreach{ k => if (k != -1) x(k) = 'K' }
 
       // move
-      move.foreach{ move => x(move.pos) = if (move.color == White) '●' else '○' }
+      move.foreach{ move => x(move.pos) = if (move.color == White) 'W' else 'B' }
 
       // actual print
       print("  ")
@@ -211,7 +228,7 @@ object Implicits {
     }
     def isStone = a == White || a == Black
     // ex) '9' => 9
-    // don'nt do  'a' => foo
+    // don't do  'a' => foo
     def toNum: Int = a - '0'
   }
 
