@@ -4,7 +4,6 @@ import scala.util.Random
 object LifespanTest extends App {
 
   import Implicits._
-  import Colors.White
 
   // -------------------- prepare
   val rand = new Random

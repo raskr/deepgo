@@ -27,10 +27,11 @@ object Main extends App {
       case head :: _ if head == "gtp" =>
         GTP_CmdHandler.listenAndServe()
 
+      // error
+      case _ => throw new RuntimeException("do like `sbt \"run test path_to_sgf_dir\"`")
     }
 
   }
-
 
   /**
     * Main task. Convert case classes to Strings
@@ -88,15 +89,14 @@ object Main extends App {
     }
   }
 
-  var fileCount = 0
   def parseAllIn(dir: String, db: Option[DB], limit: Option[Int]) = {
     if (db.isEmpty) println("run in test mode")
     try {
-      val files = listFilesIn(dir, limit, Some(".sgf")).par
-      val all = files.size
+      val files = listFilesIn(dir, limit, extension = Some(".sgf")).par
+      var (all, current) = (files.size, 0)
       files foreach { f =>
-        fileCount += 1
-        if (fileCount % 1000 == 0) println(fileCount / all)
+        current += 1
+        if (current % 1000 == 0) println(current / all)
         try {
           val res = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
           if (res.successful) {
