@@ -14,7 +14,6 @@ object Implicits {
         case (r, 'd') =>
           val (start, end) = (Config.all*(r-1), Config.all*(r-1) + Config.all)
           val dst = Utils.zeros(Config.all * 9); (start until end).foreach{ dst(_) = '1' }
-          assert(dst.length/Config.all == 9)
           dst.mkString
         case _ => throw new RuntimeException("should not happen")
       }
@@ -70,8 +69,11 @@ object Implicits {
       assert(x.length == row * col)
       // print
       for (i <- 0 until row) {
-        for (j <- 0 until col) print(x(col * i + j))
-        println()
+        val sb = new StringBuilder
+        for (j <- 0 until col) {
+          sb.append(('0' + x(col * i + j)).toChar)
+        }
+        println(sb.toString + "\n")
       }
       println("\n")
     }
@@ -116,7 +118,6 @@ object Implicits {
         if (color == Black) black(i) = '1'
       }
       val dst = empty ++ (white ++ black)
-      assert(dst.length/Config.all == 3)
       dst.mkString
     }
 
@@ -129,7 +130,6 @@ object Implicits {
           if (in(i) == Black) dst(i + 361) = '1'
         }
       }
-      // assert(dst.length/Constants.all == 2)
       dst.mkString
     }
 
@@ -142,19 +142,18 @@ object Implicits {
         val lib = liberties(i)
         val col = in(i)
         if (lib == 1) {
-          if (col == 'W') dst(i) = '1'
-          if (col == 'B') dst(Config.all * 3 + i) = '1'
+          if (col == White) dst(i) = '1'
+          if (col == Black) dst(Config.all * 3 + i) = '1'
         }
         if (lib == 2) {
-          if (col == 'W') dst(Config.all + i) = '1'
-          if (col == 'B') dst(Config.all * 4 + i) = '1'
+          if (col == White) dst(Config.all + i) = '1'
+          if (col == Black) dst(Config.all * 4 + i) = '1'
         }
         if (lib >= 3) {
-          if (col == 'W') dst(Config.all * 2 + i) = '1'
-          if (col == 'B') dst(Config.all * 5 + i) = '1'
+          if (col == White) dst(Config.all * 2 + i) = '1'
+          if (col == Black) dst(Config.all * 5 + i) = '1'
         }
       }
-      assert(dst.length/Config.all == 6)
       dst.mkString
     }
 
@@ -165,7 +164,6 @@ object Implicits {
         val a = in(i)
         if (a != Empty) borderState(i) = '1'
       }
-      assert(borderState.length/Config.all == 1)
       borderState.mkString
     }
 
@@ -177,28 +175,24 @@ object Implicits {
     def pad(row: Int, col: Int, padSize: Int, padElem: Char) =
       Utils.pad(in, row, col, padSize, padElem)
 
-    def printState(row: Int, col: Int, emphasize: Option[Move], ko: Option[Int]) = {
+    def printState(row: Int, col: Int, move: Option[Move], ko: Option[Int]) = {
       assert(in.length == row * col)
-      println("white ... X")
-      println("black ... O\n")
-      val x = in.map(a => if (a == White) 'X' else if (a == Black) 'O' else if (a == Empty) '.')
-      assert(x.length == row * col)
+
+      val x = in.clone()
 
       // ko
-      ko.foreach{ k => if (k != -1) x(k) = 'Z' }
+      ko.foreach{ k => if (k != -1) x(k) = 'K' }
 
       // move
-      emphasize.foreach{ move =>
-        x(move.pos) = if (move.color == White) '◎' else '○'
-      }
+      move.foreach{ move => x(move.pos) = if (move.color == White) '●' else '○' }
 
+      // actual print
       print("  ")
-      Array.range(0, Config.dia).foreach{i => print(('a' + i).toChar)}
+      Array.range(0, Config.dia).foreach{i => print(('a' + i).toChar + " ") }
       println()
-      // print
       for (i <- 0 until row) {
         print(('a' + i).toChar + " ")
-        for (j <- 0 until col) print(x(col * i + j))
+        for (j <- 0 until col) print(x(col * i + j) + " ")
         println()
       }
       println("\n")
@@ -213,7 +207,7 @@ object Implicits {
     def isOpponentOf(x: Char): Boolean = {
       if (x == White) a == Black || a == Outside
       else if (x == Black) a == White || a == Outside
-      else throw new RuntimeException("should not occur!")
+      else throw new RuntimeException(s"move color = $x should not occur!")
     }
     def isStone = a == White || a == Black
     // ex) '9' => 9
@@ -246,7 +240,6 @@ object Implicits {
     def toKoChannel = {
       val dst = Utils.zeros(Config.all)
       if (value != -1) dst(value) = 1
-      assert(dst.length/Config.all == 1)
       dst.mkString
     }
 

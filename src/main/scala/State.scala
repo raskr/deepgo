@@ -16,6 +16,7 @@ case class State(board: Array[Char] = Array.fill(Config.all)(Empty),
   lazy val invalidChannel = {
     val dst = Array.range(0, Config.all) map { i =>
       // already occupied or suicide move
+      // TODO: I am White only
       val cantPlay = board(i) != Empty || i.isSuicideMovePos(White, board)
       if (cantPlay) '1' else '0'
     }

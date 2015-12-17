@@ -59,20 +59,20 @@ object Main extends App {
           }
         }
         // ============================================
-        // end of header
+        // header end
         // ============================================
 
         rank match {
           case Some(rnk) if rnk.isStrong =>
             // ============================================
             // fold moves
-            // ============================================
-            val ret = nodes.tail.foldLeft(List(State(rank=rnk)), List(Move('x', 'x', 'x'))) {
+            // ===========================================x=
+            val ret = nodes.tail.foldLeft(List(State(rank=rnk)), List(Move('?', '?', '?'))) {
               case ((states, moves), node) =>
                 node.props match {
                   // the move
                   case List(Property(PropIdent(col: String), List(PropValue(Point(a: Char, b: Char))))) =>
-                    val mv = Move(col.head, a - 'a', b - 'a')
+                    val mv = Move(if (col.head == 'W') White else Black, a - 'a', b - 'a')
                     if (mv.isInvalid) (states, moves)
                     else (states.head.createNextBy(mv) :: states, mv :: moves)
                   // not a move

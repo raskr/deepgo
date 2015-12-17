@@ -9,8 +9,12 @@ object SuicideTest extends App {
 
   Array.range(0, 361).map { i =>
     val (x, y) = i.toCoordinate
-    isSuicideMove(Move(Colors.Black, x, y), init) ||
-    isSuicideMove(Move(Colors.White, x, y), init)
+    if (init(i) != Colors.Empty) {
+      false
+    } else {
+//      isSuicideMove(Move(Colors.Black, x, y), init) ||
+        isSuicideMove(Move(Colors.White, x, y), init)
+    }
   }.map(x => if (x) 1 else 0).printState(19, 19)
 
 }

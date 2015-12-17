@@ -16,12 +16,12 @@ use_gpu = args.gpu >= 0
 if use_gpu:
     cuda.check_cuda_available()
 
-base = os.path.dirname(os.path.abspath(__file__))
-name = os.path.normpath(os.path.join(base, '../deepgo.db'))
+base_path = os.path.dirname(os.path.abspath(__file__))
+db_path = os.path.normpath(os.path.join(base_path, '../deepgo.db'))
 
 # data provider
 data = Data(use_gpu=use_gpu,
-            db_path=name,
+            db_path=db_path,
             b_size=128,
             n_ch=24,
             n_train_data=40000,

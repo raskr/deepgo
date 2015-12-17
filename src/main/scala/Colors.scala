@@ -1,9 +1,9 @@
 object Colors {
   type Color = Char
-  val White = 'W'
-  val Black = 'B'
-  val Empty = 'E'
-  val Outside= 'O'
+  val White = 'O'
+  val Black = 'X'
+  val Empty = '.'
+  val Outside= 'V'
 }
 
 
