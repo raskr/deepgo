@@ -79,6 +79,8 @@ def train():
             sum_accuracy += float(acc.data) * len(y_batch)
 
         print('train mean loss = {}, accuracy = {}'.format(sum_loss / data.n_train_data, sum_accuracy / data.n_train_data))
+        with open('result.txt', 'w+a') as file:
+            file.write(('train epoch {} train mean loss = {}, accuracy = {}\n'.format(epoch, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)))
 
         # evaluation (test)
         sum_accuracy = 0
@@ -94,6 +96,8 @@ def train():
             sum_accuracy += float(acc.data) * len(y_batch)
 
         print('test mean loss = {}, accuracy = {}'.format(sum_loss / data.n_test_data, sum_accuracy / data.n_test_data))
+        with open('result.txt', 'w+a') as file:
+            file.write(('test train mean loss = {}, accuracy = {}\n'.format(sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)))
 
 
 def save_net(color):
