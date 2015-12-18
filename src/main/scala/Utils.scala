@@ -61,11 +61,15 @@ object Utils {
     val set = mutable.Set[Int]()
 
     // first row
-    (0 until dia) foreach set.add
+    var i = 0
+    while (i < dia) {
+      set.add(i)
+      i += 1
+    }
 
     // last row
     val all = dia * dia
-    (all - dia until all) foreach set.add
+    (all - dia until all) foreach { i => set.add(i) }
 
 
     { // left side
@@ -93,13 +97,12 @@ object Utils {
     import Colors._
     val rand = new Random
     def next = rand.nextInt(3)
-    (0 until 361).map{ i =>
-      next match {
-        case 0 => Empty
-        case 1 => White
-        case 2 => Black
-      }
-    }.toArray
+    Array.range(0, 361).map{ i =>
+      if (next == 0) Empty
+      else if (next == 1) White
+      else if (next == 2) Black
+      else throw new RuntimeException
+    }
   }
 
   def execCmd(cmd: String): String = scala.sys.process.Process(cmd).!!

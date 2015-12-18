@@ -10,7 +10,7 @@ class DB {
     println("create new sqlite database ...")
   }
 
-  val conn = DriverManager.getConnection("jdbc:sqlite:" + DB.DbName)
+  private [this] val conn = DriverManager.getConnection("jdbc:sqlite:" + DB.DbName)
   conn.setAutoCommit(false)
   conn.prepareStatement("create table white (" +
     "_id Integer PRIMARY KEY AUTOINCREMENT," +
@@ -18,7 +18,7 @@ class DB {
     "target SMALLINT," +
     "invalid TEXT)").execute()
 
-  val statement = conn.prepareStatement("insert into white (state, target, invalid) values (?, ?, ?)")
+  private [this] val statement = conn.prepareStatement("insert into white (state, target, invalid) values (?, ?, ?)")
 
   def insert(state: String, target: Int, invalid: String) = {
     statement.setString(1, state)

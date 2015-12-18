@@ -22,7 +22,7 @@ db_path = os.path.normpath(os.path.join(base_path, '../deepgo.db'))
 # data provider
 data = Data(use_gpu=use_gpu,
             db_path=db_path,
-            b_size=128,
+            b_size=30,
             n_ch=24,
             n_train_data=40000,
             n_test_data=8000,
@@ -49,15 +49,15 @@ def forward(x_batch, y_batch, invalid_batch=None):
     h = F.relu(model.conv3(h))
     y = y_test = model.l1(h)
     if invalid_batch is not None:
-        y_test = F.softmax(y)
+        y_test = F.softmax(y_test)
         y_test = (y_test.data - invalid_batch).clip(0)
-        y_test = F.softmax(chainer.Variable(y_test))
+        y_test = chainer.Variable(y_test)
 
     return F.softmax_cross_entropy(y, t), F.accuracy(y_test, t)
 
 
 def train():
-    optimizer = optimizers.Adam()
+    optimizer = optimizers.SGD(lr=0.05)
     optimizer.setup(model)
     for epoch in six.moves.range(1, data.n_epoch + 1):
         print('epoch: {} ({} mini batches)'.format(epoch, data.n_mb_train))
@@ -79,8 +79,8 @@ def train():
             sum_accuracy += float(acc.data) * len(y_batch)
 
         print('train mean loss = {}, accuracy = {}'.format(sum_loss / data.n_train_data, sum_accuracy / data.n_train_data))
-        with open('result.txt', 'w+a') as file:
-            file.write(('train epoch {} train mean loss = {}, accuracy = {}\n'.format(epoch, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)))
+        with open('result.txt', 'w+a') as f:
+            f.write(('train epoch {} train mean loss = {}, accuracy = {}\n'.format(epoch, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)))
 
         # evaluation (test)
         sum_accuracy = 0
@@ -96,8 +96,8 @@ def train():
             sum_accuracy += float(acc.data) * len(y_batch)
 
         print('test mean loss = {}, accuracy = {}'.format(sum_loss / data.n_test_data, sum_accuracy / data.n_test_data))
-        with open('result.txt', 'w+a') as file:
-            file.write(('test mean loss = {}, accuracy = {}\n'.format(sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)))
+        with open('result.txt', 'w+a') as f:
+            f.write(('test mean loss = {}, accuracy = {}\n'.format(sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)))
 
 
 def save_net(color):

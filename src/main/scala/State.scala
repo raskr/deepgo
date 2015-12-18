@@ -13,7 +13,7 @@ case class State(board: Array[Char] = Array.fill(Config.all)(Empty),
                  invalidPosByKo: Int = -1,
                  rank: String) {
 
-  lazy val invalidChannel = {
+  val invalidChannel = {
     val dst = Array.range(0, Config.all) map { i =>
       // already occupied or suicide move
       // TODO: I am White only

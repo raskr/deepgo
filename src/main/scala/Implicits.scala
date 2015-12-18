@@ -126,11 +126,13 @@ object Implicits {
         Utils.zeros(Config.all),
         Utils.zeros(Config.all)
         )
-      (0 until Config.all) foreach { i =>
+      var i = 0
+      while (i < Config.all) {
         val color = in(i)
-        if (color == Empty) empty(i) = '1'
-        if (color == White) white(i) = '1'
-        if (color == Black) black(i) = '1'
+        if      (color == Empty) empty(i) = '1'
+        else if (color == White) white(i) = '1'
+        else if (color == Black) black(i) = '1'
+        i += 1
       }
       val dst = empty ++ (white ++ black)
       dst.mkString
@@ -142,8 +144,8 @@ object Implicits {
       val dst = Array.fill(Config.all * 2)('0')
       in.indices foreach { i =>
         if (gSizes(i) > 3) {
-          if (in(i) == White) dst(i) = '1'
-          if (in(i) == Black) dst(i + 361) = '1'
+          if      (in(i) == White) dst(i) = '1'
+          else if (in(i) == Black) dst(i + 361) = '1'
         }
       }
       dst.mkString
@@ -154,21 +156,23 @@ object Implicits {
       val liberties = Rules.liberties(in)
       val dst = Array.fill(Config.all * 6)('0')
 
-      (0 until Config.all) foreach { i =>
+      var i = 0
+      while (i < Config.all) {
         val lib = liberties(i)
         val col = in(i)
         if (lib == 1) {
-          if (col == White) dst(i) = '1'
-          if (col == Black) dst(Config.all * 3 + i) = '1'
+          if      (col == White) dst(i) = '1'
+          else if (col == Black) dst(Config.all * 3 + i) = '1'
         }
-        if (lib == 2) {
-          if (col == White) dst(Config.all + i) = '1'
-          if (col == Black) dst(Config.all * 4 + i) = '1'
+        else if (lib == 2) {
+          if      (col == White) dst(Config.all + i) = '1'
+          else if (col == Black) dst(Config.all * 4 + i) = '1'
         }
-        if (lib >= 3) {
-          if (col == White) dst(Config.all * 2 + i) = '1'
-          if (col == Black) dst(Config.all * 5 + i) = '1'
+        else if (lib >= 3) {
+          if      (col == White) dst(Config.all * 2 + i) = '1'
+          else if (col == Black) dst(Config.all * 5 + i) = '1'
         }
+        i += 1
       }
       dst.mkString
     }

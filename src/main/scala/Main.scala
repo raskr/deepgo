@@ -97,6 +97,7 @@ object Main extends App {
       files foreach { f =>
         current += 1
         if (current % 1000 == 0) println(current / all)
+        println(current)
         try {
           val res = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
           if (res.successful) {
