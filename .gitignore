@@ -11,6 +11,7 @@
 *.txt
 *.pyc
 
+file_out/
 *.iml
 *.DS_Store
 *target/
