@@ -98,10 +98,13 @@ object Utils {
     val rand = new Random
     def next = rand.nextInt(3)
     Array.range(0, 361).map{ i =>
-      if (next == 0) Empty
-      else if (next == 1) White
-      else if (next == 2) Black
-      else throw new RuntimeException
+      val n = next
+      if (n == 0) Empty
+      else if (n == 1) White
+      else if (n == 2) Black
+      else {
+        throw new RuntimeException
+      }
     }
   }
 

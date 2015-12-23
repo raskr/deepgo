@@ -21,7 +21,7 @@ object UseDB extends App {
 
       // test with little sgf data (default is 100)
       case sgfDir :: mode :: _ if mode == "test" =>
-        parseAllIn(sgfDir, db=None, limit=Some(100))
+        parseAllIn(sgfDir, db=None, limit=Some(5))
 
       // auto play with gtp
       case mode :: _ if mode == "gtp" =>
@@ -107,7 +107,7 @@ object UseDB extends App {
     if (db.isEmpty) println("run in test mode")
     try {
       listFilesIn(dir, limit, extension = Some(".sgf")).par foreach { f =>
-        count += 1; println(count)
+        //count += 1; println(count)
         try {
           val res = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
           if (res.successful) {

@@ -15,10 +15,10 @@ object Rules {
         val blo, skip = mutable.Set[Int]()
         val lib = new MutableInt(0)
         loop(idx, padded(idx), lib, skip, blo)
-          blo foreach { x =>
-            if (lib.value == 0 && padded(x) != Empty)
-              dst.add(x.rectify(21, 19))
-          }
+        blo foreach { x =>
+          if (lib.value == 0 && padded(x) != Empty)
+            dst.add(x.rectify(21, 19))
+        }
       }
     }
 
@@ -78,20 +78,20 @@ object Rules {
       dst(x) = Empty
       flag = true
     }
-    //if (flag) board.printState(19, 19, Some(move), None)
+    if (flag) board.printState(19, 19, Some(move), None)
     dst
   }
 
   // This is the same as boardAfterCaptured(). Works perfectly but poor performance
-//  def boardAfterCaptured1(move: Move, _board: Array[Char]): Array[Char] = {
-//    val board = _board.clone()
-//    board(move.pos) = move.color
-//    val libs = liberties(board)
-//    libs.zipWithIndex.foreach{ case (lib, i) =>
-//      if (lib == 0 && board(i) != Empty) board(i) = Empty
-//    }
-//    board
-//  }
+  //  def boardAfterCaptured1(move: Move, _board: Array[Char]): Array[Char] = {
+  //    val board = _board.clone()
+  //    board(move.pos) = move.color
+  //    val libs = liberties(board)
+  //    libs.zipWithIndex.foreach{ case (lib, i) =>
+  //      if (lib == 0 && board(i) != Empty) board(i) = Empty
+  //    }
+  //    board
+  //  }
 
   // 1ch
   def nextLifespans(curLifespan: Array[Int],
@@ -150,10 +150,33 @@ object Rules {
     ko21.rectify(from = 21, to = Config.dia)
   }
 
-  def isSuicideMove(move: Move, curBoard: Array[Char]): Boolean = {
-    val dst = curBoard.clone()
-    dst(move.pos) = move.color
-    liberties(dst)(move.pos) == 0
+  def isSuicideMove(move: Move, board: Array[Char]): Boolean = {
+    val padded = board.pad(Config.dia, Config.dia, 1, Outside)
+    val movePos = (move.y+1)*21 + (move.x+1)
+    padded(movePos) = move.color
+    val paddedDia = Config.dia + 2
+    val dst = Array.fill(paddedDia * paddedDia)(0)
+
+    val blo, skip = mutable.Set[Int]()
+    val lib = new MutableInt(0)
+    loop(movePos, move.color, lib, skip, blo)
+    blo foreach { x => dst(x) = lib.value }
+
+    // recursive func
+    def loop(i: Int, checkColor: Char, lib: MutableInt,
+             shouldSkip: mutable.Set[Int], block: mutable.Set[Int]): Unit =
+    {
+      if (shouldSkip(i) || dst(i) > 0) return
+      shouldSkip.add(i)
+      val col = padded(i)
+      if (col == Empty) lib += 1
+      else if (col == checkColor) { // same color
+        block.add(i)
+        Seq(i+1, i-1, i+paddedDia, i-paddedDia).filterNot(shouldSkip.contains)
+          .foreach {loop(_, checkColor, lib, shouldSkip, block)}
+      }
+    }
+    dst(movePos) == 0
   }
 
 }
