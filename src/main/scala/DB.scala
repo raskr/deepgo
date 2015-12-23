@@ -20,10 +20,10 @@ class DB {
 
   private [this] val statement = conn.prepareStatement("insert into white (state, target, invalid) values (?, ?, ?)")
 
-  def insert(state: String, target: Int, invalid: String) = {
-    statement.setString(1, state)
-    statement.setInt(2, target)
-    statement.setString(3, invalid)
+  def insert(state: State, target: Move) = {
+    statement.setString(1, state.toChannels)
+    statement.setInt(2, target.pos)
+    statement.setString(3, state.invalidChannel)
     statement.executeUpdate
   }
 

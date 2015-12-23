@@ -57,7 +57,7 @@ object Implicits {
   implicit class RichIntArray(val x: Array[Int]) extends AnyVal {
 
     // 1ch (tested with rand. simply int to char conversion)
-    def toLifespanChannel: String = {
+    def toHistoryChannel: String = {
       val dst = x.map{ a => if (a > 9) '9' else ('0'+a).toChar }
       // assert(dst.length/Constants.all == 1)
       dst.mkString

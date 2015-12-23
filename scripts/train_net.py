@@ -24,9 +24,9 @@ data = Data(use_gpu=use_gpu,
             db_path=db_path,
             b_size=128,
             n_ch=24,
-            n_train_data=400000,
-            n_test_data=80000,
-            n_epoch=3)
+            n_train_data=10931120,
+            n_test_data=1584730,
+            n_epoch=4)
 
 # Prepare data set
 model = chainer.FunctionSet(

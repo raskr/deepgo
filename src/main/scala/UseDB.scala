@@ -28,7 +28,7 @@ object UseDB extends App {
         GTP_CmdHandler.listenAndServe()
 
       // error
-      case _ => throw new RuntimeException("do like `sbt \"run test path_to_sgf_dir\"`")
+      case _ => throw new RuntimeException("ex) sbt \"run test path_to_sgf_dir\"")
     }
 
   }
@@ -67,15 +67,19 @@ object UseDB extends App {
           case Some(rnk) if rnk.isStrong =>
             // ============================================
             // fold moves
-            // ===========================================x=
-            val ret = nodes.tail.foldLeft(List(State(rank=rnk)), List(Move('?', '?', '?'))) {
+            // ============================================
+            val dummyMove = Move('?', '?', '?', isValid = false)
+            val ret = nodes.tail.foldLeft(List(State(rank=rnk, move=dummyMove)), List(dummyMove)) {
               case ((states, moves), node) =>
                 node.props match {
                   // the move
                   case List(Property(PropIdent(col: String), List(PropValue(Point(a: Char, b: Char))))) =>
-                    val mv = Move(if (col.head == 'W') White else Black, a - 'a', b - 'a')
-                    if (mv.isInvalid) (states, moves)
-                    else (states.head.createNextBy(mv) :: states, mv :: moves)
+                    val mv = Move(if (col.head == 'W') White else Black, a - 'a', b - 'a', isValid=true)
+                    if (mv.x >= 18 || mv.y >= 18) { // invalid move
+                      (states, moves)
+                    } else {
+                      (states.head.nextStateBy(mv) :: states, mv :: moves)
+                    }
                   // not a move
                   case _ => (states, moves)
                 }
@@ -89,34 +93,30 @@ object UseDB extends App {
     }
   }
 
+  def commitResult(res: (Seq[State], Seq[Move]), db: DB) = {
+      zipEach(res._1.init, res._2.tail) { (s, m) =>
+        if (m.color == White) db.insert(s, m)
+      }
+  }
+
   def parseAllIn(dir: String, db: Option[DB], limit: Option[Int]) = {
     if (db.isEmpty) println("run in test mode")
     try {
-      val files = listFilesIn(dir, limit, extension = Some(".sgf")).par
-      var (all, current) = (files.size, 0)
-      files foreach { f =>
-        current += 1
-        if (current % 1000 == 0) println(current / all)
-        println(current)
+      listFilesIn(dir, limit, extension = Some(".sgf")).par foreach { f =>
         try {
           val res = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
           if (res.successful) {
-            val pRes = processParseResult(res.get)
-            pRes foreach { case (states, moves) =>
-              zipEach(states, moves) { (state, move) =>
-                if (move.color == White) {
-                  if (db.isEmpty) state.toChannels
-                  else db foreach { _ insert (state.toChannels, move.pos, state.invalidChannel) }
-                }
-              }
-            }
+            for {
+              a <- processParseResult(res.get)
+              b <- db
+            } yield commitResult(a, b)
           }
         } catch {
           case e: java.nio.charset.MalformedInputException =>
-            println("ignore strange file " + f.getName)
+            println("ignore strange file: " + f.getName)
         }
       }
-      db foreach { _.save() }
+      db foreach { a => a.save(); println("saving done") }
     } finally db foreach { _.close() }
 
   }

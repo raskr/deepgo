@@ -1,7 +1,11 @@
 // top-left is origin
-case class Move(color: Char, x: Int, y: Int) {
+case class Move(color: Char, x: Int, y: Int, isValid: Boolean) {
+
   val pos = y * 19 + x
-  // This method is needed because sgf file sometimes contains
-  // strange board such as over 19 * 19.
-  val isInvalid = !(x <= 18 && y <= 18)
+
+  def toMoveChannel = {
+    val a = Array.fill(Config.all)('0')
+    if (isValid) a(pos) = '1'
+    a
+  }
 }

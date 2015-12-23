@@ -71,7 +71,7 @@ object UseFile extends App {
                   case List(Property(PropIdent(col: String), List(PropValue(Point(a: Char, b: Char))))) =>
                     val mv = Move(if (col.head == 'W') White else Black, a - 'a', b - 'a')
                     if (mv.isInvalid) (states, moves)
-                    else (states.head.createNextBy(mv) :: states, mv :: moves)
+                    else (states.head.nextStateBy(mv) :: states, mv :: moves)
                   // not a move
                   case _ => (states, moves)
                 }

@@ -220,7 +220,7 @@ object GTP_CmdHandler {
 object GameState {
   import scala.collection.mutable.ArrayBuffer
   val states = ArrayBuffer[State]()
-  def updateBy(move: Move) = states.append(states.last.createNextBy(move))
+  def updateBy(move: Move) = states.append(states.last.nextStateBy(move))
   def currentState = states.last
   def reset() = { states.clear(); states.append(State(rank="1d")) }
 }
