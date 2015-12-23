@@ -94,9 +94,14 @@ object UseDB extends App {
   }
 
   def commitResult(res: (Seq[State], Seq[Move]), db: DB) = {
-      zipEach(res._1.init, res._2.tail) { (s, m) =>
-        if (m.color == White) db.insert(s, m)
+    val in = res._1.init
+    val ta = res._2.tail
+
+    zipEach(in, ta) { (s, m) =>
+      if (m.color == White) {
+        db.insert(s.toChannels, m.pos, s.invalidChannel)
       }
+    }
   }
 
   def parseAllIn(dir: String, db: Option[DB], limit: Option[Int]) = {
