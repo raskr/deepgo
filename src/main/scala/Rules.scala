@@ -9,6 +9,7 @@ object Rules {
     val padded = board.pad(Config.dia, Config.dia, 1, Outside)
     val dst = mutable.Set[Int]()
     val movePos = (move.y+1)*21 + (move.x+1)
+    val checked = mutable.Set[Int]()
 
     Seq(movePos+1, movePos-1, movePos+21, movePos-21) foreach { idx =>
       if (padded(idx).isStone) {
@@ -16,6 +17,7 @@ object Rules {
         val lib = new MutableInt(0)
         loop(idx, padded(idx), lib, skip, blo)
         blo foreach { x =>
+          checked.add(x)
           if (lib.value == 0 && padded(x) != Empty)
             dst.add(x)
         }
@@ -26,7 +28,7 @@ object Rules {
     def loop(i: Int, checkColor: Char, lib: MutableInt,
              shouldSkip: mutable.Set[Int], block: mutable.Set[Int]): Unit =
     {
-      if (shouldSkip(i) || dst.contains(i)) return
+      if (shouldSkip(i) || checked.contains(i)) return
       shouldSkip.add(i)
       val col = padded(i)
       if (col == Empty) lib += 1
@@ -79,7 +81,7 @@ object Rules {
       dst(x) = Empty
       flag = true
     }
-    //if (flag) board.printState(19, 19, Some(move), None)
+     if (flag) board.printState(19, 19, Some(move), None)
     dst
   }
 
