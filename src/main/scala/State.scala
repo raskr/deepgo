@@ -27,7 +27,7 @@ case class State(board: Array[Char] = Array.fill(Config.all)(Empty),
     dst.mkString
   }
 
-  def toChannels(futureMove: Move): String = new StringBuilder()
+  def toChannels: String = new StringBuilder()
     .append(board.toBoardChannel)     // tested
     .append(board.toBorderChannel)    // tested
     .append(board.toLibertyChannel)   // tested
@@ -35,7 +35,6 @@ case class State(board: Array[Char] = Array.fill(Config.all)(Empty),
     .append(koPos.toKoChannel)        // tested
     .append(rank.toRankChannel)       // tested
     .append(prevMove.toMoveChannel)   // maybe ok
-    .append(futureMove.toMoveChannel) // maybe ok
     .append(hist.toHistoryChannel)    // tested
     .toString()
 

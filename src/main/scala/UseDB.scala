@@ -95,13 +95,9 @@ object UseDB extends App {
 
   def commitResult(res: (Seq[State], Seq[Move]), db: DB) = {
     val (states, moves) = res
-    // '-1' is needed because of futureMove
-    (0 until states.size - 1) foreach { i =>
-      val mv = moves(i)
-      if (mv.color == White) {
-        val state = states(i)
-        val futureMove = moves(i+1)
-        db.insert(state.toChannels(futureMove), mv.pos, state.invalidChannel)
+    zipEach(states, moves){ (s, m) =>
+      if (m.color == White) {
+        db.insert(s.toChannels, m.pos, s.invalidChannel)
       }
     }
   }
