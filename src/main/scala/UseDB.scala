@@ -5,8 +5,8 @@ import scala.io.Source
 import Utils._
 
 /**
-  * sbt "run create path_to_sgf_dir"
-  * sbt "run test path_to_sgf_dir"
+  * sbt "run path_to_sgf_dir create "
+  * sbt "run  path_to_sgf_dir test"
   */
 object UseDB extends App {
 
@@ -16,19 +16,19 @@ object UseDB extends App {
     args.toList match {
 
       // create data for nn
-      case head :: sgfDir :: _ if head == "create" =>
+      case sgfDir :: mode :: _ if mode == "create" =>
         parseAllIn(sgfDir, Some(new DB), limit=None)
 
       // test with little sgf data (default is 100)
-      case head :: sgfDir :: _ if head == "test" =>
+      case sgfDir :: mode :: _ if mode == "test" =>
         parseAllIn(sgfDir, db=None, limit=Some(100))
 
       // auto play with gtp
-      case head :: _ if head == "gtp" =>
+      case mode :: _ if mode == "gtp" =>
         GTP_CmdHandler.listenAndServe()
 
       // error
-      case _ => throw new RuntimeException("ex) sbt \"run test path_to_sgf_dir\"")
+      case _ => throw new RuntimeException("ex) sbt \"run path_to_sgf_dir test\"")
     }
 
   }
@@ -68,8 +68,8 @@ object UseDB extends App {
             // ============================================
             // fold moves
             // ============================================
-            val dummyMove = Move('?', '?', '?', isValid = false)
-            val ret = nodes.tail.foldLeft(List(State(rank=rnk, move=dummyMove)), List(dummyMove)) {
+            val dummyMove = Move('?', '?', '?', isValid=false)
+            val ret = nodes.tail.foldLeft(List(State(rank=rnk, prevMove=dummyMove)), List(dummyMove)) {
               case ((states, moves), node) =>
                 node.props match {
                   // the move
@@ -87,19 +87,21 @@ object UseDB extends App {
             // ============================================
             // folding end
             // ============================================
-            Some((ret._1, ret._2))
+            Some((ret._1.tail, ret._2.init))
           case _ => None
         }
     }
   }
 
   def commitResult(res: (Seq[State], Seq[Move]), db: DB) = {
-    val in = res._1.init
-    val ta = res._2.tail
-
-    zipEach(in, ta) { (s, m) =>
-      if (m.color == White) {
-        db.insert(s.toChannels, m.pos, s.invalidChannel)
+    val (states, moves) = res
+    // '-1' is needed because of futureMove
+    (0 until states.size - 1) foreach { i =>
+      val mv = moves(i)
+      if (mv.color == White) {
+        val state = states(i)
+        val futureMove = moves(i+1)
+        db.insert(state.toChannels(futureMove), mv.pos, state.invalidChannel)
       }
     }
   }

@@ -7,13 +7,13 @@ import Implicits._
  *
  * @param board current board
  * @param koPos position next player can't play
- * @param move move that created this state
+ * @param prevMove move that created this state
  */
 case class State(board: Array[Char] = Array.fill(Config.all)(Empty),
                  hist: Array[Int] = Array.fill(Config.all)(0),
                  koPos: Int = -1,
                  rank: String,
-                 move: Move) {
+                 prevMove: Move) {
 
   val invalidChannel = {
     val dst = Array.range(0, Config.all) map { i =>
@@ -27,15 +27,16 @@ case class State(board: Array[Char] = Array.fill(Config.all)(Empty),
     dst.mkString
   }
 
-  def toChannels: String = new StringBuilder()
-    .append(board.toBoardChannel)       // tested
-    .append(board.toBorderChannel)      // tested
-    .append(board.toLibertyChannel)     // tested
-    .append(board.toGroupSizeChannel)   // tested
-    .append(koPos.toKoChannel)          // tested
-    .append(rank.toRankChannel)         // tested
-    .append(move.toMoveChannel)         // maybe ok
-    .append(hist.toHistoryChannel)      // tested
+  def toChannels(futureMove: Move): String = new StringBuilder()
+    .append(board.toBoardChannel)     // tested
+    .append(board.toBorderChannel)    // tested
+    .append(board.toLibertyChannel)   // tested
+    .append(board.toGroupSizeChannel) // tested
+    .append(koPos.toKoChannel)        // tested
+    .append(rank.toRankChannel)       // tested
+    .append(prevMove.toMoveChannel)   // maybe ok
+    .append(futureMove.toMoveChannel) // maybe ok
+    .append(hist.toHistoryChannel)    // tested
     .toString()
 
   def nextStateBy(move: Move): State = {

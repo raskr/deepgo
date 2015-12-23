@@ -224,6 +224,6 @@ object GameState {
   def currentState = states.last
   def reset() = {
     states.clear()
-    states.append(State(rank="1d", move=Move('?','?','?', isValid=false)))
+    states.append(State(rank="1d", prevMove=Move('?','?','?', isValid=false)))
   }
 }
