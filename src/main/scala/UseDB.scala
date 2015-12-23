@@ -105,9 +105,11 @@ object UseDB extends App {
   }
 
   def parseAllIn(dir: String, db: Option[DB], limit: Option[Int]) = {
+    var count = 0
     if (db.isEmpty) println("run in test mode")
     try {
       listFilesIn(dir, limit, extension = Some(".sgf")).par foreach { f =>
+        count += 1; println(count)
         try {
           val res = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
           if (res.successful) {

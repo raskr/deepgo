@@ -126,7 +126,7 @@ object Play extends Cmd {
   def createMove(color: String, pos: String): Move = {
     val x = convertX(pos.head.toLower)
     val y = convertY(pos.tail)
-    Move(if (color == "white") White else Black, x, y)
+    Move(if (color == "white") White else Black, x, y, isValid = true)
   }
 
   // gtp => sgf Int
@@ -171,7 +171,7 @@ object GenMove extends Cmd {
     val (x, y) = pos.toCoordinate
     val (xAlpha, yAlpha) = (x.toAlpha, y.toAlpha)
 
-    val move = Move(if (color == "white") White else Black, xAlpha, yAlpha)
+    val move = Move(if (color == "white") White else Black, xAlpha, yAlpha, isValid=true)
     GameState updateBy move
     // return to stderr
     val (xGtp, yGtp) = (if (xAlpha < 'i') xAlpha else (xAlpha+1).toChar, Config.dia - y)
@@ -222,5 +222,8 @@ object GameState {
   val states = ArrayBuffer[State]()
   def updateBy(move: Move) = states.append(states.last.nextStateBy(move))
   def currentState = states.last
-  def reset() = { states.clear(); states.append(State(rank="1d")) }
+  def reset() = {
+    states.clear()
+    states.append(State(rank="1d", move=Move('?','?','?', isValid=false)))
+  }
 }

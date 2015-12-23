@@ -4,7 +4,7 @@ object KoTest extends App {
   import Rules._
   import Colors._
 
-  val move = Move(Black, 1, 1)
+  val move = Move(Black, 1, 1, isValid = true)
   val newBoard = boardAfterCaptured(move, prevBoard)
 
   val ko = findKo(move, prevBoard, newBoard)

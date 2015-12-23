@@ -240,7 +240,7 @@ object Implicits {
 
     def isSuicideMovePos(color: Char, in: Array[Char]): Boolean = {
       val (x, y) = value.toCoordinate
-      Rules.isSuicideMove(Move(color, x, y), in)
+      Rules.isSuicideMove(Move(color, x, y, isValid = true), in)
     }
 
     // tested

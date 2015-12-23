@@ -46,7 +46,7 @@ case class State(board: Array[Char] = Array.fill(Config.all)(Empty),
     // 3. turns since
     val ls = hist.nextLifespans(board, newBoard)
     // return
-    State(newBoard, ls, ko, rank, Some(move))
+    State(newBoard, ls, ko, rank, move)
   }
 
 }

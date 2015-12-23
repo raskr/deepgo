@@ -13,7 +13,7 @@ object SuicideTest extends App {
       false
     } else {
 //      isSuicideMove(Move(Colors.Black, x, y), init) ||
-        isSuicideMove(Move(Colors.White, x, y), init)
+        isSuicideMove(Move(Colors.White, x, y, isValid=true), init)
     }
   }.map(x => if (x) 1 else 0).printState(19, 19)
 
