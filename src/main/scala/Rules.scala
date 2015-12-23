@@ -81,7 +81,7 @@ object Rules {
       dst(x) = Empty
       flag = true
     }
-     if (flag) board.printState(19, 19, Some(move), None)
+    // if (flag) board.printState(19, 19, Some(move), None)
     dst
   }
 
