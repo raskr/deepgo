@@ -17,7 +17,7 @@ object Rules {
         loop(idx, padded(idx), lib, skip, blo)
         blo foreach { x =>
           if (lib.value == 0 && padded(x) != Empty)
-            dst.add(x.rectify(21, 19))
+            dst.add(x)
         }
       }
     }
@@ -26,7 +26,7 @@ object Rules {
     def loop(i: Int, checkColor: Char, lib: MutableInt,
              shouldSkip: mutable.Set[Int], block: mutable.Set[Int]): Unit =
     {
-      if (shouldSkip(i) || dst.contains(i.rectify(21, 19))) return
+      if (shouldSkip(i) || dst.contains(i)) return
       shouldSkip.add(i)
       val col = padded(i)
       if (col == Empty) lib += 1
@@ -36,7 +36,8 @@ object Rules {
           .foreach {loop(_, checkColor, lib, shouldSkip, block)}
       }
     }
-    dst
+
+    dst.map(_.rectify(21, 19))
   }
 
   def liberties(board: Array[Char]): Array[Int] = {
@@ -78,7 +79,7 @@ object Rules {
       dst(x) = Empty
       flag = true
     }
-    if (flag) board.printState(19, 19, Some(move), None)
+    //if (flag) board.printState(19, 19, Some(move), None)
     dst
   }
 
