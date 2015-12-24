@@ -155,8 +155,10 @@ object Rules {
     val padded = board.pad(Config.dia, Config.dia, 1, Outside)
     val movePos = (move.y+1)*21 + (move.x+1)
 
-    val around = Seq(padded(movePos+1), padded(movePos-1), padded(movePos+21), padded(movePos-21))
-    if (around contains Empty) return false
+    if (padded(movePos+1) == Empty) return false
+    if (padded(movePos-1) == Empty) return false
+    if (padded(movePos+21) == Empty) return false
+    if (padded(movePos-21) == Empty) return false
 
     padded(movePos) = move.color
     val paddedDia = Config.dia + 2
