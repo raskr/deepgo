@@ -10,28 +10,34 @@ import Utils._
   */
 object UseDB {
 
-  def main(args: Array[String]) = {
+  def main(args: Array[String]) = try {
 
-    // parse argument
-    args.toList match {
+    // « can throw exception
+    val sgfDir = args(args.indexOf(args.find(_ == "-d")) + 1)
 
-      // create data for nn
-      case sgfDir :: mode :: _ if mode == "create" =>
-        parseAllIn(sgfDir, Some(new DB), limit=None)
+    // mode
+    args.find{x => x == "-db" || x == "-f" || x == "-gtp"} match {
 
-      // test with little sgf data (default is 100)
-      case sgfDir :: mode :: _ if mode == "test" =>
-        parseAllIn(sgfDir, db=None, limit=Some(5))
+      case Some(a) if a == "-db" =>
+        parseAllIn(sgfDir, Some(new DB))
 
-      // auto play with gtp
-      case mode :: _ if mode == "gtp" =>
+      case Some(a) if a ==  "-f" =>
+        parseAllIn(sgfDir, Some(new Files))
+
+      case Some(a) if a ==  "-gtp" =>
         GTP_CmdHandler.listenAndServe()
 
-      // error
-      case _ => throw new RuntimeException("Error!! example: sbt \"run path_to_sgf_dir test\"")
+      case None =>
+        println("test mode. (run mode didn't specified.)")
+        parseAllIn(sgfDir, None, limit=Some(100))
     }
 
+  } catch {
+    case e: IndexOutOfBoundsException =>
+      println(e)
+      throw new RuntimeException("Error! Sgf directory may not be Specified.")
   }
+
 
   /**
     * Main task. Convert case classes to Strings
@@ -93,28 +99,24 @@ object UseDB {
     }
   }
 
-  def commitResult(res: (Seq[State], Seq[Move]), db: DB) = {
+  def commitResult(res: (Seq[State], Seq[Move]), out: OutputStorage) = {
     val (states, moves) = res
     zipEach(states, moves){ (s, m) =>
       if (m.color == White) {
-        db.insert(s.toChannels, m.pos, s.invalidChannel)
+        out.commit(s.toChannels, m.pos, s.invalidChannel)
       }
     }
   }
 
-  def parseAllIn(dir: String, db: Option[DB], limit: Option[Int]) = {
-    var count = 0
-    if (db.isEmpty) println("run in test mode")
+  def parseAllIn(dir: String, out: Option[OutputStorage], limit: Option[Int] = None) = {
     try {
       listFilesIn(dir, limit, extension = Some(".sgf")).par foreach { f =>
-        count += 1; if (count % 100 == 0) println(count)
-        if (count % 10000 == 0) db foreach { _.save() }
         try {
           val res = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
           if (res.successful) {
             for {
               a <- processParseResult(res.get)
-              b <- db
+              b <- out
             } yield commitResult(a, b)
           }
         } catch {
@@ -122,8 +124,7 @@ object UseDB {
             println("ignore strange file: " + f.getName)
         }
       }
-      db foreach { a => a.save(); println("saving done") }
-    } finally db foreach { _.close() }
+    } finally out foreach { _.close() }
 
   }
 }
