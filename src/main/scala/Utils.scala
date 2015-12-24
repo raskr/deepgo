@@ -94,7 +94,7 @@ object Utils {
   }
 
   def createRandomBoard: Array[Char] = {
-    import Colors._
+    import Color._
     val rand = new Random
     def next = rand.nextInt(3)
     Array.range(0, 361).map{ i =>

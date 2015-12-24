@@ -2,7 +2,7 @@ import java.io.{FileWriter, File}
 
 object Implicits {
 
-  import Colors._
+  import Color._
 
   implicit class RichString(val x: String) extends AnyVal {
 

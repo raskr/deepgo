@@ -16,7 +16,7 @@ object LifespanTest extends App {
   // mod the board 30 times randomly
   (0 until 30) foreach { x =>
     val rnd = rand.nextInt(360)
-    curBoard(rnd) = if (rnd > 180) Colors.White else Colors.Black
+    curBoard(rnd) = if (rnd > 180) Color.White else Color.Black
   }
   // -------------------- prepare end
 

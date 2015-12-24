@@ -2,7 +2,7 @@ object Rules {
 
   import scala.collection.mutable
   import Implicits._
-  import Colors._
+  import Color._
 
   // dead position is the position that liberty is 0
   def deadPositions(move: Move, board: Array[Char]): mutable.Set[Int] = {

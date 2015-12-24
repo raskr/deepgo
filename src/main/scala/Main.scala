@@ -1,112 +1,69 @@
-import Colors._
 import Implicits._
 import SGF._
 import scala.io.Source
 import Utils._
+import Color._
 
 /**
-  * sbt "run -db -d path_to_sgf_dir"
+  * example ...
+  * sbt "run -db -wb -d path_to_sgf_dir"
   */
 object Main {
 
-  def main1(args: Array[String]) = {
+  def main(args: Array[String]) = {
 
     val sgfDir =
       try { Some(args(args.indexOf(args.find(_ == "-d").get) + 1)) }
       catch { case e: Exception => None }
 
-    val color =
-      try { Some(args.find(x => x == "-w" || x == "-b" || x == "-wb").get) }
-      catch { case e: Exception => None }
+    val color = args.find(x => x == "-w" || x == "-b" || x == "-wb")
 
-          for {
-            sgf <- sgfDir
-            col <- color
-          }
+    (sgfDir, color) match {
+      case (Some(sgf), Some(col)) =>
 
-      // mode
-    match {
-      case Some(sgfDir) =>
+        args.map(_.tail).find{ x => x == "db" || x == "f" || x == "gtp"} match {
 
-        args.find{ x => x == "-db" || x == "-f" || x == "-gtp" || x == "-white" || x == "-black"} match {
+          case Some(mode) if mode.toLowerCase == "db" =>
+            parseAllIn(sgf, colorsFrom(col.tail).map(new DB(_)))
 
-          case Some(a) if a.toLowerCase == "-db" =>
-            parseAllIn(sgfDir, Some(new DB))
+          case Some(mode) if mode.toLowerCase == "f" =>
+            parseAllIn(sgf, colorsFrom(col.tail).map(new Files(_)))
 
-          case Some(a) if a.toLowerCase == "-f" =>
-            parseAllIn(sgfDir, Some(new Files))
-
-          case Some(a) if a.toLowerCase == "-gtp" =>
-            GTP_CmdHandler.listenAndServe()
+          case Some(mode) if mode.toLowerCase == "gtp" =>
+            new GTP_CmdHandler().listenAndServe()
 
           case None =>
             println("test mode (run mode was not given) ... ")
-            parseAllIn(sgfDir, None, limit = Some(100))
+            parseAllIn(sgf, Seq(), limit=Some(100))
         }
 
-      case None =>
-        throw new RuntimeException("Error: Specify sgf dir. (ex: sbt \"run -db -d sgf\"" )
-
-    }
-  }
-  def main(args: Array[String]) = {
-
-    { // sgf dir
-      try { Some(args(args.indexOf(args.find(_ == "-d").get) + 1)) }
-      catch { case e: Exception => None }
+      case _ =>
+        println("test mode (run mode was not given) ... ")
     }
 
-    // mode
-    match {
-      case Some(sgfDir) =>
-
-        args.find{ x => x == "-db" || x == "-f" || x == "-gtp" || x == "-white" || x == "-black"} match {
-
-          case Some(a) if a.toLowerCase == "-db" =>
-            parseAllIn(sgfDir, Some(new DB))
-
-          case Some(a) if a.toLowerCase == "-f" =>
-            parseAllIn(sgfDir, Some(new Files))
-
-          case Some(a) if a.toLowerCase == "-gtp" =>
-            GTP_CmdHandler.listenAndServe()
-
-          case None =>
-            println("test mode (run mode was not given) ... ")
-            parseAllIn(sgfDir, None, limit = Some(100))
-        }
-
-      case None =>
-        throw new RuntimeException("Error: Specify sgf dir. (ex: sbt \"run -db -d sgf\"" )
-
-    }
   }
 
-  def parseAllIn(dir: String, out: Option[OutputStorage], limit: Option[Int] = None) = {
+  def parseAllIn(dir: String, outs: Seq[OutputStorage], limit: Option[Int] = None) = {
     try {
       var count = 0
       listFilesIn(dir, limit, Some(".sgf")).par foreach { f =>
         count += 1; if (count % 1000 == 0) println(count)
         try {
           val res = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
-          if (res.successful) for {
-            r <- processParseResult(res.get)
-            o <- out
-          } commitResult(r, o)
+          if (res.successful)
+            processParseResult(res.get) foreach { commitResult(_, outs) }
         } catch {
           case e: java.nio.charset.MalformedInputException =>
             println("ignore strange file: " + f.getName)
         }
       }
-    } finally out foreach { _.close() }
+    } finally outs foreach { _.close() }
   }
 
-  private def commitResult(res: (Seq[State], Seq[Move]), out: OutputStorage) = {
+  private def commitResult(res: (Seq[State], Seq[Move]), outs: Seq[OutputStorage]) = {
     val (states, moves) = res
-    zipEach(states, moves){ (s, m) =>
-      if (m.color == White) {
-        out.commit(s.toChannels, m.pos, s.invalidChannel)
-      }
+    zipEach(states, moves){ (st, mv) =>
+      outs.foreach { out => if (out.color == mv.color) out.commit(st, mv) }
     }
   }
 

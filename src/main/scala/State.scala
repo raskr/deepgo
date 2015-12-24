@@ -1,4 +1,4 @@
-import Colors._
+import Color._
 import Implicits._
 
 /**

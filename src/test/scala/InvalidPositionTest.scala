@@ -1,7 +1,7 @@
 object InvalidPositionTest extends App {
   import Utils._
   import Implicits._
-  import Colors._
+  import Color._
 
   val board = createRandomBoard
 

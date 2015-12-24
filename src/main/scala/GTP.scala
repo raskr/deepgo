@@ -1,4 +1,4 @@
-import Colors._
+import Color._
 import Implicits._
 
 sealed abstract class Cmd {
@@ -179,7 +179,7 @@ object GenMove extends Cmd {
   }
 }
 
-object GTP_CmdHandler {
+class GTP_CmdHandler {
 
   import scala.io.StdIn.readLine
 
