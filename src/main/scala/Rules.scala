@@ -119,7 +119,7 @@ object Rules {
       }
     }
 
-    dst.clip(Config.padAll, Config.padAll, 1).map(x => if (x == -1) 0 else x)
+    dst.clip(Config.padDia, Config.padDia, 1).map(x => if (x == -1) 0 else x)
   }
 
   def findKo(move: Move, prevBoard: Array[Char], newBoard: Array[Char]): Int = {
