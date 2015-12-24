@@ -107,7 +107,7 @@ object UseDB extends App {
     if (db.isEmpty) println("run in test mode")
     try {
       listFilesIn(dir, limit, extension = Some(".sgf")).par foreach { f =>
-        //count += 1; println(count)
+        count += 1; println(count)
         try {
           val res = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
           if (res.successful) {
