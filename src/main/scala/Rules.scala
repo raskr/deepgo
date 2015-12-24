@@ -146,16 +146,18 @@ object Rules {
     val movePos = (move.y+1)*21 + (move.x+1)
     val around = Seq(movePos+1, movePos-1, movePos+21, movePos-21)
     val surrounded = around forall { paddedPrev(_) isOpponentOf move.color }
-
     val empty4 = around.filter { paddedNew(_) == Empty }
     val ko21 = if (surrounded && empty4.size == 1) empty4.head else -1
-    // ko21 = always is 21
     ko21.rectify(from = 21, to = Config.dia)
   }
 
   def isSuicideMove(move: Move, board: Array[Char]): Boolean = {
     val padded = board.pad(Config.dia, Config.dia, 1, Outside)
     val movePos = (move.y+1)*21 + (move.x+1)
+
+    val around = Seq(padded(movePos+1), padded(movePos-1), padded(movePos+21), padded(movePos-21))
+    if (around contains Empty) return false
+
     padded(movePos) = move.color
     val paddedDia = Config.dia + 2
     val dst = Array.fill(paddedDia * paddedDia)(0)
