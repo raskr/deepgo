@@ -5,12 +5,12 @@ import scala.io.Source
 import Utils._
 
 /**
-  * sbt "run path_to_sgf_dir create "
+  * sbt "run path_to_sgf_dir create"
   * sbt "run  path_to_sgf_dir test"
   */
-object UseDB extends App {
+object UseDB {
 
-  override def main(args: Array[String]) = {
+  def main(args: Array[String]) = {
 
     // parse argument
     args.toList match {
@@ -28,7 +28,7 @@ object UseDB extends App {
         GTP_CmdHandler.listenAndServe()
 
       // error
-      case _ => throw new RuntimeException("ex) sbt \"run path_to_sgf_dir test\"")
+      case _ => throw new RuntimeException("Error!! example: sbt \"run path_to_sgf_dir test\"")
     }
 
   }
