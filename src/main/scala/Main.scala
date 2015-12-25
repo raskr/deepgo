@@ -47,40 +47,6 @@ object Main extends App {
       case Nil => results
     }
 
-
-  def main1(args: Array[String]) = {
-
-    val sgfDir =
-      try { Some(args(args.indexOf(args.find(_ == "-d").get) + 1)) }
-      catch { case e: Exception => None }
-
-    val color = args.find(x => x == "-w" || x == "-b" || x == "-wb")
-
-    (sgfDir, color) match {
-      case (Some(sgf), Some(col)) =>
-
-        args.map(_.tail).find{ x => x == "db" || x == "f" || x == "gtp"} match {
-
-          case Some(mode) if mode.toLowerCase == "db" =>
-            parseSGF(sgf, colorsFrom(col.tail).map(new DB(_)))
-
-          case Some(mode) if mode.toLowerCase == "f" =>
-            parseSGF(sgf, colorsFrom(col.tail).map(new Files(_)))
-
-          case Some(mode) if mode.toLowerCase == "gtp" =>
-            new GTP_CmdHandler().listenAndServe()
-
-          case None =>
-            println("test mode (run mode was not given) ... ")
-            parseSGF(sgf, Seq(), limit=Some(100))
-        }
-
-      case _ =>
-        println("test mode (run mode was not given) ... ")
-    }
-
-  }
-
   def parseSGF(dir: String, outs: Seq[OutputStorage], limit: Option[Int] = None) = {
     try {
       listFilesIn(dir, limit, Some(".sgf")).par foreach { f =>
