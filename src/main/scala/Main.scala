@@ -1,16 +1,54 @@
 import Implicits._
 import SGF._
-import scala.io.Source
 import Utils._
 import Color._
+import scala.annotation.tailrec
+import scala.collection.mutable
+import scala.io.Source
 
 /**
   * example ...
-  * sbt "run -db -wb -d path_to_sgf_dir"
+  * sbt "run -m db -c wb -d path_to_sgf_dir"
   */
-object Main {
+object Main extends App {
 
-  def main(args: Array[String]) = {
+  case class Arg(pref: String, v: String)
+  type Args = mutable.Set[Arg]
+
+  val res = parseArgs(args.toList)
+
+  (res.find{_.pref == "-d"}, res.find{_.pref == "-c"}, res.find{_.pref == "-m"}) match {
+    case (Some(d), Some(c), Some(m)) if m.v == "db" =>
+      parseSGF(d.v, colorsFrom(c.v).map(new DB(_)))
+
+    case (Some(d), Some(c), Some(m)) if m.v == "f" =>
+      parseSGF(d.v, colorsFrom(c.v).map(new Files(_)))
+
+    case (_, _, Some(m)) if m.v == "gtp" =>
+      new GTP_CmdHandler().listenAndServe()
+
+    case (Some(d), _, None) =>
+      println("test mode (run mode was not given) ... ")
+      parseSGF(d.v, Seq(), limit=Some(100))
+
+    case _ => throw new RuntimeException("Illegal arguments")
+
+  }
+
+  @tailrec
+  def parseArgs(remain: List[String], results: Args = mutable.Set()): Args =
+    remain match {
+      case pref :: rem if rem.nonEmpty =>
+        if (pref.startsWith("-")) {
+          results.add(Arg(pref, rem.head))
+        }
+        parseArgs(rem.tail, results)
+
+      case Nil => results
+    }
+
+
+  def main1(args: Array[String]) = {
 
     val sgfDir =
       try { Some(args(args.indexOf(args.find(_ == "-d").get) + 1)) }
@@ -24,17 +62,17 @@ object Main {
         args.map(_.tail).find{ x => x == "db" || x == "f" || x == "gtp"} match {
 
           case Some(mode) if mode.toLowerCase == "db" =>
-            parseAllIn(sgf, colorsFrom(col.tail).map(new DB(_)))
+            parseSGF(sgf, colorsFrom(col.tail).map(new DB(_)))
 
           case Some(mode) if mode.toLowerCase == "f" =>
-            parseAllIn(sgf, colorsFrom(col.tail).map(new Files(_)))
+            parseSGF(sgf, colorsFrom(col.tail).map(new Files(_)))
 
           case Some(mode) if mode.toLowerCase == "gtp" =>
             new GTP_CmdHandler().listenAndServe()
 
           case None =>
             println("test mode (run mode was not given) ... ")
-            parseAllIn(sgf, Seq(), limit=Some(100))
+            parseSGF(sgf, Seq(), limit=Some(100))
         }
 
       case _ =>
@@ -43,11 +81,9 @@ object Main {
 
   }
 
-  def parseAllIn(dir: String, outs: Seq[OutputStorage], limit: Option[Int] = None) = {
+  def parseSGF(dir: String, outs: Seq[OutputStorage], limit: Option[Int] = None) = {
     try {
-      var count = 0
       listFilesIn(dir, limit, Some(".sgf")).par foreach { f =>
-        count += 1; if (count % 1000 == 0) println(count)
         try {
           val res = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
           if (res.successful)
@@ -81,7 +117,7 @@ object Main {
 
         var rank: Option[String] = None
         // ============================================
-        // Header of sgf file
+        // Header of sgf
         // ============================================
         nodes.head.props foreach { prop: Property =>
           prop match {
