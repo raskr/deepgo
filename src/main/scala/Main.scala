@@ -63,10 +63,10 @@ object Main extends App {
   private def commitResult(res: (Seq[State], Seq[Move]), outs: Seq[OutputStorage]) = {
     val (states, moves) = res
     zipEach(states, moves){ (st, mv) =>
-      val i = states.indexOf(st)
-      val next = states(i).board.createNextBoardBy(mv)
-      if (next sameElements states(i+1).board) println("ok")
-      else println("ng")
+//      val i = states.indexOf(st)
+//      val next = states(i).board.createNextBoardBy(mv)
+//      if (next sameElements states(i+1).board) println("ok")
+//      else println("ng")
       outs.foreach {out => if (out.color == mv.color) out.commit(st, mv) }
     }
   }
