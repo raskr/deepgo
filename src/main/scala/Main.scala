@@ -38,12 +38,9 @@ object Main extends App {
   @tailrec
   def parseArgs(remain: List[String], results: Args = mutable.Set()): Args =
     remain match {
-      case pref :: rem if rem.nonEmpty =>
-        if (pref.startsWith("-")) {
-          results.add(Arg(pref, rem.head))
-        }
-        parseArgs(rem.tail, results)
-
+      case pref :: value :: rem =>
+        if (pref.startsWith("-")) results.add(Arg(pref, value))
+        parseArgs(rem, results)
       case Nil => results
     }
 

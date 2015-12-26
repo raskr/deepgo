@@ -26,7 +26,7 @@ class Data:
         self.n_mb_train = int(n_train_data/b_size)
         self.n_mb_test = int(n_test_data/b_size)
         self.mb_indices_train = list(range(self.n_mb_train))
-        self.mb_indices_test = list(range(self.n_mb_train + 1, self.n_mb_train + 1 + self.n_mb_test))
+        self.mb_indices_test = list(range(self.n_mb_test + 1, self.n_mb_test + 1 + self.n_mb_test))
 
         conn = db.connect(db_path)
         self.cur = conn.cursor()
