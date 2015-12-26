@@ -4,6 +4,7 @@ import Utils._
 import Color._
 import scala.annotation.tailrec
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
 /**
@@ -62,7 +63,11 @@ object Main extends App {
   private def commitResult(res: (Seq[State], Seq[Move]), outs: Seq[OutputStorage]) = {
     val (states, moves) = res
     zipEach(states, moves){ (st, mv) =>
-      outs.foreach { out => if (out.color == mv.color) out.commit(st, mv) }
+      val i = states.indexOf(st)
+      val next = states(i).board.createNextBoardBy(mv)
+      if (next sameElements states(i+1).board) println("ok")
+      else println("ng")
+      outs.foreach {out => if (out.color == mv.color) out.commit(st, mv) }
     }
   }
 
@@ -72,7 +77,7 @@ object Main extends App {
     * @param result result in 'one' file
     * @return (current states, targets wrt those)
     */
-  def processParseResult(result: Collection): Option[(List[State], List[Move])] = {
+  def processParseResult(result: Collection): Option[(Seq[State], Seq[Move])] = {
     result match {
       // result.successful is guaranteed by caller of this method
       case Collection(List(GameTree(Sequence(nodes: List[Node]), _))) =>
@@ -99,28 +104,27 @@ object Main extends App {
         rank match {
           case Some(rnk) if rnk.isStrong =>
             // ============================================
-            // fold moves
+            // moves
             // ============================================
-            val dummyMove = Move('?', '?', '?', isValid=false)
-            val ret = nodes.tail.foldLeft(List(State(rank=rnk, prevMove=dummyMove)), List(dummyMove)) {
-              case ((states, moves), node) =>
-                node.props match {
-                  // the move
-                  case List(Property(PropIdent(col: String), List(PropValue(Point(a: Char, b: Char))))) =>
-                    val mv = Move(if (col.head == 'W') White else Black, a - 'a', b - 'a', isValid=true)
-                    if (mv.x >= 18 || mv.y >= 18) { // invalid move
-                      (states, moves)
-                    } else {
-                      (states.head.nextStateBy(mv) :: states, mv :: moves)
-                    }
-                  // not a move
-                  case _ => (states, moves)
-                }
+            val dummyMv = Move('?', '?', '?', isValid=false)
+            val (states, moves) =
+              (ArrayBuffer(State(rank=rnk, prevMove=dummyMv)),ArrayBuffer(dummyMv))
+
+            nodes.tail.foreach {
+              _.props match {
+                // the move
+                case List(Property(PropIdent(col: String), List(PropValue(Point(a: Char, b: Char))))) =>
+                  val mv = Move(if (col.head == 'W') White else Black, a-'a', b-'a', isValid=true)
+                  if (mv.x <= 18 && mv.y <= 18) {
+                    states append states.last.nextStateBy(mv)
+                    moves append mv
+                  }
+                // not a move
+                case _ =>
+              }
             }
-            // ============================================
-            // folding end
-            // ============================================
-            Some((ret._1.tail, ret._2.init))
+
+            Some((states.init, moves.tail))
           case _ => None
         }
     }
