@@ -2,8 +2,6 @@ import Implicits._
 import SGF._
 import Utils._
 import Color._
-import scala.annotation.tailrec
-import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
@@ -13,10 +11,7 @@ import scala.io.Source
   */
 object Main extends App {
 
-  case class Arg(pref: String, v: String)
-  type Args = mutable.Set[Arg]
-
-  val res = parseArgs(args.toList)
+  val res = ArgParse(args.toList)
 
   (res.find{_.pref == "-d"}, res.find{_.pref == "-c"}, res.find{_.pref == "-m"}) match {
     case (Some(d), Some(c), Some(m)) if m.v == "db" =>
@@ -35,15 +30,6 @@ object Main extends App {
     case _ => throw new RuntimeException("Illegal arguments")
 
   }
-
-  @tailrec
-  def parseArgs(remain: List[String], results: Args = mutable.Set()): Args =
-    remain match {
-      case pref :: value :: rem =>
-        if (pref.startsWith("-")) results.add(Arg(pref, value))
-        parseArgs(rem, results)
-      case Nil => results
-    }
 
   def parseSGF(dir: String, outs: Seq[OutputStorage], limit: Option[Int] = None) = {
     try {
