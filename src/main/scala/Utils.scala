@@ -108,6 +108,21 @@ object Utils {
     }
   }
 
+  // arg parsing
+  import scala.annotation.tailrec
+  type Arg = (String, String)
+  type Args = mutable.Set[Arg]
+
+  @tailrec
+  def parseArgs(remain: List[String], results: Args = mutable.Set()): Args =
+    remain match {
+      case pref :: value :: rem =>
+        if (pref.startsWith("-")) results.add((pref, value))
+        parseArgs(rem, results)
+      case Nil => results
+    }
+  // arg parsing end
+
   def execCmd(cmd: String): String = scala.sys.process.Process(cmd).!!
 
   // pad the array around with the provided element

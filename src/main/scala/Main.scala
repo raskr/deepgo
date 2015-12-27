@@ -6,26 +6,29 @@ import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
 /**
-  * example ...
   * sbt "run -m db -c wb -d path_to_sgf_dir"
   */
 object Main extends App {
 
-  val res = ArgParse(args.toList)
+  val res = Utils.parseArgs(args.toList)
 
-  (res.find{_.pref == "-d"}, res.find{_.pref == "-c"}, res.find{_.pref == "-m"}) match {
-    case (Some(d), Some(c), Some(m)) if m.v == "db" =>
-      parseSGF(d.v, colorsFrom(c.v).map(new DB(_)))
+  val dir = res.find{_._1 == "-d"}
+  val color = res.find{_._1 == "-c"}
+  val mode = res.find{_._1 == "-m"}
 
-    case (Some(d), Some(c), Some(m)) if m.v == "f" =>
-      parseSGF(d.v, colorsFrom(c.v).map(new Files(_)))
+  (dir, color, mode) match {
+    case (Some(d), Some(c), Some(m)) if m._2 == "db" =>
+      parseSGF(d._2, colorsFrom(c._2).map(new DB(_)))
 
-    case (_, _, Some(m)) if m.v == "gtp" =>
+    case (Some(d), Some(c), Some(m)) if m._2 == "f" =>
+      parseSGF(d._2, colorsFrom(c._2).map(new Files(_)))
+
+    case (_, _, Some(m)) if m._2 == "gtp" =>
       new GTP_CmdHandler().listenAndServe()
 
     case (Some(d), _, None) =>
       println("test mode (run mode was not given) ... ")
-      parseSGF(d.v, Seq(), limit=Some(100))
+      parseSGF(d._2, Seq(), limit=Some(100))
 
     case _ => throw new RuntimeException("Illegal arguments")
 
@@ -83,15 +86,12 @@ object Main extends App {
             case _ =>
           }
         }
-        // ============================================
-        // header end
-        // ============================================
 
+        // ============================================
+        // moves
+        // ============================================
         rank match {
           case Some(rnk) if rnk.isStrong =>
-            // ============================================
-            // moves
-            // ============================================
             val dummyMv = Move('?', '?', '?', isValid=false)
             val (states, moves) =
               (ArrayBuffer(State(rank=rnk, prevMove=dummyMv)),ArrayBuffer(dummyMv))
