@@ -4,9 +4,9 @@ import random
 import numpy as np
 from chainer import cuda
 
-
-query = "SELECT state, target FROM white WHERE _id BETWEEN {} AND {} ORDER BY RANDOM()"
-query_test = "SELECT state, target, invalid FROM white WHERE _id BETWEEN {} AND {} ORDER BY RANDOM()"
+# change the table name O/X
+query = "SELECT state, target FROM O WHERE _id BETWEEN {} AND {} ORDER BY RANDOM()"
+query_test = "SELECT state, target, invalid FROM O WHERE _id BETWEEN {} AND {} ORDER BY RANDOM()"
 
 
 class Data:
