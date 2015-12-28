@@ -12,21 +12,20 @@ object Main extends App {
 
   val res = Utils.parseArgs(args.toList)
 
-  val dir = res.find{_._1 == "-d"}
-  val color = res.find{_._1 == "-c"}
-  val mode = res.find{_._1 == "-m"}
-  val opponentRank = res.find{_._1 == "-o"}
+  val dir          = res find (_._1 == "-d")
+  val color        = res find (_._1 == "-c")
+  val mode         = res find (_._1 == "-m")
+  val opponentRank = res find (_._1 == "-o") // use when gtp mode
 
-  (dir, color, mode) match {
-    case (Some(d), Some(c), Some(m)) if m._2 == "db" =>
+  (dir, color, mode, opponentRank) match {
+    case (Some(d), Some(c), Some(m), _) if m._2 == "db" =>
       parseSGF(d._2, colorsFrom(c._2).map(new DB(_)))
 
-    case (Some(d), Some(c), Some(m)) if m._2 == "f" =>
+    case (Some(d), Some(c), Some(m), _) if m._2 == "f" =>
       parseSGF(d._2, colorsFrom(c._2).map(new Files(_)))
 
-    case (_, _, Some(m)) if m._2 == "gtp" =>
-      if (opponentRank.isEmpty) throw new RuntimeException("opponent rank is required")
-      new GTP_CmdHandler(opponentRank.get._2).listenAndServe()
+    case (_, _, Some(m), Some(o)) if m._2 == "gtp" =>
+      new GTP_CmdHandler(o._2).listenAndServe()
 
     case (Some(d), _, None) =>
       println("test mode (run mode was not given) ... ")
@@ -76,6 +75,7 @@ object Main extends App {
 
         var rankW: Option[String] = None
         var rankB: Option[String] = None
+
         // ============================================
         // Header of sgf
         // ============================================
@@ -91,14 +91,17 @@ object Main extends App {
             case _ =>
           }
         }
+        // ============================================
+        // Header end
+        // ============================================
 
-        // ============================================
-        // moves
-        // ============================================
         val dummyMv = Move('?', '?', '?', isValid=false)
         val states = ArrayBuffer(State(rankW=rankW, rankB=rankB, prevMove=dummyMv))
         val moves = ArrayBuffer(dummyMv)
 
+        // ============================================
+        // moves
+        // ============================================
         nodes.tail.foreach {
           _.props match {
             // the move
@@ -112,6 +115,9 @@ object Main extends App {
             case _ =>
           }
         }
+        // ============================================
+        // moves end
+        // ============================================
 
         Some((states.init, moves.tail))
     }
