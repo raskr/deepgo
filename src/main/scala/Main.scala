@@ -83,12 +83,11 @@ object Main extends App {
           prop match {
             // rank (white player)
             case Property(PropIdent(a: String), List(PropValue(SimpleText(r: String))))
-              if a == "WR" && colors.contains(White) =>
-              rankW = if (r.isStrong) Some(r) else None
+              if a == "WR" => rankW = if (r.isStrong) Some(r) else None
             // rank (black player)
             case Property(PropIdent(a: String), List(PropValue(SimpleText(r: String))))
-              if a == "BR" && colors.contains(Black)=>
-              rankB = if (r.isStrong) Some(r) else None
+              if a == "BR" => rankB = if (r.isStrong) Some(r) else None
+            // other
             case _ =>
           }
         }
@@ -97,13 +96,14 @@ object Main extends App {
         // moves
         // ============================================
         val dummyMv = Move('?', '?', '?', isValid=false)
-        val (states, moves) = (ArrayBuffer(State(rankW=rankW, rankB=rankB, prevMove=dummyMv)), ArrayBuffer(dummyMv))
+        val states = ArrayBuffer(State(rankW=rankW, rankB=rankB, prevMove=dummyMv))
+        val moves = ArrayBuffer(dummyMv)
 
         nodes.tail.foreach {
           _.props match {
             // the move
             case List(Property(PropIdent(col: String), List(PropValue(Point(a: Char, b: Char))))) =>
-              val mv = Move(if (col.head == 'W') White else Black, a-'a', b-'a', isValid=true)
+              val mv = Move(if (col.head.toLower == 'w') White else Black, a-'a', b-'a', isValid=true)
               if (mv.x <= 18 && mv.y <= 18) {
                 states append states.last.nextStateBy(mv)
                 moves append mv
@@ -113,7 +113,7 @@ object Main extends App {
           }
         }
 
-        Some((states, moves))
+        Some((states.init, moves.tail))
     }
   }
 
