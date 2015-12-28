@@ -225,6 +225,11 @@ object Implicits {
   }
 
   implicit class RichChar(val a: Char) extends AnyVal {
+    def opponent: Char = {
+      if (a == White)  Black
+      else if (a == Black)  White
+      else throw new RuntimeException(s"move color = $a should not occur!")
+    }
     def isOpponentOf(x: Char): Boolean = {
       if (x == White) a == Black || a == Outside
       else if (x == Black) a == White || a == Outside

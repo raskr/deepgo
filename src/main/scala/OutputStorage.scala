@@ -50,12 +50,14 @@ final class DB(val color: Char) extends OutputStorage {
   // statement.whatever() is "not" thread safe.
   // mutex is requirement.
   def commit(state: State, target: Move) = DB.lock.synchronized {
-    DB.currentRowCount += 1
-    statement.setString(1, state.toChannels)
-    statement.setInt(2, target.pos)
-    statement.setString(3, state.invalidChannel)
-    statement.executeUpdate
-    if (DB.currentRowCount % 5000000 == 0) DB.conn.commit()
+    state.toChannels.foreach { ch =>
+      DB.currentRowCount += 1
+      statement.setString(1, ch)
+      statement.setInt(2, target.pos)
+      statement.setString(3, state.invalidChannel)
+      statement.executeUpdate
+      if (DB.currentRowCount % 5000000 == 0) DB.conn.commit()
+    }
   }
 }
 
@@ -77,14 +79,16 @@ final class Files(val color: Char) extends OutputStorage {
   d.mkdir()
 
   def commit(state: State, target: Move) = lock.synchronized {
-    buf.append(state.toChannels)
-    bufInvalid.append(state.invalidChannel)
-    bufTarget.append("" + target.pos)
-    currentBufSize += 1
-    if (currentBufSize == maxRowInFile) {
-      push()
-      currentBufSize = 0
-      buf.clear()
+    state.toChannels.foreach { ch =>
+      buf.append(ch)
+      bufInvalid.append(state.invalidChannel)
+      bufTarget.append("" + target.pos)
+      currentBufSize += 1
+      if (currentBufSize == maxRowInFile) {
+        push()
+        currentBufSize = 0
+        buf.clear()
+      }
     }
   }
 

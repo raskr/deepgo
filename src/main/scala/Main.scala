@@ -15,6 +15,7 @@ object Main extends App {
   val dir = res.find{_._1 == "-d"}
   val color = res.find{_._1 == "-c"}
   val mode = res.find{_._1 == "-m"}
+  val opponentRank = res.find{_._1 == "-o"}
 
   (dir, color, mode) match {
     case (Some(d), Some(c), Some(m)) if m._2 == "db" =>
@@ -24,7 +25,8 @@ object Main extends App {
       parseSGF(d._2, colorsFrom(c._2).map(new Files(_)))
 
     case (_, _, Some(m)) if m._2 == "gtp" =>
-      new GTP_CmdHandler().listenAndServe()
+      if (opponentRank.isEmpty) throw new RuntimeException("opponent rank is required")
+      new GTP_CmdHandler(opponentRank.get._2).listenAndServe()
 
     case (Some(d), _, None) =>
       println("test mode (run mode was not given) ... ")
@@ -40,7 +42,7 @@ object Main extends App {
         try {
           val res = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
           if (res.successful)
-            processParseResult(res.get) foreach { commitResult(_, outs) }
+            processParseResult(res.get, outs.map(_.color)) foreach { commitResult(_, outs) }
         } catch {
           case e: java.nio.charset.MalformedInputException =>
             println("ignore strange file: " + f.getName)
@@ -66,13 +68,14 @@ object Main extends App {
     * @param result result in 'one' file
     * @return (current states, targets wrt those)
     */
-  def processParseResult(result: Collection): Option[(Seq[State], Seq[Move])] = {
+  def processParseResult(result: Collection, colors: Seq[Char]): Option[(Seq[State], Seq[Move])] = {
     result match {
       // result.successful is guaranteed by caller of this method
       case Collection(List(GameTree(Sequence(nodes: List[Node]), _))) =>
         if (nodes.isEmpty) return None
 
-        var rank: Option[String] = None
+        var rankW: Option[String] = None
+        var rankB: Option[String] = None
         // ============================================
         // Header of sgf
         // ============================================
@@ -80,9 +83,12 @@ object Main extends App {
           prop match {
             // rank (white player)
             case Property(PropIdent(a: String), List(PropValue(SimpleText(r: String))))
-              if a == "WR" =>
-              rank = Some(r)
-            // other
+              if a == "WR" && colors.contains(White) =>
+              rankW = if (r.isStrong) Some(r) else None
+            // rank (black player)
+            case Property(PropIdent(a: String), List(PropValue(SimpleText(r: String))))
+              if a == "BR" && colors.contains(Black)=>
+              rankB = if (r.isStrong) Some(r) else None
             case _ =>
           }
         }
@@ -90,29 +96,24 @@ object Main extends App {
         // ============================================
         // moves
         // ============================================
-        rank match {
-          case Some(rnk) if rnk.isStrong =>
-            val dummyMv = Move('?', '?', '?', isValid=false)
-            val (states, moves) =
-              (ArrayBuffer(State(rank=rnk, prevMove=dummyMv)),ArrayBuffer(dummyMv))
+        val dummyMv = Move('?', '?', '?', isValid=false)
+        val (states, moves) = (ArrayBuffer(State(rankW=rankW, rankB=rankB, prevMove=dummyMv)), ArrayBuffer(dummyMv))
 
-            nodes.tail.foreach {
-              _.props match {
-                // the move
-                case List(Property(PropIdent(col: String), List(PropValue(Point(a: Char, b: Char))))) =>
-                  val mv = Move(if (col.head == 'W') White else Black, a-'a', b-'a', isValid=true)
-                  if (mv.x <= 18 && mv.y <= 18) {
-                    states append states.last.nextStateBy(mv)
-                    moves append mv
-                  }
-                // not a move
-                case _ =>
+        nodes.tail.foreach {
+          _.props match {
+            // the move
+            case List(Property(PropIdent(col: String), List(PropValue(Point(a: Char, b: Char))))) =>
+              val mv = Move(if (col.head == 'W') White else Black, a-'a', b-'a', isValid=true)
+              if (mv.x <= 18 && mv.y <= 18) {
+                states append states.last.nextStateBy(mv)
+                moves append mv
               }
-            }
-
-            Some((states.init, moves.tail))
-          case _ => None
+            // not a move
+            case _ =>
+          }
         }
+
+        Some((states, moves))
     }
   }
 
