@@ -25,13 +25,13 @@ object Main extends App {
       parseSGF(d._2, colorsFrom(c._2).map(new Files(_)))
 
     case (_, Some(c), Some(m), Some(o)) if m._2 == "gtp" =>
-      new GTP_CmdHandler(o._2, c._2.head).listenAndServe()
+      GTP_CmdHandler(o._2, c._2.head).listenAndServe()
 
     case (Some(d), _, None, _) =>
       println("test mode (run mode was not given) ... ")
       parseSGF(d._2, Seq(), limit=Some(100))
 
-    case _ => throw new RuntimeException("Illegal arguments")
+    case _ => throw new IllegalArgumentException
 
   }
 

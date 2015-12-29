@@ -179,6 +179,11 @@ object GenMove extends Cmd {
   }
 }
 
+object  GTP_CmdHandler {
+  def apply(opponentRank: String, myColor: Char) =
+    new GTP_CmdHandler(opponentRank, myColor)
+}
+
 class GTP_CmdHandler(opponentRank: String, myColor: Char) {
 
   import scala.io.StdIn.readLine
