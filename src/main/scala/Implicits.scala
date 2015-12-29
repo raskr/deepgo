@@ -63,7 +63,7 @@ object Implicits {
       dst.mkString
     }
 
-    def nextLifespans(prevBoard: Array[Char], curBoard: Array[Char]) =
+    def nextHistory(prevBoard: Array[Char], curBoard: Array[Char]) =
       Rules.nextLifespans(x, prevBoard, curBoard)
 
     def printSelf(row: Int, col: Int) = {

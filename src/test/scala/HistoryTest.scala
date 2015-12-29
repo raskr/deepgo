@@ -26,7 +26,7 @@ object LifespanTest extends App {
   prevLifeSpans.toHistoryChannel.toCharArray.printSelf(Config.dia, Config.dia)
 
   // update
-  val newLifeSpans = prevLifeSpans.nextLifespans(prevBoard, curBoard)
+  val newLifeSpans = prevLifeSpans.nextHistory(prevBoard, curBoard)
 
   // after
   curBoard.printState(Config.dia, Config.dia, None, None)

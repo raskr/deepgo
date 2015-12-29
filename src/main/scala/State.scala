@@ -52,7 +52,7 @@ case class State(board: Array[Char] = Array.fill(Config.all)(Empty),
     // 2. find `ko`
     val ko = board.findKoBy(move, newBoard)
     // 3. turns since
-    val ls = hist.nextLifespans(board, newBoard)
+    val ls = hist.nextHistory(board, newBoard)
     // return
     State(newBoard, ls, ko, rankW, rankB, move)
   }

@@ -179,12 +179,13 @@ object GenMove extends Cmd {
   }
 }
 
-class GTP_CmdHandler(opponentRank: String) {
+class GTP_CmdHandler(opponentRank: String, myColor: Char) {
 
   import scala.io.StdIn.readLine
 
   if (TextUtils.isEmpty(opponentRank)) throw new RuntimeException("opponentRank is required")
   GameState.opponentRank = opponentRank
+  GameState.myColor = myColor
 
   def listenAndServe(): Unit = {
 
@@ -223,11 +224,16 @@ class GTP_CmdHandler(opponentRank: String) {
 object GameState {
   import scala.collection.mutable.ArrayBuffer
   var opponentRank = ""
+  var myColor = ' '
   val states = ArrayBuffer[State]()
   def updateBy(move: Move) = states.append(states.last.nextStateBy(move))
   def currentState = states.last
   def reset() = {
     states.clear()
-    states.append(State(rank=opponentRank, prevMove=Move('?','?','?', isValid=false)))
+    if (myColor == White) {
+      states.append(State(rankW=Some(opponentRank), rankB=None, prevMove=Move('?','?','?', isValid=false)))
+    } else {
+      states.append(State(rankB=Some(opponentRank), rankW=None, prevMove=Move('?','?','?', isValid=false)))
+    }
   }
 }

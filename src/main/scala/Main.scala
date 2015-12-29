@@ -24,10 +24,10 @@ object Main extends App {
     case (Some(d), Some(c), Some(m), _) if m._2 == "f" =>
       parseSGF(d._2, colorsFrom(c._2).map(new Files(_)))
 
-    case (_, _, Some(m), Some(o)) if m._2 == "gtp" =>
-      new GTP_CmdHandler(o._2).listenAndServe()
+    case (_, Some(c), Some(m), Some(o)) if m._2 == "gtp" =>
+      new GTP_CmdHandler(o._2, c._2.head).listenAndServe()
 
-    case (Some(d), _, None) =>
+    case (Some(d), _, None, _) =>
       println("test mode (run mode was not given) ... ")
       parseSGF(d._2, Seq(), limit=Some(100))
 
@@ -95,7 +95,7 @@ object Main extends App {
         // Header end
         // ============================================
 
-        val dummyMv = Move('?', '?', '?', isValid=false)
+        val dummyMv = Move(White, '?', '?', isValid=false)
         val states = ArrayBuffer(State(rankW=rankW, rankB=rankB, prevMove=dummyMv))
         val moves = ArrayBuffer(dummyMv)
 
