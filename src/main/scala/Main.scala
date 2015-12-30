@@ -5,9 +5,7 @@ import Color._
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
-/**
-  * sbt "run -m db -c wb -d path_to_sgf_dir"
-  */
+// sbt "run -m db -c wb -d path_to_sgf_dir"
 object Main extends App {
 
   val res = Utils.parseArgs(args.toList)
@@ -27,7 +25,7 @@ object Main extends App {
     case (_, Some(c), Some(m), Some(o)) if m._2 == "gtp" =>
       GTP_CmdHandler(o._2, c._2.head).listenAndServe()
 
-    case (Some(d), _, None, _) =>
+    case (Some(d), _, _, _) =>
       println("test mode (run mode was not given) ... ")
       parseSGF(d._2, Seq(), limit=Some(100))
 
@@ -57,7 +55,10 @@ object Main extends App {
 //      val next = states(i).board.createNextBoardBy(mv)
 //      if (next sameElements states(i+1).board) println("ok")
 //      else println("ng")
-      outs.foreach {out => if (out.color == mv.color) out.commit(st, mv) }
+      st.board.printState(19, 19, Some(mv), None)
+      outs.foreach {out =>
+        if (out.color == mv.color) out.commit(st, mv)
+      }
     }
   }
 

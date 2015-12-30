@@ -1,6 +1,5 @@
 import java.io.{FileWriter, BufferedWriter, File}
 import java.sql.DriverManager
-
 import scala.collection.mutable.ArrayBuffer
 
 sealed abstract class OutputStorage {
@@ -28,27 +27,23 @@ object DB {
 final class DB(val color: Char) extends OutputStorage {
 
   DB.conn.setAutoCommit(false)
-
-  println("drop table: " + color)
-  DB.conn.prepareStatement("drop table if exists " + color).execute()
-
-  println("create table " + color)
+  DB.conn.prepareStatement("DROP TABLE IF EXISTS " + color).execute()
   DB.conn.prepareStatement(s"create table $color (" +
     "_id Integer PRIMARY KEY AUTOINCREMENT," +
     "state TEXT," +
     "target SMALLINT," +
     "invalid TEXT)").execute()
 
-  private [this] val statement = DB.conn.prepareStatement(s"insert into $color (state, target, invalid) values (?, ?, ?)")
+  println("created new table: " + color)
 
-  // statement#close(), res#close()
-  // need not be called as long as conn#close() called certainly.
-  def close() = {
-    DB.closeConnection()
-  }
+  private [this] val statement = DB.conn.prepareStatement(s"INSERT into $color (state, target, invalid) values (?, ?, ?)")
+
+  // You don't have to call statement#close and res#close as long as
+  // conn#close() called certainly.
+  def close() = DB.closeConnection()
 
   // statement.whatever() is "not" thread safe.
-  // mutex is requirement.
+  // mutex is required.
   def commit(state: State, target: Move) = DB.lock.synchronized {
     state.toChannels.foreach { ch =>
       DB.currentRowCount += 1
@@ -56,6 +51,7 @@ final class DB(val color: Char) extends OutputStorage {
       statement.setInt(2, target.pos)
       statement.setString(3, state.invalidChannel)
       statement.executeUpdate
+      // save regularly
       if (DB.currentRowCount % 5000000 == 0) DB.conn.commit()
     }
   }

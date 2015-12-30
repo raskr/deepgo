@@ -21,6 +21,7 @@ object Implicits {
 
     // rank.isStrong
     def isStrong: Boolean = {
+      // TODO: ↓ For now, if the rank string illegal, simply return false ... orz
       if (x.length != 2) false
       else
         (x.charAt(0).getNumericValue, x.charAt(1)) match {

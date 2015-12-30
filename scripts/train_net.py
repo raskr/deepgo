@@ -30,9 +30,9 @@ data = Data(use_gpu=use_gpu,
 
 # Prepare data set
 model = chainer.FunctionSet(
-    conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=20, ksize=5, pad=2),
-    conv2=F.Convolution2D(in_channels=20, out_channels=20, ksize=5, pad=2),
-    conv3=F.Convolution2D(in_channels=20, out_channels=1, ksize=5, pad=2),
+    conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=30, ksize=5, pad=2),
+    conv2=F.Convolution2D(in_channels=30, out_channels=30, ksize=5, pad=2),
+    conv3=F.Convolution2D(in_channels=30, out_channels=1, ksize=5, pad=2),
     l1=F.Linear(361, 361)
 )
 
@@ -58,16 +58,14 @@ def forward(x_batch, y_batch, invalid_batch=None):
 
 
 def train():
-    optimizer = optimizers.Adam()
+    optimizer = optimizers.SGD(lr=.05)
     optimizer.setup(model)
     for epoch in six.moves.range(1, data.n_epoch + 1):
-        print('epoch: {} ({} mini batches)'.format(epoch, data.n_mb_train))
-
         sum_accuracy = 0
         sum_loss = 0
         mb_count = 0
         for i in data.mb_indices(True):
-            print('mini batch: {} of {}'.format(mb_count, data.n_mb_train))
+            print('epoch: {} mini batch: {} of {}'.format(epoch, mb_count, data.n_mb_train))
             mb_count += 1
             x_batch, y_batch = data(True, i)
 
@@ -88,7 +86,7 @@ def train():
         sum_loss = 0
         mb_count = 0
         for i in data.mb_indices(False):
-            print('mini batch: {} of {}'.format(mb_count, data.n_mb_test))
+            print('test mini batch: {} of {}'.format(mb_count, data.n_mb_test))
             mb_count += 1
             x_batch, y_batch, invalid_batch = data(False, i)
 

@@ -33,28 +33,24 @@ case class State(board: Array[Char] = Array.fill(Config.all)(Empty),
   }
 
   def toChannels: Option[String] =
-    opponentRank.map{ x =>
+    opponentRank map { rank =>
       new StringBuilder()
         .append(board.toBoardChannel)     // 3 tested
         .append(board.toBorderChannel)    // 1 tested
         .append(board.toLibertyChannel)   // 6 tested
         .append(board.toGroupSizeChannel) // 2 tested
         .append(koPos.toKoChannel)        // 1 tested
-        .append(x.toRankChannel)          // 9 tested
+        .append(rank.toRankChannel)       // 9 tested
         .append(prevMove.toMoveChannel)   // 1 maybe ok
         .append(hist.toHistoryChannel)    // 1 tested
         .toString
     }
 
   def nextStateBy(move: Move): State = {
-    // 1. update board
     val newBoard = board.createNextBoardBy(move)
-    // 2. find `ko`
     val ko = board.findKoBy(move, newBoard)
-    // 3. turns since
-    val ls = hist.nextHistory(board, newBoard)
-    // return
-    State(newBoard, ls, ko, rankW, rankB, move)
+    val his = hist.nextHistory(board, newBoard)
+    State(newBoard, his, ko, rankW, rankB, move)
   }
 
 }
