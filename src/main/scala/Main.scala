@@ -17,7 +17,7 @@ object Main extends App {
 
   (dir, color, mode, opponentRank) match {
     case (Some(d), Some(c), Some(m), _) if m._2 == "db" =>
-      parseSGF(d._2, colorsFrom(c._2).map(new DB(_)))
+      parseSGF(d._2, colorsFrom(c._2).map(new DB(_)), limit=Some(20000))
 
     case (Some(d), Some(c), Some(m), _) if m._2 == "f" =>
       parseSGF(d._2, colorsFrom(c._2).map(new Files(_)))
@@ -38,8 +38,7 @@ object Main extends App {
       listFilesIn(dir, limit, Some(".sgf")).par foreach { f =>
         try {
           val res = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
-          if (res.successful)
-            processParseResult(res.get, outs.map(_.color)) foreach { commitResult(_, outs) }
+          if (res.successful) processParseResult(res.get, outs.map(_.color)) foreach { commitResult(_, outs) }
         } catch {
           case e: java.nio.charset.MalformedInputException =>
             println("ignore strange file: " + f.getName)
@@ -55,10 +54,8 @@ object Main extends App {
 //      val next = states(i).board.createNextBoardBy(mv)
 //      if (next sameElements states(i+1).board) println("ok")
 //      else println("ng")
-      st.board.printState(19, 19, Some(mv), None)
-      outs.foreach {out =>
-        if (out.color == mv.color) out.commit(st, mv)
-      }
+//      st.board.printState(19, 19, Some(mv), None)
+      outs.foreach {out => if (out.color == mv.color) out.commit(st, mv) }
     }
   }
 

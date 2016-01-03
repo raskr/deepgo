@@ -144,10 +144,10 @@ object Implicits {
       val gSizes = Rules.groupSizes(in)
       val dst = Array.fill(Config.all * 2)('0')
       in.indices foreach { i =>
-        if (gSizes(i) > 3) {
-          if      (in(i) == White) dst(i) = '1'
-          else if (in(i) == Black) dst(i + 361) = '1'
-        }
+        val tmp = gSizes(i)
+        val value = if (tmp > 9) 9 else tmp
+        if      (in(i) == White) dst(i)     = ('0' + value).toChar
+        else if (in(i) == Black) dst(i+361) = ('0' + value).toChar
       }
       dst.mkString
     }

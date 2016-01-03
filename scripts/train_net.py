@@ -19,20 +19,22 @@ if use_gpu:
 base_path = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.normpath(os.path.join(base_path, '../deepgo.db'))
 
-# data provider
+# data provider (if 39998 sgf => 3898669)
 data = Data(use_gpu=use_gpu,
             db_path=db_path,
             b_size=128,
-            n_ch=24,
+            n_ch=22,
+            #n_train_data=12481120,
+            #n_test_data=34730,
             n_train_data=10931120,
-            n_test_data=1584730,
+            n_test_data=30000,
             n_epoch=4)
 
 # Prepare data set
 model = chainer.FunctionSet(
-    conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=30, ksize=5, pad=2),
-    conv2=F.Convolution2D(in_channels=30, out_channels=30, ksize=5, pad=2),
-    conv3=F.Convolution2D(in_channels=30, out_channels=1, ksize=5, pad=2),
+    conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=20, ksize=5, pad=2),
+    conv2=F.Convolution2D(in_channels=20, out_channels=20, ksize=3, pad=1),
+    conv3=F.Convolution2D(in_channels=20, out_channels=1, ksize=3, pad=1),
     l1=F.Linear(361, 361)
 )
 
@@ -61,9 +63,7 @@ def train():
     optimizer = optimizers.SGD(lr=.05)
     optimizer.setup(model)
     for epoch in six.moves.range(1, data.n_epoch + 1):
-        sum_accuracy = 0
-        sum_loss = 0
-        mb_count = 0
+        sum_accuracy = sum_loss = mb_count = 0
         for i in data.mb_indices(True):
             print('epoch: {} mini batch: {} of {}'.format(epoch, mb_count, data.n_mb_train))
             mb_count += 1
@@ -82,9 +82,7 @@ def train():
             f.write(('train epoch {} train mean loss = {}, accuracy = {}\n'.format(epoch, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)))
 
         # evaluation (test)
-        sum_accuracy = 0
-        sum_loss = 0
-        mb_count = 0
+        sum_accuracy = sum_loss = mb_count = 0
         for i in data.mb_indices(False):
             print('test mini batch: {} of {}'.format(mb_count, data.n_mb_test))
             mb_count += 1
