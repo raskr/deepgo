@@ -55,6 +55,20 @@ object Implicits {
     }
   }
 
+  implicit class RichFloatArray(val x: Array[Float]) extends AnyVal {
+    def printSelf(row: Int, col: Int) = {
+      assert(x.length == row * col)
+      // print
+      for (i <- 0 until row) {
+        for (j <- 0 until col) {
+          print(x(col * i + j) + " ")
+        }
+        println()
+      }
+      println("\n")
+    }
+  }
+
   implicit class RichIntArray(val x: Array[Int]) extends AnyVal {
 
     // 1ch (tested with rand. simply int to char conversion)
