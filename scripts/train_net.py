@@ -19,6 +19,10 @@ if use_gpu:
 base_path = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.normpath(os.path.join(base_path, '../deepgo.db'))
 
+# 12481120 -> max
+# 10551120 -> omit 1d, 2d
+# 10931120 -> not omitd
+
 # data provider (if 39998 sgf => 3898669)
 data = Data(use_gpu=use_gpu,
             db_path=db_path,
