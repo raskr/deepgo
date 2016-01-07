@@ -19,7 +19,10 @@ case class State(board: Array[Char] = Array.fill(all)(Empty),
 
   val ansColor = prevMove.color.opponent
 
-  val opponentRank: Option[String] =
+  def myRank: Option[String] =
+    if (prevMove.color.opponent == White) rankB else rankW
+
+  def opponentRank: Option[String] =
     if (prevMove.color.opponent == White) rankW else rankB
 
   val invalidChannel = {
@@ -34,7 +37,7 @@ case class State(board: Array[Char] = Array.fill(all)(Empty),
   }
 
   def toChannels: Option[String] =
-    opponentRank map { rank =>
+    myRank map { rank =>
       new StringBuilder()
         .append(board.toBoardChannel)     // 3 tested
         .append(board.toBorderChannel)    // 1 tested

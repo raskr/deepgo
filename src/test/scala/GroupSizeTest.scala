@@ -13,7 +13,6 @@ object GroupSizeTest extends App {
   println("sizes")
 //  sizes.map{x => ('0' + x).toChar}.printState(19, 19, None, None)
   val a: Array[Float] = sizes.map{x => scala.math.exp(0.01*x).toFloat-1}
-  println("aaaaaaaaaaaaaaaaaaaaaaaaaa")
   a.printSelf(19, 19)
 
   // channel

@@ -60,7 +60,7 @@ def forward(x_batch, y_batch, invalid_batch=None):
 
 
 def train():
-    optimizer = optimizers.SGD(lr=.05)
+    optimizer = optimizers.Adam()
     optimizer.setup(model)
     for epoch in six.moves.range(1, data.n_epoch + 1):
         sum_accuracy = sum_loss = mb_count = 0
@@ -96,11 +96,12 @@ def train():
         with open('result.txt', 'a+') as f:
             f.write(('test mean loss = {}, accuracy = {}\n'.format(sum_loss / data.n_test_data, sum_accuracy / data.n_test_data)))
 
+        save_net('white_{}'.format(epoch))
 
-def save_net(color):
+
+def save_net(name):
     print("save network...")
-    six.moves.cPickle.dump(model.to_cpu(), open("{}.pkl".format("../" + color), "wb"), -1)
+    six.moves.cPickle.dump(model.to_cpu(), open("{}.pkl".format("../" + name), "wb"), -1)
 
 
 train()
-save_net('white')
