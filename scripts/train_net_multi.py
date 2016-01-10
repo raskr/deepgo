@@ -1,6 +1,7 @@
 import argparse
 import os
 
+from __init__ import *
 import six
 import chainer.functions as F
 import chainer
@@ -39,10 +40,10 @@ n_out_plane = 1
 
 # Prepare data set
 model = chainer.FunctionSet(
-    conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=20, ksize=5, pad=2),
-    conv2=F.Convolution2D(in_channels=20, out_channels=20, ksize=3, pad=1),
-    conv3=F.Convolution2D(in_channels=20, out_channels=n_out_plane, ksize=3, pad=1),
-    l1=F.Linear(361, 361)
+        conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=20, ksize=5, pad=2),
+        conv2=F.Convolution2D(in_channels=20, out_channels=20, ksize=3, pad=1),
+        conv3=F.Convolution2D(in_channels=20, out_channels=n_out_plane, ksize=3, pad=1),
+        l1=F.Linear(361*n_out_plane, 361*n_out_plane)
 )
 
 
@@ -51,18 +52,26 @@ if use_gpu:
     model.to_gpu()
 
 
-def forward(x_batch, y_batch, invalid_batch):
-    x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
+def forward(x_batch, invalid_batch, *y_batches):
+
+    x = chainer.Variable(x_batch)
+    ts = [chainer.Variable(y_batch) for y_batch in y_batches]
+
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
     h = F.relu(model.conv3(h))
+
     y = y_test = model.l1(h)
+
     if invalid_batch is not None:
-        y_test = F.softmax(y_test)
+        y_test = softmax_multi(y_test, n_out_plane)
         y_test = (y_test.data - invalid_batch).clip(0, 1)
         y_test = chainer.Variable(y_test)
 
-    return F.softmax_cross_entropy(y, t), F.accuracy(y_test, t)
+    losses = softmax_cross_entropy_multi(y, ts)
+    accuracies = accuracy_multi(y_test, ts)
+
+    return losses, accuracies
 
 
 def train():
@@ -76,8 +85,7 @@ def train():
             x_batch, y_batch = data(True, i)
 
             optimizer.zero_grads()
-            # loss is result of SoftmaxCrossEntropy#call() (using forward internally)
-            loss, acc = forward(x_batch, y_batch, invalid_batch=None)
+            loss, acc = forward(x_batch, y_batch, None)
             loss.backward()
             optimizer.update()
 
