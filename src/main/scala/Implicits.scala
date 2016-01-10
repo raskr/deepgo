@@ -19,6 +19,14 @@ object Implicits {
         case _ => throw new RuntimeException("should not happen")
       }
 
+    def isValidRank: Boolean = {
+      if (x.length != 2) return false
+      val (num, rank) = (x.charAt(0).getNumericValue, x.charAt(1))
+      if (num < 0 || num > 9) return false
+      if (!(rank == 'k' || rank == 'd' || rank == 'p')) return false
+      true
+    }
+
     def isStrong: Boolean = {
       if (x.length != 2) false
       else
