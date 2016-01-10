@@ -17,7 +17,7 @@ object Main extends App {
 
   (dir, color, mode, opponentRank) match {
     case (Some(d), Some(c), Some(m), _) if m._2 == "db" =>
-      parseSGF(d._2, colorsFrom(c._2).map(new DB(_)), limit=Some(20000))
+      parseSGF(d._2, colorsFrom(c._2).map(new DB(_)), limit=None)
 
     case (Some(d), Some(c), Some(m), _) if m._2 == "f" =>
       parseSGF(d._2, colorsFrom(c._2).map(new Files(_)))
@@ -81,10 +81,10 @@ object Main extends App {
           prop match {
             // rank (white player)
             case Property(PropIdent(a: String), List(PropValue(SimpleText(r: String)))) if a == "WR" =>
-              rankW = Some(r).filter(_.isStrong)
+              rankW = Some(r).filter(_.isStrongRank)
             // rank (black player)
             case Property(PropIdent(a: String), List(PropValue(SimpleText(r: String)))) if a == "BR" =>
-              rankB = Some(r).filter(_.isStrong)
+              rankB = Some(r).filter(_.isStrongRank)
             // other
             case _ =>
           }

@@ -23,11 +23,11 @@ object Implicits {
       if (x.length != 2) return false
       val (num, rank) = (x.charAt(0).getNumericValue, x.charAt(1))
       if (num < 0 || num > 9) return false
-      if (!(rank == 'k' || rank == 'd' || rank == 'p')) return false
+      if (rank != 'k' && rank != 'd' && rank != 'p') return false
       true
     }
 
-    def isStrong: Boolean = {
+    def isStrongRank: Boolean = {
       if (x.length != 2) false
       else
         (x.charAt(0).getNumericValue, x.charAt(1)) match {
