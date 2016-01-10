@@ -30,15 +30,18 @@ data = Data(use_gpu=use_gpu,
             n_ch=22,
             #n_train_data=12481120,
             #n_test_data=34730,
-            n_train_data=10931120,
-            n_test_data=30000,
+            # n_train_data=10931120,
+            n_train_data=1093,
+            n_test_data=3,
             n_epoch=4)
+
+n_out_plane = 1
 
 # Prepare data set
 model = chainer.FunctionSet(
     conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=20, ksize=5, pad=2),
     conv2=F.Convolution2D(in_channels=20, out_channels=20, ksize=3, pad=1),
-    conv3=F.Convolution2D(in_channels=20, out_channels=1, ksize=3, pad=1),
+    conv3=F.Convolution2D(in_channels=20, out_channels=n_out_plane, ksize=3, pad=1),
     l1=F.Linear(361, 361)
 )
 
@@ -48,7 +51,7 @@ if use_gpu:
     model.to_gpu()
 
 
-def forward(x_batch, y_batch, invalid_batch=None):
+def forward(x_batch, y_batch, invalid_batch):
     x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
@@ -74,7 +77,8 @@ def train():
             x_batch, y_batch = data(True, i)
 
             optimizer.zero_grads()
-            loss, acc = forward(x_batch, y_batch)
+            # loss is result of SoftmaxCrossEntropy#call() (using forward internally)
+            loss, acc = forward(x_batch, y_batch, invalid_batch=None)
             loss.backward()
             optimizer.update()
 

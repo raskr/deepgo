@@ -80,11 +80,11 @@ object Main extends App {
         nodes.head.props foreach { prop: Property =>
           prop match {
             // rank (white player)
-            case Property(PropIdent(a: String), List(PropValue(SimpleText(r: String))))
-              if a == "WR" => rankW = if (r.isStrong) Some(r) else None
+            case Property(PropIdent(a: String), List(PropValue(SimpleText(r: String)))) if a == "WR" =>
+              rankW = Some(r).filter(_.isStrong)
             // rank (black player)
-            case Property(PropIdent(a: String), List(PropValue(SimpleText(r: String))))
-              if a == "BR" => rankB = if (r.isStrong) Some(r) else None
+            case Property(PropIdent(a: String), List(PropValue(SimpleText(r: String)))) if a == "BR" =>
+              rankB = Some(r).filter(_.isStrong)
             // other
             case _ =>
           }

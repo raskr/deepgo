@@ -6,10 +6,10 @@ object Implicits {
 
   implicit class RichString(val x: String) extends AnyVal {
 
-    // 9ch
-    // tested
+    // 9ch (tested)
     def toRankChannel: String =
       (x.charAt(0).getNumericValue, x.charAt(1)) match {
+        case (_, 'k') => Utils.zeros(Config.all*9).mkString
         case (_, 'p') => Utils.ones(Config.all*9).mkString
         case (r, 'd') if r == 9 => Utils.ones(Config.all*9).mkString
         case (r, 'd') =>
@@ -19,16 +19,14 @@ object Implicits {
         case _ => throw new RuntimeException("should not happen")
       }
 
-    // rank.isStrong
     def isStrong: Boolean = {
-      // TODO: ↓ For now, if the rank string illegal, simply return false ... orz
       if (x.length != 2) false
       else
         (x.charAt(0).getNumericValue, x.charAt(1)) match {
           case (_, 'k') => false
           case (_, 'p') => true
           case (r, 'd') => true
-          case _ => false
+          case _ => throw new RuntimeException("should not happen")
         }
     }
 

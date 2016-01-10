@@ -1,1 +1,7 @@
-__author__ = 'perrier'
+import softmax_cross_entropy_multi
+import softmax_multi
+import accuracy_multi
+
+softmax_multi = softmax_multi.softmax_multi
+softmax_cross_entropy_multi = softmax_cross_entropy_multi.softmax_cross_entropy_multi
+accuracy_multi = accuracy_multi.accuracy_multi

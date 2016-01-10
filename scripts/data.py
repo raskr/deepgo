@@ -1,6 +1,5 @@
 import sqlite3 as db
 from math import exp
-from utils import *
 import random
 import numpy as np
 from chainer import cuda
