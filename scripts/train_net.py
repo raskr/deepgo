@@ -36,6 +36,7 @@ data = Data(use_gpu=use_gpu,
             n_epoch=4)
 
 n_out_plane = 1
+n_layer = 5
 
 # Prepare data set
 model = chainer.FunctionSet(
@@ -103,7 +104,7 @@ def train():
         with open('result.txt', 'a+') as f:
             f.write(('test mean loss = {}, accuracy = {}\n'.format(sum_loss / data.n_test_data, sum_accuracy / data.n_test_data)))
 
-        save_net('white_{}'.format(epoch))
+        save_net('white_epoch:{}_layer:{}_data:{}'.format(epoch))
 
 
 def save_net(name):

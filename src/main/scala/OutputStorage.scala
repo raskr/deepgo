@@ -5,6 +5,7 @@ import scala.collection.mutable.ArrayBuffer
 sealed abstract class OutputStorage {
   val color: Char
   def commit(state: State, target: Move)
+  def commit(state: State, targets: Seq[Move])
   def close()
 }
 
@@ -55,6 +56,19 @@ final class DB(val color: Char) extends OutputStorage {
       if (DB.currentRowCount % 5000000 == 0) DB.conn.commit()
     }
   }
+
+  def commit(state: State, targets: Seq[Move]) = DB.lock.synchronized {
+    state.toChannels.foreach { ch =>
+      DB.currentRowCount += 1
+      statement.setString(1, ch)
+      statement.setString(2, targets.map(_.pos).mkString(","))
+      statement.setString(3, state.invalidChannel)
+      statement.executeUpdate
+      // save regularly
+      if (DB.currentRowCount % 5000000 == 0) DB.conn.commit()
+    }
+  }
+
 }
 
 final class Files(val color: Char) extends OutputStorage {
@@ -79,6 +93,20 @@ final class Files(val color: Char) extends OutputStorage {
       buf.append(ch)
       bufInvalid.append(state.invalidChannel)
       bufTarget.append("" + target.pos)
+      currentBufSize += 1
+      if (currentBufSize == maxRowInFile) {
+        push()
+        currentBufSize = 0
+        buf.clear()
+      }
+    }
+  }
+
+  def commit(state: State, targets: Seq[Move]) = DB.lock.synchronized {
+    state.toChannels.foreach { ch =>
+      buf.append(ch)
+      bufInvalid.append(state.invalidChannel)
+      bufTarget.append("" + targets.map(_.pos).mkString(","))
       currentBufSize += 1
       if (currentBufSize == maxRowInFile) {
         push()

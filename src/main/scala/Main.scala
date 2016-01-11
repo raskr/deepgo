@@ -2,6 +2,7 @@ import Implicits._
 import SGF._
 import Utils._
 import Color._
+import java.nio.charset.{MalformedInputException => fmtErr}
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
@@ -38,11 +39,10 @@ object Main extends App {
       listFilesIn(dir, limit, Some(".sgf")).par foreach { f =>
         try {
           val res = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
-          if (res.successful) processParseResult(res.get, outs.map(_.color)) foreach { commitResult(_, outs) }
-        } catch {
-          case e: java.nio.charset.MalformedInputException =>
-            println("ignore strange file: " + f.getName)
-        }
+          if (res.successful) processParseResult(res.get, outs.map(_.color)).foreach{ res =>
+            commitResult(distributeTargetMoves(1, res), outs)
+          }
+        } catch { case _: fmtErr => println("ignore strange file: " + f.getName) }
       }
     } finally outs foreach { _.close() }
   }
@@ -50,13 +50,26 @@ object Main extends App {
   private def commitResult(res: (Seq[State], Seq[Move]), outs: Seq[OutputStorage]) = {
     val (states, moves) = res
     zipEach(states, moves){ (st, mv) =>
-//      val i = states.indexOf(st)
-//      val next = states(i).board.createNextBoardBy(mv)
-//      if (next sameElements states(i+1).board) println("ok")
-//      else println("ng")
-//      st.board.printState(19, 19, Some(mv), None)
       outs.foreach {out => if (out.color == mv.color) out.commit(st, mv) }
     }
+  }
+
+  private def commitResult(res: Seq[(State, Seq[Move])], outs: Seq[OutputStorage]) = {
+    res foreach { case (st, ts) =>
+      outs.foreach{ o => if (o.color == ts.head.color) o.commit(st, ts) }
+    }
+  }
+
+  def distributeTargetMoves(step: Int, res: (Seq[State], Seq[Move])): Seq[(State, Seq[Move])] = {
+    val (states, moves) = res
+    val stLen = states.size
+    val mvLen = moves.size
+
+    assert(step >= 1 && stLen == mvLen && step < stLen)
+
+    Range(0, stLen - step).map( i =>
+      (states(i), moves.slice(i, i + step))
+    )
   }
 
   /**
