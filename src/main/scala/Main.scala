@@ -37,14 +37,15 @@ object Main extends App {
   def parseSGF(dir: String, outs: Seq[OutputStorage], limit: Option[Int] = None) = {
     try {
       listFilesIn(dir, limit, Some(".sgf")).par foreach { f =>
-        try {
-          val res = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
-          if (res.successful) processParseResult(res.get, outs.map(_.color)).foreach{ res =>
-            commitResult(distributeTargetMoves(1, res), outs)
-          }
-        } catch { case _: fmtErr => println("ignore strange file: " + f.getName) }
+        val pRes = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
+        if (pRes.successful) processParseResult(pRes.get, outs.map(_.color)).foreach { res =>
+          val res = distributeTargetMoves(res, step=1)
+          commitResult(res, outs)
+        }
       }
-    } finally outs foreach { _.close() }
+    }
+    catch { case e: fmtErr => println("ignore strange file"}
+    finally outs foreach { _.close() }
   }
 
   private def commitResult(res: (Seq[State], Seq[Move]), outs: Seq[OutputStorage]) = {
@@ -60,16 +61,15 @@ object Main extends App {
     }
   }
 
-  def distributeTargetMoves(step: Int, res: (Seq[State], Seq[Move])): Seq[(State, Seq[Move])] = {
+  def distributeTargetMoves(res: (Seq[State],Seq[Move]),
+                            step: Int): Seq[(State, Seq[Move])] = {
     val (states, moves) = res
     val stLen = states.size
     val mvLen = moves.size
 
     assert(step >= 1 && stLen == mvLen && step < stLen)
 
-    Range(0, stLen - step).map( i =>
-      (states(i), moves.slice(i, i + step))
-    )
+    Range(0, stLen-step).map( i => (states(i), moves.slice(i, i + step)) )
   }
 
   /**
