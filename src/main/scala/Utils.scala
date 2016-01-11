@@ -109,11 +109,10 @@ object Utils {
   }
 
   // arg parsing
-  import scala.annotation.tailrec
   type Arg = (String, String)
   type Args = mutable.Set[Arg]
 
-  @tailrec
+  @scala.annotation.tailrec
   def parseArgs(remain: List[String], results: Args = mutable.Set()): Args =
     remain match {
       case pref :: value :: rem =>
