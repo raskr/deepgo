@@ -34,19 +34,19 @@ object Main extends App {
 
   }
 
-  def parseSGF(dir: String, outs: Seq[OutputStorage], limit: Option[Int] = None) = {
-    try {
-      listFilesIn(dir, limit, Some(".sgf")).par foreach { f =>
-        val pRes = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
-        if (pRes.successful) processParseResult(pRes.get, outs.map(_.color)).foreach { res =>
-          val res = distributeTargetMoves(res, step=1)
-          commitResult(res, outs)
-        }
+  def parseSGF(dir: String, outs: Seq[OutputStorage], limit: Option[Int]=None) = try {
+    listFilesIn(dir, limit, Some(".sgf")).par foreach { f =>
+      // getLines() may throw exception
+      val parsed = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
+      if (parsed.successful) processParseResult(parsed.get, outs.map(_.color)).foreach { pRes =>
+        val res = distributeTargetMoves(pRes, step=4)
+        // internal test
+        if (outs.isEmpty) DistributeTargetMovesTest(res)
+        commitResult(res, outs)
       }
     }
-    catch { case e: fmtErr => println("ignore strange file"}
-    finally outs foreach { _.close() }
-  }
+  } catch   { case e: fmtErr => println("ignore strange file")
+  } finally { outs foreach (_.close()) }
 
   private def commitResult(res: (Seq[State], Seq[Move]), outs: Seq[OutputStorage]) = {
     val (states, moves) = res
@@ -61,14 +61,10 @@ object Main extends App {
     }
   }
 
-  def distributeTargetMoves(res: (Seq[State],Seq[Move]),
-                            step: Int): Seq[(State, Seq[Move])] = {
+  private def distributeTargetMoves(res: (Seq[State],Seq[Move]), step: Int): Seq[(State, Seq[Move])] = {
     val (states, moves) = res
-    val stLen = states.size
-    val mvLen = moves.size
-
+    val (stLen, mvLen) = (states.size, moves.size)
     assert(step >= 1 && stLen == mvLen && step < stLen)
-
     Range(0, stLen-step).map( i => (states(i), moves.slice(i, i + step)) )
   }
 
@@ -80,7 +76,6 @@ object Main extends App {
     */
   def processParseResult(result: Collection, colors: Seq[Char]): Option[(Seq[State], Seq[Move])] = {
     result match {
-      // result.successful is guaranteed by caller of this method
       case Collection(List(GameTree(Sequence(nodes: List[Node]), _))) =>
         if (nodes.isEmpty) return None
 
@@ -92,13 +87,12 @@ object Main extends App {
         // ============================================
         nodes.head.props foreach { prop: Property =>
           prop match {
-            // rank (white player)
+            // rank
             case Property(PropIdent(a: String), List(PropValue(SimpleText(r: String)))) if a == "WR" =>
               rankW = Some(r).filter(_.isStrongRank)
-            // rank (black player)
             case Property(PropIdent(a: String), List(PropValue(SimpleText(r: String)))) if a == "BR" =>
               rankB = Some(r).filter(_.isStrongRank)
-            // other
+            // others
             case _ =>
           }
         }

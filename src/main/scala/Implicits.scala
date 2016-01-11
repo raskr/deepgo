@@ -75,6 +75,13 @@ object Implicits {
     }
   }
 
+  implicit class RichStateSeq(val x: Seq[State]) extends AnyVal {
+    def nextOf(st: State): State = {
+      val i = x.indexOf(st)
+      x(i+1)
+    }
+  }
+
   implicit class RichIntArray(val x: Array[Int]) extends AnyVal {
 
     // 1ch (tested with rand. simply int to char conversion)
