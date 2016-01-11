@@ -6,16 +6,16 @@ import java.nio.charset.{MalformedInputException => fmtErr}
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
-// sbt "run -m db -c wb -d path/to/sgf/dir"
+// sbt "run -m db -c wb -s 4 -d path/to/sgf/dir"
 object Main {
 
   def main(args: Array[String]) = {
     val res = Utils.parseArgs(args.toList)
-    val dir          = res find (_._1.matches("-d || --dir"))
-    val color        = res find (_._1.matches("-c || --color"))
-    val mode         = res find (_._1.matches("-m || --mode"))
-    val step         = res find (_._1.matches("-s || --step")) // prediction step num
-    val opponentRank = res find (_._1.matches("-r || --rank")) // use when gtp mode
+    val dir          = res find (_._1.matches("-d||--dir"))
+    val color        = res find (_._1.matches("-c||--color"))
+    val mode         = res find (_._1.matches("-m||--mode"))
+    val step         = res find (_._1.matches("-s||--step")) // prediction step num
+    val opponentRank = res find (_._1.matches("-r||--rank")) // use when gtp mode
 
     (dir, color, mode, step, opponentRank) match {
       case (Some(d), Some(c), Some(m), Some(s), _) if m._2 == "db" =>
@@ -24,12 +24,11 @@ object Main {
       case (Some(d), Some(c), Some(m), Some(s), _) if m._2 == "f" =>
         parseSGF(d._2, colorsFrom(c._2).map(new Files(_)), s._2.head-'0')
 
+      case (Some(d), _, _, _, _) =>
+        parseSGF(d._2, Seq(), 4, limit=Some(100))
+
       case (_, Some(c), Some(m), Some(s), Some(o)) if m._2 == "gtp" =>
         GTP_CmdHandler(o._2, c._2.head).listenAndServe()
-
-      case (Some(d), _, _, _, _) =>
-        println("test mode (run mode was not given) ... ")
-        parseSGF(d._2, Seq(), 4, limit=Some(100))
 
       case _ => throw new IllegalArgumentException("Put valid arguments.")
     }

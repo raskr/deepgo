@@ -32,7 +32,7 @@ final class DB(val color: Char) extends OutputStorage {
   DB.conn.prepareStatement(s"create table $color (" +
     "_id Integer PRIMARY KEY AUTOINCREMENT," +
     "state TEXT," +
-    "target SMALLINT," +
+    "target TEXT," +
     "invalid TEXT)").execute()
 
   println("created new table: " + color)
