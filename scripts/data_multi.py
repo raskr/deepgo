@@ -9,15 +9,16 @@ query = "SELECT state, target FROM O WHERE _id BETWEEN {} AND {} ORDER BY RANDOM
 query_test = "SELECT state, target, invalid FROM O WHERE _id BETWEEN {} AND {} ORDER BY RANDOM()"
 
 
-class Data:
+class DataMulti:
 
-    def __init__(self, use_gpu, n_epoch, n_ch, b_size, n_train_data, n_test_data, db_path):
+    def __init__(self, use_gpu, n_epoch, n_ch, b_size, n_train_data, n_test_data, n_y, db_path):
         self.db_path = db_path
         self.use_gpu = use_gpu
         self.xp = cuda.cupy if use_gpu else np
 
         self.n_epoch = n_epoch
         self.n_ch = n_ch
+        self.n_y = n_y
         self.n_train_data = n_train_data
         self.n_test_data = n_test_data
         self.b_size = b_size
@@ -39,19 +40,19 @@ class Data:
             self.cur.execute(query.format(self.b_size*i+1, self.b_size*i + self.b_size))
             for row in self.cur.fetchall():
                 xs = self.xp.append(xs, str2floats(row[0]))
-                ys = self.xp.append(ys, row[1])
+                ys = self.xp.append(ys, split_y(row[1]))
             return xs.reshape(self.b_size, self.n_ch, 19, 19).astype(self.xp.float32, False),\
-                   ys.astype(self.xp.int32, False)
+                   ys.reshape(self.b_size, self.n_y).astype(self.xp.int32, False)
         else:
             invalids = self.xp.asarray([], dtype=self.xp.float32)
             self.cur.execute(query_test.format(self.b_size*i+1, self.b_size*i + self.b_size))
             for row in self.cur.fetchall():
                 xs = self.xp.append(xs, str2floats(row[0]))
-                ys = self.xp.append(ys, row[1])
+                ys = self.xp.append(ys, split_y(row[1]))
                 invalids = self.xp.append(invalids, str2floats_simple(row[2]))
 
-            return xs.reshape(self.b_size, self.n_ch, 19, 19).astype(self.xp.float32, False),\
-                   ys.astype(self.xp.int32, False),\
+            return xs.reshape(self.b_size, self.n_ch, 19, 19).astype(self.xp.float32, False), \
+                   ys.reshape(self.b_size, self.n_y).astype(self.xp.int32, False), \
                    invalids.reshape(self.b_size, 361).astype(self.xp.float32, False)
 
     def mb_indices(self, train):
@@ -60,6 +61,10 @@ class Data:
             return iter(self.mb_indices_train)
         random.shuffle(self.mb_indices_test)
         return iter(self.mb_indices_test)
+
+
+def split_y(string):
+    return [int(a) for a in string.split(',')]
 
 
 # convert string consist of channels to float array

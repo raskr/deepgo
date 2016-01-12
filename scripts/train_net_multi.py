@@ -7,7 +7,7 @@ import chainer.functions as F
 import chainer
 from chainer import cuda, optimizers
 
-from data import Data
+from data_multi import DataMulti as Data
 
 parser = argparse.ArgumentParser(description='train Go')
 parser.add_argument('--gpu', '-g', default=-1, type=int, help='GPU ID (negative value indicates CPU)')
@@ -18,7 +18,7 @@ if use_gpu:
     cuda.check_cuda_available()
 
 base_path = os.path.dirname(os.path.abspath(__file__))
-db_path = os.path.normpath(os.path.join(base_path, '../deepgo.db'))
+db_path = os.path.normpath(os.path.join(base_path, '../deepgo_multi_pred.db'))
 
 # 12481120 -> max
 # 10551120 -> omit 1d, 2d
@@ -27,23 +27,20 @@ db_path = os.path.normpath(os.path.join(base_path, '../deepgo.db'))
 # data provider (if 39998 sgf => 3898669)
 data = Data(use_gpu=use_gpu,
             db_path=db_path,
-            b_size=128,
+            b_size=3,
             n_ch=22,
-            #n_train_data=12481120,
-            #n_test_data=34730,
-            # n_train_data=10931120,
-            n_train_data=1093,
+            n_train_data=10,
             n_test_data=3,
+            n_y=4,
             n_epoch=4)
 
-n_out_plane = 1
 
 # Prepare data set
 model = chainer.FunctionSet(
         conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=20, ksize=5, pad=2),
         conv2=F.Convolution2D(in_channels=20, out_channels=20, ksize=3, pad=1),
-        conv3=F.Convolution2D(in_channels=20, out_channels=n_out_plane, ksize=3, pad=1),
-        l1=F.Linear(361*n_out_plane, 361*n_out_plane)
+        conv3=F.Convolution2D(in_channels=20, out_channels=data.n_y, ksize=3, pad=1),
+        l1=F.Linear(361*data.n_y, 361*data.n_y)
 )
 
 
@@ -52,24 +49,22 @@ if use_gpu:
     model.to_gpu()
 
 
-def forward(x_batch, invalid_batch, *y_batches):
-
-    x = chainer.Variable(x_batch)
-    ts = [chainer.Variable(y_batch) for y_batch in y_batches]
+def forward(x_batch, y_batch, invalid_batch):
+    x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
 
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
     h = F.relu(model.conv3(h))
-
     y = y_test = model.l1(h)
 
     if invalid_batch is not None:
-        y_test = softmax_multi(y_test, n_out_plane)
+        y_test = softmax_multi(y_test, data.n_y)
         y_test = (y_test.data - invalid_batch).clip(0, 1)
         y_test = chainer.Variable(y_test)
 
-    losses = softmax_cross_entropy_multi(y, ts)
-    accuracies = accuracy_multi(y_test, ts)
+    # forward of softmax_cross_entropy_multi
+    losses = softmax_cross_entropy_multi(y, t, data.n_y)
+    accuracies = accuracy_multi(y_test, t, data.n_y)
 
     return losses, accuracies
 

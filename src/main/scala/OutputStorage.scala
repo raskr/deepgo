@@ -9,6 +9,22 @@ sealed abstract class OutputStorage {
   def close()
 }
 
+object DB1 {
+  val dbName = "deepgo.db"
+  val lock = new AnyRef
+  var closed = false
+  var currentRowCount = 0
+  private lazy val conn = DriverManager.getConnection("jdbc:sqlite:" + dbName)
+
+  def closeConnection() = lock.synchronized {
+    if (!closed) {
+      closed = true
+      conn.commit()
+      conn.close()
+    }
+  }
+}
+
 object DB {
   val dbName = "deepgo.db"
   val lock = new AnyRef
@@ -23,6 +39,52 @@ object DB {
       conn.close()
     }
   }
+}
+
+final class DB1(val color: Char) extends OutputStorage {
+
+  DB1.conn.setAutoCommit(false)
+  DB1.conn.prepareStatement("DROP TABLE IF EXISTS " + color).execute()
+  DB1.conn.prepareStatement(s"create table $color (" +
+    "_id Integer PRIMARY KEY AUTOINCREMENT," +
+    "state TEXT," +
+    "target Integer," +
+    "invalid TEXT)").execute()
+
+  println("created new table: " + color)
+
+  private [this] val statement = DB1.conn.prepareStatement(s"INSERT into $color (state, target, invalid) values (?, ?, ?)")
+
+  // You don't have to call statement#close and res#close as long as
+  // conn#close() called certainly.
+  def close() = DB1.closeConnection()
+
+  // statement.whatever() is "not" thread safe.
+  // mutex is required.
+  def commit(state: State, target: Move) = DB1.lock.synchronized {
+    state.toChannels.foreach { ch =>
+      DB1.currentRowCount += 1
+      statement.setString(1, ch)
+      statement.setInt(2, target.pos)
+      statement.setString(3, state.invalidChannel)
+      statement.executeUpdate
+      // save regularly
+      if (DB1.currentRowCount % 5000000 == 0) DB1.conn.commit()
+    }
+  }
+
+  def commit(state: State, targets: Seq[Move]) = DB1.lock.synchronized {
+    state.toChannels.foreach { ch =>
+      DB1.currentRowCount += 1
+      statement.setString(1, ch)
+      statement.setString(2, targets.map(_.pos).mkString(","))
+      statement.setString(3, state.invalidChannel)
+      statement.executeUpdate
+      // save regularly
+      if (DB1.currentRowCount % 5000000 == 0) DB1.conn.commit()
+    }
+  }
+
 }
 
 final class DB(val color: Char) extends OutputStorage {
