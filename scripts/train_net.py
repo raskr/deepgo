@@ -30,7 +30,7 @@ data = Data(use_gpu=use_gpu,
             n_ch=22,
             n_train_data=10,
             n_test_data=3,
-            n_epoch=1)
+            n_epoch=3)
 
 n_out_plane = 1
 n_layer = 5

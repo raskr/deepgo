@@ -25,7 +25,7 @@ case class State(board: Array[Char] = Array.fill(all)(Empty),
   def opponentRank: Option[String] =
     if (prevMove.color.opponent == White) rankW else rankB
 
-  val invalidChannel = {
+  def invalidChannel = {
     val dst = Array.range(0, all) map { i =>
       // already occupied or suicide move
       val cantPlay = board(i) != Empty || i.isSuicideMovePos(ansColor, board)

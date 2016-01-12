@@ -59,14 +59,23 @@ def forward(x_batch, y_batch, invalid_batch):
 
     if invalid_batch is not None:
         y_test = softmax_multi(y_test, data.n_y)
-        y_test = (y_test.data - invalid_batch).clip(0, 1)
+        y_test = (create_test_batch(y_test.data) - invalid_batch).clip(0, 1)
         y_test = chainer.Variable(y_test)
 
-    # forward of softmax_cross_entropy_multi
-    losses = softmax_cross_entropy_multi(y, t, data.n_y)
-    accuracies = accuracy_multi(y_test, t, data.n_y)
+    return softmax_cross_entropy_multi(y, t, data.n_y),\
+           F.accuracy(y_test, chainer.Variable(create_test_batch_t(y_batch)))
 
-    return losses, accuracies
+
+# ok
+def create_test_batch_t(array):
+    ret = data.xp.hsplit(array, data.n_y)[0].squeeze()
+    return ret
+
+
+def create_test_batch(array):
+    reshaped = array.reshape(data.b_size, data.n_y, 361)
+    ret = data.xp.hsplit(reshaped, 4)[0].squeeze()
+    return ret
 
 
 def train():
