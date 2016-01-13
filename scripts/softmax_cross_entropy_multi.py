@@ -1,4 +1,3 @@
-import chainer
 import numpy as np
 from chainer import function
 import chainer.functions as F
@@ -80,43 +79,31 @@ class MultiSoftmaxCrossEntropy(function.Function):
         else:
             self.count = x.shape[0]
 
-        reshaped = x.reshape(x.shape[0], self.n, x.shape[1] / self.n)
+        self.in_shape = x.shape[0], self.n, x.shape[2], x.shape[3]
+        reshaped = x.reshape(x.shape[0], self.n, x.shape[2] * x.shape[3])
         planes = cupy.hsplit(reshaped, self.n)
         targets = cupy.hsplit(t, self.n)
 
-        losses = [self.functions[i](chainer.Variable(p), chainer.Variable(ta))
-                       for p, ta, i in zip(planes, targets, range(self.n))]
-        losses_ret = [l.data for l in losses]
-        return (reduce(lambda a, b: a + b, losses_ret) / self.n).reshape(()),
+        losses = [self.functions[i].forward_cpu((p.squeeze(), ta.squeeze()))[0]
+                  for p, ta, i in zip(planes, targets, range(self.n))]
+
+        return cupy.asarray([(sum(losses) / self.n)]).reshape(()),
 
     def backward_gpu(self, inputs, grad_outputs):
         cupy = cuda.cupy
-        # calc each delta
-        gxs = [f.backward_gpu(inputs, grad_outputs) for f in self.functions]
-        # extract actual arrays
-        data = [gx.data for gx in gxs]
-        # concat arrays to single array
-        array = reduce(lambda a, b: cupy.concatenate(a, b), data)
-        return chainer.Variable(array), None
+        x, t = inputs
+        reshaped = x.reshape(x.shape[0], self.n, x.shape[2] * x.shape[3])
+        planes = cupy.hsplit(reshaped, self.n)
+        targets = cupy.hsplit(t, self.n)
+
+        # inputs is None in most case
+        gxs = [self.functions[i].backward_cpu((p.squeeze(), ta.squeeze()), grad_outputs)[0]
+               for p, ta, i in zip(planes, targets, range(self.n))]
+        # concat arrays and return
+        ret = reduce(lambda a, b: cupy.hstack((a, b)), gxs)
+        # return ret.reshape(self.in_shape), None
+        return ret.reshape(self.in_shape), None
 
 
 def softmax_cross_entropy_multi(x, t, n, use_cudnn=True, normalize=True):
-    """Channelwise softmax function.
-
-    This function computes its softmax along the second axis. Let
-    :math:`x = (x_1, x_2, \\dots, x_d)^{\\top}` be the d dimensional index
-    array and :math:`f(x)` be the d dimensional input array. For each index
-    :math:`x` of the input array :math:`f(x)`, it computes the probability
-    :math:`p(x)` defined as
-    :math:`p(x) = {\\exp(f(x)) \\over \\sum_{x_2} \\exp(f(x))}`.
-
-    Args:
-        x (~chainer.Variable): Input variable.
-        use_cudnn (bool): If True and CuDNN is enabled, then this function uses
-            CuDNN as the core implementation.
-
-    Returns:
-        ~chainer.Variable: Output variable.
-
-    """
     return MultiSoftmaxCrossEntropy(use_cudnn, n)(x, t)
