@@ -84,10 +84,10 @@ class MultiSoftmaxCrossEntropy(function.Function):
         planes = cupy.hsplit(reshaped, self.n)
         targets = cupy.hsplit(t, self.n)
 
-        losses = [self.functions[i].forward_cpu((p.squeeze(), ta.squeeze()))[0]
+        losses = [self.functions[i].forward_gpu((p.squeeze(), ta.squeeze()))[0]
                   for p, ta, i in zip(planes, targets, range(self.n))]
 
-        return cupy.asarray([(sum(losses) / self.n)]).reshape(()),
+        return cupy.asarray([(sum(losses) / self.n)], dtype=cupy.float32).reshape(()),
 
     def backward_gpu(self, inputs, grad_outputs):
         cupy = cuda.cupy
@@ -97,7 +97,7 @@ class MultiSoftmaxCrossEntropy(function.Function):
         targets = cupy.hsplit(t, self.n)
 
         # inputs is None in most case
-        gxs = [self.functions[i].backward_cpu((p.squeeze(), ta.squeeze()), grad_outputs)[0]
+        gxs = [self.functions[i].backward_gpu((p.squeeze(), ta.squeeze()), grad_outputs)[0]
                for p, ta, i in zip(planes, targets, range(self.n))]
         # concat arrays and return
         ret = reduce(lambda a, b: cupy.hstack((a, b)), gxs)

@@ -18,7 +18,7 @@ if use_gpu:
     cuda.check_cuda_available()
 
 base_path = os.path.dirname(os.path.abspath(__file__))
-db_path = os.path.normpath(os.path.join(base_path, '../deepgo_.db'))
+db_path = os.path.normpath(os.path.join(base_path, '../deepgo_multi.db'))
 
 # 12481120 -> max
 # 10551120 -> omit 1d, 2d
@@ -27,12 +27,12 @@ db_path = os.path.normpath(os.path.join(base_path, '../deepgo_.db'))
 # data provider (if 39998 sgf => 3898669)
 data = Data(use_gpu=use_gpu,
             db_path=db_path,
-            b_size=3,
+            b_size=42,
             n_ch=22,
-            n_train_data=100,
-            n_test_data=5,
+            n_train_data=10000000,
+            n_test_data=50000,
             n_y=3,
-            n_epoch=2)
+            n_epoch=4)
 
 
 # Prepare data set
