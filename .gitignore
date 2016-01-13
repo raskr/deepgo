@@ -2,6 +2,7 @@
 
 *.pkl
 *.db
+*journal
 *.sgf
 /sgf
 /sgf_test
