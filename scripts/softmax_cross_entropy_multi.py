@@ -43,7 +43,8 @@ class MultiSoftmaxCrossEntropy(function.Function):
         else:
             self.count = x.shape[0]
 
-        reshaped = x.reshape(x.shape[0], self.n, x.shape[1] / self.n)
+        self.in_shape = x.shape[0], self.n, x.shape[2], x.shape[3]
+        reshaped = x.reshape(x.shape[0], self.n, x.shape[2] * x.shape[3])
         planes = np.hsplit(reshaped, self.n)
         targets = np.hsplit(t, self.n)
 
@@ -55,7 +56,7 @@ class MultiSoftmaxCrossEntropy(function.Function):
     # inputs = return = tuple of array
     def backward_cpu(self, inputs, grad_outputs):
         x, t = inputs
-        reshaped = x.reshape(x.shape[0], self.n, x.shape[1] / self.n)
+        reshaped = x.reshape(x.shape[0], self.n, x.shape[2] * x.shape[3])
         planes = np.hsplit(reshaped, self.n)
         targets = np.hsplit(t, self.n)
 
@@ -63,7 +64,9 @@ class MultiSoftmaxCrossEntropy(function.Function):
         gxs = [self.functions[i].backward_cpu((p.squeeze(), ta.squeeze()), grad_outputs)[0]
                for p, ta, i in zip(planes, targets, range(self.n))]
         # concat arrays and return
-        return reduce(lambda a, b: np.hstack((a, b)), gxs), None
+        ret = reduce(lambda a, b: np.hstack((a, b)), gxs)
+        # return ret.reshape(self.in_shape), None
+        return ret.reshape(self.in_shape), None
 
     def forward_gpu(self, inputs):
         cupy = cuda.cupy

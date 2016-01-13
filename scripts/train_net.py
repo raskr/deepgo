@@ -64,7 +64,7 @@ def forward(x_batch, y_batch, invalid_batch):
 
 
 def train():
-    optimizer = optimizers.Adam()
+    optimizer = optimizers.SGD(lr=0.05)
     optimizer.setup(model)
     for epoch in six.moves.range(1, data.n_epoch + 1):
         sum_accuracy = sum_loss = mb_count = 0
@@ -77,6 +77,14 @@ def train():
             # loss is result of SoftmaxCrossEntropy#call() (using forward internally)
             loss, acc = forward(x_batch, y_batch, invalid_batch=None)
             loss.backward()
+            if epoch == 2:
+                optimizer.lr = 0.04
+            if epoch == 3:
+                optimizer.lr = 0.03
+            if epoch == 4:
+                optimizer.lr = 0.02
+            if epoch == 5:
+                optimizer.lr = 0.01
             optimizer.update()
 
             sum_loss += float(loss.data) * len(y_batch)

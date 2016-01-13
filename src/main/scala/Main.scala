@@ -6,7 +6,7 @@ import java.nio.charset.{MalformedInputException => fmtErr}
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
-// sbt "run -m db -c wb -s 4 -d path/to/sgf/dir"
+// sbt "run -m db -c wb -s 4 -d path/to/sgfDir"
 object Main {
 
   def main(args: Array[String]) = {
@@ -18,23 +18,24 @@ object Main {
     val opponentRank = res find (_._1.matches("-r||--rank")) // use when gtp mode
 
     (dir, color, mode, step, opponentRank) match {
-      case (Some(d), Some(c), Some(m), Some(s), _) if m._2 == "db" =>
-        //parseSGF(d._2, colorsFrom(c._2).map(new DB(_)), s._2.head-'0', limit=Some(2))
-        parseSGF1(d._2, colorsFrom(c._2).map(new DB1(_)), s._2.head-'0', limit=Some(2))
+      case (Some(d), Some(c), Some(m), Some(s), _) if m._2 == "db" => // use sqlite3 as output storage
+        parseSGF(d._2, colorsFrom(c._2).map(new DB(_)), s._2.charAt(0)-'0', limit=Some(60000))
+        // parseSGF_single(d._2, colorsFrom(c._2).map(new DB1(_)), s._2.head-'0', limit=Some(2))
 
-      case (Some(d), Some(c), Some(m), Some(s), _) if m._2 == "f" =>
+      case (Some(d), Some(c), Some(m), Some(s), _) if m._2 == "f" => // use text files as output storage
         parseSGF(d._2, colorsFrom(c._2).map(new Files(_)), s._2.head-'0')
 
-      case (Some(d), _, _, _, _) =>
-        parseSGF(d._2, Seq(), 4, limit=Some(100))
+      case (Some(d), _, _, Some(s), _) => // test
+        parseSGF(d._2, Seq(), 4, limit=Some(10000))
+        errors.foreach { print }
 
       case (_, Some(c), Some(m), Some(s), Some(o)) if m._2 == "gtp" =>
         GTP_CmdHandler(o._2, c._2.head).listenAndServe()
 
-      case _ => throw new IllegalArgumentException("Put valid arguments.")
+      case _ => throw new IllegalArgumentException("No valid arguments were given.")
     }
   }
-  def parseSGF1(dir: String, outs: Seq[OutputStorage], step: Int, limit: Option[Int] = None) = {
+  def parseSGF_single(dir: String, outs: Seq[OutputStorage], step: Int, limit: Option[Int] = None) = {
     try {
       listFilesIn(dir, limit, Some(".sgf")).par foreach { f =>
         try {
@@ -75,10 +76,25 @@ object Main {
     }
   }
 
+  val errors = scala.collection.mutable.ArrayBuffer[Exception]()
+
   private def distributeTargetMoves(res: (Seq[State],Seq[Move]), step: Int): Seq[(State, Seq[Move])] = {
     val (states, moves) = res
     val (stLen, mvLen) = (states.size, moves.size)
-    assert(step >= 1 && stLen == mvLen && step < stLen)
+
+    //if (step > stLen) {
+    //  new Thread(new Runnable() {
+    //    def run() = new java.io.File("aaaaaaaaaa").write("aaaaaaaaaa" + stLen)
+    //  }).run()
+    //  Thread.sleep(1000)
+    //}
+    if (step >= stLen) errors.append(new RuntimeException("lennnnnnnn: " + stLen))
+
+    //try {
+    //  assert(step < stLen)
+    //} catch {
+    //  case e: java.lang.AssertionError => throw new RuntimeException("lennnnnnnn: " + stLen)
+    //}
     Range(0, stLen-step).map( i => (states(i), moves.slice(i, i + step)) )
   }
 

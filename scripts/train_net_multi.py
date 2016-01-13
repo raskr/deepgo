@@ -40,7 +40,6 @@ model = chainer.FunctionSet(
         conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=20, ksize=5, pad=2),
         conv2=F.Convolution2D(in_channels=20, out_channels=20, ksize=3, pad=1),
         conv3=F.Convolution2D(in_channels=20, out_channels=data.n_y, ksize=3, pad=1),
-        l1=F.Linear(361*data.n_y, 361*data.n_y)
 )
 
 
@@ -54,32 +53,31 @@ def forward(x_batch, y_batch, invalid_batch):
 
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
-    h = F.relu(model.conv3(h))
-    y = y_test = model.l1(h)
+    # shape is (b_size, n, 19, 19)
+    y = F.relu(model.conv3(h))
+    y_ch_reduced = chainer.Variable(focus_on_first_channel(y.data))
 
     if invalid_batch is not None:
-        y_test = softmax_multi(y_test, data.n_y)
-        y_test = (create_test_batch(y_test.data) - invalid_batch).clip(0, 1)
-        y_test = chainer.Variable(y_test)
+        y_ch_reduced = F.softmax(y_ch_reduced)
+        y_ch_reduced = chainer.Variable((y_ch_reduced.data - invalid_batch).clip(0, 1))
 
     return softmax_cross_entropy_multi(y, t, data.n_y),\
-           F.accuracy(y_test, chainer.Variable(create_test_batch_t(y_batch)))
+           F.accuracy(y_ch_reduced, chainer.Variable(focus_on_first_value(y_batch)))
 
 
-# ok
-def create_test_batch_t(array):
+def focus_on_first_value(array):
     ret = data.xp.hsplit(array, data.n_y)[0].squeeze()
     return ret
 
 
-def create_test_batch(array):
+def focus_on_first_channel(array):
     reshaped = array.reshape(data.b_size, data.n_y, 361)
     ret = data.xp.hsplit(reshaped, 4)[0].squeeze()
     return ret
 
 
 def train():
-    optimizer = optimizers.Adam()
+    optimizer = optimizers.SGD(lr=0.05)
     optimizer.setup(model)
     for epoch in six.moves.range(1, data.n_epoch + 1):
         sum_accuracy = sum_loss = mb_count = 0
@@ -91,6 +89,14 @@ def train():
             optimizer.zero_grads()
             loss, acc = forward(x_batch, y_batch, None)
             loss.backward()
+            if epoch == 2:
+                optimizer.lr = 0.04
+            if epoch == 3:
+                optimizer.lr = 0.03
+            if epoch == 4:
+                optimizer.lr = 0.02
+            if epoch == 5:
+                optimizer.lr = 0.01
             optimizer.update()
 
             sum_loss += float(loss.data) * len(y_batch)

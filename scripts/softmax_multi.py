@@ -18,17 +18,12 @@ class MultiSoftmax(function.Function):
     def forward(self, inputs):
         xp = cuda.get_array_module(*inputs)
         x = inputs[0]
-        reshaped = x.reshape(x.shape[0], self.n, x.shape[1] / self.n)
-        # print('bbbbbbbbbbbbb')
-        # print(reshaped.shape)
+        input_shape = x.shape
+        reshaped = x.reshape(x.shape[0], self.n, x.shape[2] * x.shape[3])
         planes = xp.hsplit(reshaped, self.n)
-        # for p in planes:
-        #     print(p.squeeze().shape)
-        planes = [self.softmax.forward((p.squeeze(),))[0] for p in planes]
+        planes = [self.softmax.forward((p.squeeze(),)) for p in planes]
         res = reduce(lambda a, b: xp.hstack((a, b)), planes)
-        # print('aaaaaaaaa')
-        # print(res.shape)
-        return res,
+        return res.reshape(input_shape),
 
 
 def softmax_multi(x, n, use_cudnn=True):
