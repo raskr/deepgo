@@ -19,7 +19,7 @@ object Main {
 
     (dir, color, mode, step, opponentRank) match {
       case (Some(d), Some(c), Some(m), Some(s), _) if m._2 == "db" => // use sqlite3 as output storage
-        parseSGF(d._2, colorsFrom(c._2).map(new DB(_)), s._2.charAt(0)-'0', limit=Some(60000))
+        parseSGF(d._2, colorsFrom(c._2).map(new DB(_)), s._2.charAt(0)-'0', limit=None)
         // parseSGF_single(d._2, colorsFrom(c._2).map(new DB1(_)), s._2.head-'0', limit=Some(2))
 
       case (Some(d), Some(c), Some(m), Some(s), _) if m._2 == "f" => // use text files as output storage
@@ -27,7 +27,6 @@ object Main {
 
       case (Some(d), _, _, Some(s), _) => // test
         parseSGF(d._2, Seq(), 4, limit=Some(10000))
-        errors.foreach { print }
 
       case (_, Some(c), Some(m), Some(s), Some(o)) if m._2 == "gtp" =>
         GTP_CmdHandler(o._2, c._2.head).listenAndServe()
@@ -55,9 +54,11 @@ object Main {
       val parsed = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
       if (parsed.successful) processParseResult(parsed.get, outs.map(_.color)).foreach { pRes =>
         val res = distributeTargetMoves(pRes, step)
-        // internal test
-        if (outs.isEmpty) DistributeTargetMovesTest(res)
-        commitResult(res, outs)
+	res foreach { x =>
+        	// internal test
+		if (outs.isEmpty) DistributeTargetMovesTest(x)
+		commitResult(x, outs)
+	}
       }
     }
   } catch   { case e: fmtErr => println("ignore strange file")
@@ -76,26 +77,12 @@ object Main {
     }
   }
 
-  val errors = scala.collection.mutable.ArrayBuffer[Exception]()
-
-  private def distributeTargetMoves(res: (Seq[State],Seq[Move]), step: Int): Seq[(State, Seq[Move])] = {
+  private def distributeTargetMoves(res: (Seq[State],Seq[Move]), step: Int): Option[Seq[(State, Seq[Move])]] = {
     val (states, moves) = res
     val (stLen, mvLen) = (states.size, moves.size)
 
-    //if (step > stLen) {
-    //  new Thread(new Runnable() {
-    //    def run() = new java.io.File("aaaaaaaaaa").write("aaaaaaaaaa" + stLen)
-    //  }).run()
-    //  Thread.sleep(1000)
-    //}
-    if (step >= stLen) errors.append(new RuntimeException("lennnnnnnn: " + stLen))
-
-    //try {
-    //  assert(step < stLen)
-    //} catch {
-    //  case e: java.lang.AssertionError => throw new RuntimeException("lennnnnnnn: " + stLen)
-    //}
-    Range(0, stLen-step).map( i => (states(i), moves.slice(i, i + step)) )
+    if (stLen < 10) Some(Range(0, stLen-step).map( i => (states(i), moves.slice(i, i + step)) ))
+    else None
   }
 
   /**
