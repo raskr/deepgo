@@ -18,7 +18,7 @@ if use_gpu:
     cuda.check_cuda_available()
 
 base_path = os.path.dirname(os.path.abspath(__file__))
-db_path = os.path.normpath(os.path.join(base_path, '../deepgo_multi_pred.db'))
+db_path = os.path.normpath(os.path.join(base_path, '../deepgo_multi.db'))
 
 # 12481120 -> max
 # 10551120 -> omit 1d, 2d
@@ -29,9 +29,9 @@ data = Data(use_gpu=use_gpu,
             db_path=db_path,
             b_size=3,
             n_ch=22,
-            n_train_data=10,
-            n_test_data=3,
-            n_y=4,
+            n_train_data=10000000,
+            n_test_data=50000,
+            n_y=3,
             n_epoch=4)
 
 
@@ -72,7 +72,7 @@ def focus_on_first_value(array):
 
 def focus_on_first_channel(array):
     reshaped = array.reshape(data.b_size, data.n_y, 361)
-    ret = data.xp.hsplit(reshaped, 4)[0].squeeze()
+    ret = data.xp.hsplit(reshaped, data.n_y)[0].squeeze()
     return ret
 
 
