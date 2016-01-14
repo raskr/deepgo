@@ -22,9 +22,8 @@ class MultiAccuracy(function.Function):
         accs = [F.accuracy(chainer.Variable(plane.squeeze()), chainer.Variable(t.squeeze()))
                 for plane, t in zip(planes, targets)]
 
-        ret = [np.asarray([acc.data]) for acc in accs]
-        ret = (reduce(lambda a, b: a + b, ret) / self.n)
-        return ret.reshape(()),
+        accs = [np.asarray([acc.data]) for acc in accs]
+        return (sum(accs) / self.n).reshape(()),
 
 
 def accuracy_multi(y, t, n):

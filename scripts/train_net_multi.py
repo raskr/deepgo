@@ -1,7 +1,7 @@
 import argparse
 import os
 
-from __init__ import *
+from modified_functions import softmax_cross_entropy_multi
 import six
 import chainer.functions as F
 import chainer
@@ -27,9 +27,9 @@ db_path = os.path.normpath(os.path.join(base_path, '../deepgo_multi.db'))
 # data provider (if 39998 sgf => 3898669)
 data = Data(use_gpu=use_gpu,
             db_path=db_path,
-            b_size=42,
+            b_size=128,
             n_ch=22,
-            n_train_data=10000000,
+            n_train_data=5000000,
             n_test_data=50000,
             n_y=3,
             n_epoch=4)

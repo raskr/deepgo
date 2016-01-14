@@ -3,7 +3,6 @@ from chainer import function
 import chainer.functions as F
 
 
-# need not backward
 class MultiSoftmax(function.Function):
 
     softmax = F.Softmax()
