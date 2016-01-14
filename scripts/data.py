@@ -38,7 +38,8 @@ class Data:
         if train:
             self.cur.execute(query.format(self.b_size*i+1, self.b_size*i + self.b_size))
             for row in self.cur.fetchall():
-                xs = self.xp.concatenate((xs, self.xp.asarray(str2floats(row[0]), self.xp.float32)))
+                # simple !
+                xs = self.xp.concatenate((xs, self.xp.asarray(str2floats_simple(row[0]), self.xp.float32)))
                 ys = self.xp.append(ys, row[1])
 
             return xs.reshape(self.b_size, self.n_ch, 19, 19), ys.astype(self.xp.int32)
@@ -46,7 +47,8 @@ class Data:
             invalids = self.xp.asarray([], dtype=self.xp.float32)
             self.cur.execute(query_test.format(self.b_size*i+1, self.b_size*i + self.b_size))
             for row in self.cur.fetchall():
-                xs = self.xp.concatenate((xs, self.xp.asarray(str2floats(row[0]), self.xp.float32)))
+                # simple !
+                xs = self.xp.concatenate((xs, self.xp.asarray(str2floats_simple(row[0]), self.xp.float32)))
                 ys = self.xp.append(ys, row[1])
                 invalids = self.xp.concatenate((invalids, self.xp.asarray(str2floats_simple(row[2]), self.xp.float32)))
 

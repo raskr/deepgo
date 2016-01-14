@@ -20,11 +20,10 @@ object Main {
     (dir, color, mode, step, opponentRank) match {
       case (Some(d), Some(c), Some(m), Some(s), _) if m._2 == "db" => // use sqlite3
         val stp = s._2.charAt(0)-'0'
-        if (stp == 1) {
-          parseSGF_single(d._2, colorsFrom(c._2).map(new DB1(_)), s._2.head-'0', limit=Some(2))
-        } else {
-          parseSGF(d._2, colorsFrom(c._2).map(new DB(_)), stp, limit=None)
-        }
+//        if (stp == 1)
+//          parseSGF_single(d._2, colorsFrom(c._2).map(new DB1(_)), s._2.head-'0', limit=None)
+//        else
+          parseSGF(d._2, colorsFrom(c._2).map(new DB(_)), stp, limit=Some(110000))
 
       case (Some(d), Some(c), Some(m), Some(s), _) if m._2 == "f" => // use text files
         parseSGF(d._2, colorsFrom(c._2).map(new Files(_)), s._2.head-'0')
@@ -39,11 +38,15 @@ object Main {
     }
   }
   def parseSGF_single(dir: String, outs: Seq[OutputStorage], step: Int, limit: Option[Int] = None) = {
+    var i = 0
     try {
       listFilesIn(dir, limit, Some(".sgf")).par foreach { f =>
+        i += 1; if (i % 1000 == 0) println(i)
         try {
           val res = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
-          if (res.successful) processParseResult(res.get, outs.map(_.color)) foreach { commitResult(_, outs) }
+          if (res.successful) processParseResult(res.get, outs.map(_.color)) foreach {
+            commitResult(_, outs)
+          }
         } catch {
           case e: java.nio.charset.MalformedInputException =>
             println("ignore strange file: " + f.getName)
@@ -59,8 +62,7 @@ object Main {
       if (parsed.successful) processParseResult(parsed.get, outs.map(_.color)).foreach { pRes =>
         val res = distributeTargetMoves(pRes, step)
         res foreach { x =>
-          // internal test
-          if (outs.isEmpty) DistributeTargetMovesTest(x)
+          if (outs.isEmpty) TargetDistributionTest(x)
           commitResult(x, outs)
         }
       }
@@ -84,7 +86,7 @@ object Main {
   private def distributeTargetMoves(res: (Seq[State],Seq[Move]), step: Int): Option[Seq[(State, Seq[Move])]] = {
     val (states, moves) = res
     val (stLen, mvLen) = (states.size, moves.size)
-
+    assert(stLen == mvLen)
     if (stLen > 10) Some(Range(0, stLen-step).map( i => (states(i), moves.slice(i, i + step)) ))
     else None
   }

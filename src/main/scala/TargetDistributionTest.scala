@@ -1,21 +1,21 @@
 import Implicits._
 import Utils._
 
-object DistributeTargetMovesTest {
+object TargetDistributionTest {
 
   /**
     * @param dst return value of Main.distributeTargetMoves()
     */
   def apply(dst: Seq[(State, Seq[Move])]) = {
-    val (dstSt, dstMv) = dst.unzip
-    zipEach(dstSt, dstMv) { (st, ms: Seq[Move]) =>
-      var answerState = st
-      var createdState = st
+    val (states, moves) = dst.unzip
+    zipEach(states, moves) { (curState, moveChunk: Seq[Move]) =>
+      var answerState = curState
+      var createdState = curState
 
-      ms.foreach{ m =>
+      for (m <- moveChunk) {
         try {
-          createdState = createdState.nextStateBy(m)
-          answerState = dstSt.nextOf(answerState)
+          createdState = createdState nextStateBy m
+          answerState = states nextOf answerState
           assert(createdState.board sameElements answerState.board)
         } catch { case e: IndexOutOfBoundsException => /* ignore */ }
       }

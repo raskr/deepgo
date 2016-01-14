@@ -1,7 +1,7 @@
 import argparse
 import os
 
-from modified_functions import softmax_cross_entropy_multi
+from modified_functions.softmax_cross_entropy_multi import softmax_cross_entropy_multi
 import six
 import chainer.functions as F
 import chainer
@@ -45,7 +45,6 @@ model = chainer.FunctionSet(
 
 if use_gpu:
     cuda.get_device(0).use()
-    model.to_gpu()
 
 
 def forward(x_batch, y_batch, invalid_batch):
@@ -80,6 +79,8 @@ def train():
     optimizer = optimizers.SGD(lr=0.05)
     optimizer.setup(model)
     for epoch in six.moves.range(1, data.n_epoch + 1):
+        if use_gpu:
+            model.to_gpu()
         sum_accuracy = sum_loss = mb_count = 0
         for i in data.mb_indices(True):
             print('epoch: {} mini batch: {} of {}'.format(epoch, mb_count, data.n_mb_train))

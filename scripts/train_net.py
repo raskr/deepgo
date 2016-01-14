@@ -1,6 +1,7 @@
 import argparse
 import os
 
+from modified_functions.softmax_cross_entropy_mod import softmax_cross_entropy_mod
 import six
 import chainer.functions as F
 import chainer
@@ -26,20 +27,24 @@ db_path = os.path.normpath(os.path.join(base_path, '../deepgo_single.db'))
 # data provider (if 39998 sgf => 3898669)
 data = Data(use_gpu=use_gpu,
             db_path=db_path,
-            b_size=3,
-            n_ch=22,
-            n_train_data=100,
-            n_test_data=20,
+            b_size=200,
+            n_ch=3,
+            n_train_data=17000000,
+            n_test_data=50000,
             n_epoch=3)
 
-n_layer = 5
 
 # Prepare data set
 model = chainer.FunctionSet(
-    conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=20, ksize=5, pad=2),
-    conv2=F.Convolution2D(in_channels=20, out_channels=20, ksize=3, pad=1),
-    conv3=F.Convolution2D(in_channels=20, out_channels=1, ksize=3, pad=1),
-    l1=F.Linear(361, 361)
+    conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=64, ksize=5, pad=2),
+    conv2=F.Convolution2D(in_channels=64, out_channels=64, ksize=3, pad=1),
+    conv3=F.Convolution2D(in_channels=64, out_channels=64, ksize=3, pad=1),
+    conv4=F.Convolution2D(in_channels=64, out_channels=64, ksize=3, pad=1),
+    conv5=F.Convolution2D(in_channels=64, out_channels=64, ksize=3, pad=1),
+    conv6=F.Convolution2D(in_channels=64, out_channels=64, ksize=3, pad=1),
+    conv7=F.Convolution2D(in_channels=64, out_channels=64, ksize=3, pad=1),
+    conv8=F.Convolution2D(in_channels=64, out_channels=1, ksize=3, pad=1),
+    l=F.Linear(361, 361)
 )
 
 
@@ -53,7 +58,11 @@ def forward(x_batch, y_batch, invalid_batch):
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
     h = F.relu(model.conv3(h))
-    y = y_test = model.l1(h)
+    h = F.relu(model.conv4(h))
+    h = F.relu(model.conv5(h))
+    h = F.relu(model.conv6(h))
+    h = F.relu(model.conv7(h))
+    y = y_test = model.l(F.relu(model.conv8(h)))
     if invalid_batch is not None:
         y_test = F.softmax(y_test)
         y_test = (y_test.data - invalid_batch).clip(0, 1)
