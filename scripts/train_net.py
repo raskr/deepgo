@@ -17,7 +17,7 @@ if use_gpu:
     cuda.check_cuda_available()
 
 base_path = os.path.dirname(os.path.abspath(__file__))
-db_path = os.path.normpath(os.path.join(base_path, '../deepgo.db'))
+db_path = os.path.normpath(os.path.join(base_path, '../deepgo_single.db'))
 
 # 12481120 -> max
 # 10551120 -> omit 1d, 2d
@@ -28,18 +28,17 @@ data = Data(use_gpu=use_gpu,
             db_path=db_path,
             b_size=3,
             n_ch=22,
-            n_train_data=10,
-            n_test_data=3,
+            n_train_data=100,
+            n_test_data=20,
             n_epoch=3)
 
-n_out_plane = 1
 n_layer = 5
 
 # Prepare data set
 model = chainer.FunctionSet(
     conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=20, ksize=5, pad=2),
     conv2=F.Convolution2D(in_channels=20, out_channels=20, ksize=3, pad=1),
-    conv3=F.Convolution2D(in_channels=20, out_channels=n_out_plane, ksize=3, pad=1),
+    conv3=F.Convolution2D(in_channels=20, out_channels=1, ksize=3, pad=1),
     l1=F.Linear(361, 361)
 )
 

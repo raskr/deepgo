@@ -10,7 +10,7 @@ sealed abstract class OutputStorage {
 }
 
 object DB1 {
-  val dbName = "deepgo.db"
+  val dbName = "deepgo_single.db"
   val lock = new AnyRef
   var closed = false
   var currentRowCount = 0
@@ -26,7 +26,7 @@ object DB1 {
 }
 
 object DB {
-  val dbName = "deepgo.db"
+  val dbName = "deepgo_multi.db"
   val lock = new AnyRef
   var closed = false
   var currentRowCount = 0
