@@ -40,13 +40,13 @@ case class State(board: Array[Char] = Array.fill(all)(Empty),
     ownRank map { rank =>
       new StringBuilder()
         .append(board.toBoardChannel)     // 3 tested
-//        .append(board.toBorderChannel)    // 1 tested
-//        .append(board.toLibertyChannel)   // 6 tested
-//        .append(koPos.toKoChannel)        // 1 tested
-//        .append(rank.toRankChannel)       // 9 tested
-//        .append(prevMove.toMoveChannel)   // 1 maybe ok
-//        .append(board.toGroupSizeChannel) // 2 tested
-//        .append(hist.toHistoryChannel)    // 1 tested
+        .append(board.toBorderChannel)    // 1 tested
+        .append(board.toLibertyChannel)   // 6 tested
+        .append(koPos.toKoChannel)        // 1 tested
+        .append(rank.toRankChannel)       // 9 tested
+        .append(prevMove.toMoveChannel)   // 1 maybe ok
+        .append(board.toGroupSizeChannel) // 2 tested
+        .append(hist.toHistoryChannel)    // 1 tested
         .toString
     }
 

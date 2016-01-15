@@ -27,10 +27,10 @@ db_path = os.path.normpath(os.path.join(base_path, '../deepgo_multi.db'))
 # data provider (if 39998 sgf => 3898669)
 data = Data(use_gpu=use_gpu,
             db_path=db_path,
-            b_size=128,
+            b_size=2,
             n_ch=22,
-            n_train_data=5000000,
-            n_test_data=50000,
+            n_train_data=100,
+            n_test_data=40,
             n_y=3,
             n_epoch=4)
 
@@ -52,24 +52,25 @@ def forward(x_batch, y_batch, invalid_batch):
 
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
-    # shape is (b_size, n, 19, 19)
     y = F.relu(model.conv3(h))
-    y_ch_reduced = chainer.Variable(focus_on_first_channel(y.data))
+    y_ch_reduced = chainer.Variable(hsplit_output(y.data))
 
     if invalid_batch is not None:
         y_ch_reduced = F.softmax(y_ch_reduced)
         y_ch_reduced = chainer.Variable((y_ch_reduced.data - invalid_batch).clip(0, 1))
+        y_ch_reduced = F.softmax(y_ch_reduced)
 
-    return softmax_cross_entropy_multi(y, t, data.n_y),\
-           F.accuracy(y_ch_reduced, chainer.Variable(focus_on_first_value(y_batch)))
+    return softmax_cross_entropy_multi(y, t),\
+           F.accuracy(y_ch_reduced, chainer.Variable(hsplit_target(y_batch)))
 
 
-def focus_on_first_value(array):
+# ok
+def hsplit_target(array):
     ret = data.xp.hsplit(array, data.n_y)[0].squeeze()
     return ret
 
 
-def focus_on_first_channel(array):
+def hsplit_output(array):
     reshaped = array.reshape(data.b_size, data.n_y, 361)
     ret = data.xp.hsplit(reshaped, data.n_y)[0].squeeze()
     return ret

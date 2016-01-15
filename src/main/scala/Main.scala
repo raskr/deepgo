@@ -20,10 +20,7 @@ object Main {
     (dir, color, mode, step, opponentRank) match {
       case (Some(d), Some(c), Some(m), Some(s), _) if m._2 == "db" => // use sqlite3
         val stp = s._2.charAt(0)-'0'
-//        if (stp == 1)
-//          parseSGF_single(d._2, colorsFrom(c._2).map(new DB1(_)), s._2.head-'0', limit=None)
-//        else
-          parseSGF(d._2, colorsFrom(c._2).map(new DB(_)), stp, limit=Some(110000))
+        parseSGF(d._2, colorsFrom(c._2).map(new DB(_)), stp, limit=Some(3))
 
       case (Some(d), Some(c), Some(m), Some(s), _) if m._2 == "f" => // use text files
         parseSGF(d._2, colorsFrom(c._2).map(new Files(_)), s._2.head-'0')
