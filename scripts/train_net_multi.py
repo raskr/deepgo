@@ -34,6 +34,7 @@ data = Data(use_gpu=use_gpu,
             n_y=3,
             n_epoch=4)
 
+n_layer = 3
 
 # Prepare data set
 model = chainer.FunctionSet(
@@ -46,6 +47,9 @@ model = chainer.FunctionSet(
 if use_gpu:
     cuda.get_device(0).use()
 
+# cache. used when testing.
+softmax = F.Softmax()
+
 
 def forward(x_batch, y_batch, invalid_batch):
     x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
@@ -53,15 +57,16 @@ def forward(x_batch, y_batch, invalid_batch):
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
     y = F.relu(model.conv3(h))
-    y_ch_reduced = chainer.Variable(hsplit_output(y.data))
+    # this is array
+    y_ch_reduced = hsplit_output(y.data)
 
     if invalid_batch is not None:
-        y_ch_reduced = F.softmax(y_ch_reduced)
-        y_ch_reduced = chainer.Variable((y_ch_reduced.data - invalid_batch).clip(0, 1))
-        y_ch_reduced = F.softmax(y_ch_reduced)
+        y_ch_reduced = softmax.forward(y_ch_reduced)
+        y_ch_reduced = (y_ch_reduced.data - invalid_batch).clip(0, 1)
+        y_ch_reduced = softmax.forward(y_ch_reduced)
 
     return softmax_cross_entropy_multi(y, t),\
-           F.accuracy(y_ch_reduced, chainer.Variable(hsplit_target(y_batch)))
+           F.accuracy(chainer.Variable(y_ch_reduced), chainer.Variable(hsplit_target(y_batch)))
 
 
 # ok
@@ -123,7 +128,7 @@ def train():
         with open('result.txt', 'a+') as f:
             f.write(('test mean loss = {}, accuracy = {}\n'.format(sum_loss / data.n_test_data, sum_accuracy / data.n_test_data)))
 
-        save_net('white_{}'.format(epoch))
+        save_net('{}ep_{}data_{}pred_{}layer'.format(epoch, data.n_train_data, data.n_y, n_layer))
 
 
 def save_net(name):
