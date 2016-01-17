@@ -135,7 +135,8 @@ def train():
             f.write(('state: {}\ntest mean loss = {}, accuracy = {}\n'.format(data.printable(), sum_loss / data.n_test_data, sum_accuracy / data.n_test_data)))
 
     save_net('white_{}'.format(data.printable()))
-    print('took total: {}'.format(datetime.now() - start_time))
+    with open('{}.txt'.format(start_time_str), 'a+') as f:
+        f.write('It took total... {}\n\n'.format(datetime.now() - start_time))
 
 
 def save_net(name):
