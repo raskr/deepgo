@@ -40,20 +40,19 @@ class Data:
             for row in self.cur.fetchall():
                 # simple !
                 xs = self.xp.concatenate((xs, self.xp.asarray(str2floats_simple(row[0]), self.xp.float32)))
-                ys = self.xp.append(ys, row[1])
+                ys = self.xp.concatenate((ys, self.xp.asarray([row[1]], self.xp.int32)))
 
-            return xs.reshape(self.b_size, self.n_ch, 19, 19), ys.astype(self.xp.int32)
+            return xs.reshape(self.b_size, self.n_ch, 19, 19), ys
         else:
             invalids = self.xp.asarray([], dtype=self.xp.float32)
             self.cur.execute(query_test.format(self.b_size*i+1, self.b_size*i + self.b_size))
             for row in self.cur.fetchall():
                 # simple !
                 xs = self.xp.concatenate((xs, self.xp.asarray(str2floats_simple(row[0]), self.xp.float32)))
-                ys = self.xp.append(ys, row[1])
+                ys = self.xp.concatenate((ys, self.xp.asarray([row[1]], self.xp.int32)))
                 invalids = self.xp.concatenate((invalids, self.xp.asarray(str2floats_simple(row[2]), self.xp.float32)))
 
-            return xs.reshape(self.b_size, self.n_ch, 19, 19),\
-                   ys.astype(self.xp.int32),\
+            return xs.reshape(self.b_size, self.n_ch, 19, 19), ys,\
                    invalids.reshape(self.b_size, 361)
 
     def mb_indices(self, train):

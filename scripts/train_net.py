@@ -27,23 +27,21 @@ db_path = os.path.normpath(os.path.join(base_path, '../deepgo_single.db'))
 # data provider (if 39998 sgf => 3898669)
 data = Data(use_gpu=use_gpu,
             db_path=db_path,
-            b_size=200,
+            b_size=128,
             n_ch=3,
-            n_train_data=17000000,
-            n_test_data=50000,
-            n_epoch=3)
+            n_train_data=15000000,
+            n_test_data=70000,
+            n_epoch=4)
 
 
 # Prepare data set
 model = chainer.FunctionSet(
-    conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=64, ksize=5, pad=2),
-    conv2=F.Convolution2D(in_channels=64, out_channels=64, ksize=3, pad=1),
-    conv3=F.Convolution2D(in_channels=64, out_channels=64, ksize=3, pad=1),
-    conv4=F.Convolution2D(in_channels=64, out_channels=64, ksize=3, pad=1),
-    conv5=F.Convolution2D(in_channels=64, out_channels=64, ksize=3, pad=1),
-    conv6=F.Convolution2D(in_channels=64, out_channels=64, ksize=3, pad=1),
-    conv7=F.Convolution2D(in_channels=64, out_channels=64, ksize=3, pad=1),
-    conv8=F.Convolution2D(in_channels=64, out_channels=1, ksize=3, pad=1),
+    conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=32, ksize=5, pad=2),
+    conv2=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
+    conv3=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
+    conv4=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
+    conv5=F.Convolution2D(in_channels=32, out_channels=32, ksize=3, pad=1),
+    conv6=F.Convolution2D(in_channels=32, out_channels=1, ksize=3, pad=1),
     l=F.Linear(361, 361)
 )
 
@@ -51,6 +49,8 @@ model = chainer.FunctionSet(
 if use_gpu:
     cuda.get_device(0).use()
     model.to_gpu()
+
+softmax = F.Softmax()
 
 
 def forward(x_batch, y_batch, invalid_batch):
@@ -61,18 +61,19 @@ def forward(x_batch, y_batch, invalid_batch):
     h = F.relu(model.conv4(h))
     h = F.relu(model.conv5(h))
     h = F.relu(model.conv6(h))
-    h = F.relu(model.conv7(h))
-    y = y_test = model.l(F.relu(model.conv8(h)))
+    y = y_test = model.l(F.relu(model.conv7(h)))
+
     if invalid_batch is not None:
-        y_test = F.softmax(y_test)
+        y_test = softmax.forward(y_test.data)
         y_test = (y_test.data - invalid_batch).clip(0, 1)
+        y_test = softmax.forward(y_test)
         y_test = chainer.Variable(y_test)
 
     return F.softmax_cross_entropy(y, t), F.accuracy(y_test, t)
 
 
 def train():
-    optimizer = optimizers.SGD(lr=0.05)
+    optimizer = optimizers.SGD(lr=0.08)
     optimizer.setup(model)
     for epoch in six.moves.range(1, data.n_epoch + 1):
         sum_accuracy = sum_loss = mb_count = 0
@@ -86,9 +87,9 @@ def train():
             loss, acc = forward(x_batch, y_batch, invalid_batch=None)
             loss.backward()
             if epoch == 2:
-                optimizer.lr = 0.04
+                optimizer.lr = 0.06
             if epoch == 3:
-                optimizer.lr = 0.03
+                optimizer.lr = 0.04
             if epoch == 4:
                 optimizer.lr = 0.02
             if epoch == 5:
@@ -117,12 +118,14 @@ def train():
         with open('result.txt', 'a+') as f:
             f.write(('test mean loss = {}, accuracy = {}\n'.format(sum_loss / data.n_test_data, sum_accuracy / data.n_test_data)))
 
-        save_net('white_epoch:{}_layer:{}_data:{}'.format(epoch, 5, 'test'))
+    save_net('white_epoch:{}_layer:{}_ch:{}_data:{}'.format(data.n_epoch, 6, 32, data.n_mb_train))
 
 
 def save_net(name):
     print("save network...")
     six.moves.cPickle.dump(model.to_cpu(), open("{}.pkl".format("../" + name), "wb"), -1)
+    if use_gpu:
+        model.to_gpu()
 
 
 train()
