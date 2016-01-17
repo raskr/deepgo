@@ -11,7 +11,15 @@ query_test = "SELECT state, target, invalid FROM O WHERE _id BETWEEN {} AND {} O
 
 class DataMulti:
 
-    def __init__(self, use_gpu, n_epoch, n_ch, b_size, n_train_data, n_test_data, n_y, db_path):
+    def printable(self):
+        return '{}ep_{}data_{}pred_{}layer'.format(self.n_epoch,
+                                                   self.n_train_data,
+                                                   self.n_y,
+                                                   self.n_layer)
+
+    def __init__(self, use_gpu, n_epoch, n_ch,
+                 b_size, n_train_data, n_test_data,
+                 n_y, n_layer, db_path):
         self.db_path = db_path
         self.use_gpu = use_gpu
         self.xp = cuda.cupy if use_gpu else np
@@ -19,7 +27,10 @@ class DataMulti:
         self.n_epoch = n_epoch
         self.n_ch = n_ch
         self.n_y = n_y
+        self.n_layer = n_layer
         self.n_train_data = n_train_data
+        self.n_train_data_half = n_train_data / 2
+        self.n_train_data_quarter = n_train_data / 4
         self.n_test_data = n_test_data
         self.b_size = b_size
         self.n_epoch = n_epoch

@@ -11,13 +11,19 @@ query_test = "SELECT state, target, invalid FROM O WHERE _id BETWEEN {} AND {} O
 
 class Data:
 
-    def __init__(self, use_gpu, n_epoch, n_ch, b_size, n_train_data, n_test_data, db_path):
+    def printable(self):
+        return '{}ep_{}data_1pred_{}layer'.format(self.n_epoch,
+                                                  self.n_train_data,
+                                                  self.n_layer)
+
+    def __init__(self, use_gpu, n_epoch, n_ch, b_size, n_train_data, n_test_data, n_layer, db_path):
         self.db_path = db_path
         self.use_gpu = use_gpu
         self.xp = cuda.cupy if use_gpu else np
 
         self.n_epoch = n_epoch
         self.n_ch = n_ch
+        self.n_layer = n_layer
         self.n_train_data = n_train_data
         self.n_test_data = n_test_data
         self.b_size = b_size
@@ -38,8 +44,7 @@ class Data:
         if train:
             self.cur.execute(query.format(self.b_size*i+1, self.b_size*i + self.b_size))
             for row in self.cur.fetchall():
-                # simple !
-                xs = self.xp.concatenate((xs, self.xp.asarray(str2floats_simple(row[0]), self.xp.float32)))
+                xs = self.xp.concatenate((xs, self.xp.asarray(str2floats(row[0]), self.xp.float32)))
                 ys = self.xp.concatenate((ys, self.xp.asarray([row[1]], self.xp.int32)))
 
             return xs.reshape(self.b_size, self.n_ch, 19, 19), ys
@@ -47,8 +52,7 @@ class Data:
             invalids = self.xp.asarray([], dtype=self.xp.float32)
             self.cur.execute(query_test.format(self.b_size*i+1, self.b_size*i + self.b_size))
             for row in self.cur.fetchall():
-                # simple !
-                xs = self.xp.concatenate((xs, self.xp.asarray(str2floats_simple(row[0]), self.xp.float32)))
+                xs = self.xp.concatenate((xs, self.xp.asarray(str2floats(row[0]), self.xp.float32)))
                 ys = self.xp.concatenate((ys, self.xp.asarray([row[1]], self.xp.int32)))
                 invalids = self.xp.concatenate((invalids, self.xp.asarray(str2floats_simple(row[2]), self.xp.float32)))
 

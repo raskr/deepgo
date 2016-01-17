@@ -1,5 +1,6 @@
 import argparse
 import os
+from datetime import datetime
 
 from modified_functions.softmax_cross_entropy_multi import softmax_cross_entropy_multi
 import six
@@ -30,11 +31,11 @@ data = Data(use_gpu=use_gpu,
             b_size=2,
             n_ch=22,
             n_train_data=100,
-            n_test_data=40,
+            n_test_data=10,
             n_y=3,
+            n_layer=3,
             n_epoch=4)
 
-n_layer = 3
 
 # Prepare data set
 model = chainer.FunctionSet(
@@ -52,6 +53,9 @@ if use_gpu:
 softmax = F.Softmax()
 
 
+start_time = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+
+
 def forward(x_batch, y_batch, invalid_batch):
     x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
 
@@ -61,9 +65,9 @@ def forward(x_batch, y_batch, invalid_batch):
     y_reduced = pick_channel_y(y.data, 0)
 
     if invalid_batch is not None:
-        y_reduced = softmax.forward(y_reduced)
+        y_reduced = F.softmax(chainer.Variable(y_reduced))
         y_reduced = (y_reduced.data - invalid_batch).clip(0, 1)
-        y_reduced = softmax.forward(y_reduced)
+        y_reduced = F.softmax(chainer.Variable(y_reduced)).data
 
     return softmax_cross_entropy_multi(y, t),\
            F.accuracy(chainer.Variable(y_reduced), chainer.Variable(pick_channel_t(y_batch, 0)))
@@ -81,13 +85,27 @@ def pick_channel_y(array, idx):
     return ret
 
 
+def decline_lr(epoch, optimizer):
+    if epoch == 2:
+        optimizer.lr = 0.06
+    if epoch == 3:
+        optimizer.lr = 0.04
+    if epoch == 4:
+        optimizer.lr = 0.02
+    if epoch == 5:
+        optimizer.lr = 0.01
+
+
 def train():
     optimizer = optimizers.SGD(lr=0.1)
     optimizer.setup(model)
     for epoch in six.moves.range(1, data.n_epoch + 1):
+        decline_lr(epoch, optimizer)
         sum_accuracy = sum_loss = mb_count = 0
+
+        # train loop
         for i in data.mb_indices(True):
-            if i % 100 == 0:
+            if mb_count % 100 == 0:
                 print('epoch: {} mini batch: {} of {}'.format(epoch, mb_count, data.n_mb_train))
             mb_count += 1
             x_batch, y_batch = data(True, i)
@@ -95,27 +113,17 @@ def train():
             optimizer.zero_grads()
             loss, acc = forward(x_batch, y_batch, None)
             loss.backward()
-            if epoch == 2:
-                optimizer.lr = 0.06
-            if epoch == 3:
-                optimizer.lr = 0.04
-            if epoch == 4:
-                optimizer.lr = 0.02
-            if epoch == 5:
-                optimizer.lr = 0.01
             optimizer.update()
 
             sum_loss += float(loss.data) * len(y_batch)
             sum_accuracy += float(acc.data) * len(y_batch)
 
-        current_state = '{}ep_{}data_{}pred_{}layer'.format(epoch, data.n_train_data, data.n_y, n_layer)
-        print('state: {}\n train mean loss = {}, accuracy = {}'.format(current_state, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data))
-        with open('result.txt', 'a+') as f:
-            f.write(('state: {}\n train epoch {} train mean loss = {}, accuracy = {}\n'
-                     .format(current_state, epoch, sum_loss / data.n_train_data,
-                             sum_accuracy / data.n_train_data)))
+            if mb_count % (data.n_mb_train / 2) == 0:
+                print('state: {}\n train mean loss = {}, accuracy = {}'.format(data.printable(), sum_loss / data.n_train_data, sum_accuracy / data.n_train_data))
+                with open('res_{}.txt'.format(start_time), 'a+') as f:
+                    f.write(('state: {}\n train epoch {} train loss={}, acc={}\n' .format(data.printable(), epoch, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)))
 
-        # evaluation (test)
+        # test
         sum_accuracy = sum_loss = mb_count = 0
         for i in data.mb_indices(False):
             print('test mini batch: {} of {}'.format(mb_count, data.n_mb_test))
@@ -126,17 +134,18 @@ def train():
             sum_loss += float(loss.data) * len(y_batch)
             sum_accuracy += float(acc.data) * len(y_batch)
 
-        current_state = '{}ep_{}data_{}pred_{}layer'.format(epoch, data.n_test_data, data.n_y, n_layer)
-        print('state: {}\n test mean loss = {}, accuracy = {}'.format(current_state, sum_loss / data.n_test_data, sum_accuracy / data.n_test_data))
-        with open('result.txt', 'a+') as f:
-            f.write(('state: {}\n test mean loss = {}, accuracy = {}\n'.format(current_state, sum_loss / data.n_test_data, sum_accuracy / data.n_test_data)))
+        print('state: {}\n test loss={}, acc={}'.format(data.printable(), sum_loss / data.n_test_data, sum_accuracy / data.n_test_data))
+        with open('res_{}.txt'.format(start_time), 'a+') as f:
+            f.write(('state: {}\n test mean loss = {}, accuracy = {}\n'.format(data.printable(), sum_loss / data.n_test_data, sum_accuracy / data.n_test_data)))
 
-        save_net('white_{}'.format(current_state))
+    save_net('white_{}'.format(data.printable()))
 
 
 def save_net(name):
     print("save network...")
     six.moves.cPickle.dump(model.to_cpu(), open("{}.pkl".format("../" + name), "wb"), -1)
+    if use_gpu:
+        model.to_gpu()
 
 
 train()
