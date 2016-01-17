@@ -41,7 +41,7 @@ data = Data(use_gpu=use_gpu,
 model = chainer.FunctionSet(
         conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=30, ksize=5, pad=2),
         conv2=F.Convolution2D(in_channels=30, out_channels=30, ksize=5, pad=2),
-        conv3=F.Convolution2D(in_channels=30, out_channels=data.n_y, ksize=5, pad=2),
+        conv3=F.Convolution2D(in_channels=30, out_channels=data.n_y, ksize=3, pad=1),
 )
 
 
@@ -49,12 +49,9 @@ if use_gpu:
     cuda.get_device(0).use()
     model.to_gpu()
 
-# cache. used when testing.
-softmax = F.Softmax()
 
-
-start_time = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
-
+start_time = datetime.now()
+start_time_str = start_time.strftime('%Y-%m-%d_%H:%M:%S')
 
 def forward(x_batch, y_batch, invalid_batch):
     x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
@@ -86,11 +83,11 @@ def pick_channel_y(array, idx):
 def decline_lr(epoch, optimizer):
     if epoch == 2:
         optimizer.lr = 0.06
-    if epoch == 3:
+    elif epoch == 3:
         optimizer.lr = 0.04
-    if epoch == 4:
+    elif epoch == 4:
         optimizer.lr = 0.02
-    if epoch == 5:
+    elif epoch == 5:
         optimizer.lr = 0.01
 
 
@@ -118,7 +115,7 @@ def train():
 
             if mb_count % (data.n_mb_train / 2) == 0:
                 print('state: {}\ntrain mean loss = {}, accuracy = {}'.format(data.printable(), sum_loss / data.n_train_data, sum_accuracy / data.n_train_data))
-                with open('res_{}.txt'.format(start_time), 'a+') as f:
+                with open('{}.txt'.format(start_time_str), 'a+') as f:
                     f.write(('state: {}\ntrain epoch {} train loss={}, acc={}\n' .format(data.printable(), epoch, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)))
 
         # test loop
@@ -134,11 +131,11 @@ def train():
             sum_accuracy += float(acc.data) * len(y_batch)
 
         print('state: {}\ntest loss={}, acc={}'.format(data.printable(), sum_loss / data.n_test_data, sum_accuracy / data.n_test_data))
-        with open('res_{}.txt'.format(start_time), 'a+') as f:
+        with open('{}.txt'.format(start_time_str), 'a+') as f:
             f.write(('state: {}\ntest mean loss = {}, accuracy = {}\n'.format(data.printable(), sum_loss / data.n_test_data, sum_accuracy / data.n_test_data)))
 
     save_net('white_{}'.format(data.printable()))
-    print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    print('took total: {}'.format(datetime.now() - start_time))
 
 
 def save_net(name):
