@@ -62,27 +62,25 @@ def forward(x_batch, y_batch, invalid_batch):
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
     y = F.relu(model.conv3(h))
-    y_reduced = pick_channel_y(y.data, 0)
+    y_reduced_arr = pick_channel_y(y.data, 0)
 
     if invalid_batch is not None:
-        y_reduced = F.softmax(chainer.Variable(y_reduced))
-        y_reduced = (y_reduced.data - invalid_batch).clip(0, 1)
-        y_reduced = F.softmax(chainer.Variable(y_reduced)).data
+        y_reduced_arr = F.softmax(chainer.Variable(y_reduced_arr))
+        y_reduced_arr = (y_reduced_arr.data - invalid_batch).clip(0, 1)
+        y_reduced_arr = F.softmax(chainer.Variable(y_reduced_arr)).data
 
     return softmax_cross_entropy_multi(y, t),\
-           F.accuracy(chainer.Variable(y_reduced), chainer.Variable(pick_channel_t(y_batch, 0)))
+           F.accuracy(chainer.Variable(y_reduced_arr), chainer.Variable(pick_channel_t(y_batch, 0)))
 
 
 # Precisely, not 'channel'
 def pick_channel_t(array, idx):
-    ret = data.xp.hsplit(array, data.n_y)[idx].squeeze()
-    return ret
+    return data.xp.hsplit(array, data.n_y)[idx].squeeze()
 
 
 def pick_channel_y(array, idx):
     reshaped = array.reshape(data.b_size, data.n_y, 361)
-    ret = data.xp.hsplit(reshaped, data.n_y)[idx].squeeze()
-    return ret
+    return data.xp.hsplit(reshaped, data.n_y)[idx].squeeze()
 
 
 def decline_lr(epoch, optimizer):
@@ -103,7 +101,7 @@ def train():
         decline_lr(epoch, optimizer)
         sum_accuracy = sum_loss = mb_count = 0
 
-        # train loop
+        # training loop
         for i in data.mb_indices(True):
             if mb_count % 20 == 0:
                 print('epoch: {} mini batch: {} of {}'.format(epoch, mb_count, data.n_mb_train))
@@ -119,14 +117,15 @@ def train():
             sum_accuracy += float(acc.data) * len(y_batch)
 
             if mb_count % (data.n_mb_train / 2) == 0:
-                print('state: {}\n train mean loss = {}, accuracy = {}'.format(data.printable(), sum_loss / data.n_train_data, sum_accuracy / data.n_train_data))
+                print('state: {}\ntrain mean loss = {}, accuracy = {}'.format(data.printable(), sum_loss / data.n_train_data, sum_accuracy / data.n_train_data))
                 with open('res_{}.txt'.format(start_time), 'a+') as f:
-                    f.write(('state: {}\n train epoch {} train loss={}, acc={}\n' .format(data.printable(), epoch, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)))
+                    f.write(('state: {}\ntrain epoch {} train loss={}, acc={}\n' .format(data.printable(), epoch, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)))
 
-        # test
+        # test loop
         sum_accuracy = sum_loss = mb_count = 0
         for i in data.mb_indices(False):
-            print('test mini batch: {} of {}'.format(mb_count, data.n_mb_test))
+            if mb_count % 20 == 0:
+                print('test mini batch: {} of {}'.format(mb_count, data.n_mb_test))
             mb_count += 1
             x_batch, y_batch, invalid_batch = data(False, i)
 
@@ -134,11 +133,12 @@ def train():
             sum_loss += float(loss.data) * len(y_batch)
             sum_accuracy += float(acc.data) * len(y_batch)
 
-        print('state: {}\n test loss={}, acc={}'.format(data.printable(), sum_loss / data.n_test_data, sum_accuracy / data.n_test_data))
+        print('state: {}\ntest loss={}, acc={}'.format(data.printable(), sum_loss / data.n_test_data, sum_accuracy / data.n_test_data))
         with open('res_{}.txt'.format(start_time), 'a+') as f:
-            f.write(('state: {}\n test mean loss = {}, accuracy = {}\n'.format(data.printable(), sum_loss / data.n_test_data, sum_accuracy / data.n_test_data)))
+            f.write(('state: {}\ntest mean loss = {}, accuracy = {}\n'.format(data.printable(), sum_loss / data.n_test_data, sum_accuracy / data.n_test_data)))
 
     save_net('white_{}'.format(data.printable()))
+    print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
 
 def save_net(name):
