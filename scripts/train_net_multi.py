@@ -39,9 +39,8 @@ n_layer = 3
 # Prepare data set
 model = chainer.FunctionSet(
         conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=30, ksize=5, pad=2),
-        conv2=F.Convolution2D(in_channels=30, out_channels=30, ksize=3, pad=1),
-        conv3=F.Convolution2D(in_channels=30, out_channels=30, ksize=3, pad=1),
-        conv4=F.Convolution2D(in_channels=30, out_channels=data.n_y, ksize=3, pad=1),
+        conv2=F.Convolution2D(in_channels=30, out_channels=30, ksize=5, pad=2),
+        conv3=F.Convolution2D(in_channels=30, out_channels=data.n_y, ksize=5, pad=2),
 )
 
 
@@ -59,16 +58,15 @@ def forward(x_batch, y_batch, invalid_batch):
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
     y = F.relu(model.conv3(h))
-    # this is array
-    y_ch_reduced = pick_channel_y(y.data, 0)
+    y_reduced = pick_channel_y(y.data, 0)
 
     if invalid_batch is not None:
-        y_ch_reduced = softmax.forward(y_ch_reduced)
-        y_ch_reduced = (y_ch_reduced.data - invalid_batch).clip(0, 1)
-        y_ch_reduced = softmax.forward(y_ch_reduced)
+        y_reduced = softmax.forward(y_reduced)
+        y_reduced = (y_reduced.data - invalid_batch).clip(0, 1)
+        y_reduced = softmax.forward(y_reduced)
 
     return softmax_cross_entropy_multi(y, t),\
-           F.accuracy(chainer.Variable(y_ch_reduced), chainer.Variable(pick_channel_t(y_batch, 0)))
+           F.accuracy(chainer.Variable(y_reduced), chainer.Variable(pick_channel_t(y_batch, 0)))
 
 
 # Precisely, not 'channel'
