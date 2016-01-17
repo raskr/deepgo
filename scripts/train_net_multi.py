@@ -105,7 +105,7 @@ def train():
 
         # train loop
         for i in data.mb_indices(True):
-            if mb_count % 100 == 0:
+            if mb_count % 20 == 0:
                 print('epoch: {} mini batch: {} of {}'.format(epoch, mb_count, data.n_mb_train))
             mb_count += 1
             x_batch, y_batch = data(True, i)

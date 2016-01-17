@@ -83,7 +83,8 @@ def train():
     for epoch in six.moves.range(1, data.n_epoch + 1):
         sum_accuracy = sum_loss = mb_count = 0
         for i in data.mb_indices(True):
-            print('epoch: {} mini batch: {} of {}'.format(epoch, mb_count, data.n_mb_train))
+            if mb_count % 20 == 0:
+                print('epoch: {} mini batch: {} of {}'.format(epoch, mb_count, data.n_mb_train))
             mb_count += 1
             x_batch, y_batch = data(True, i)
 
