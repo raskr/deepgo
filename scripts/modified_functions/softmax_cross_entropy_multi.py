@@ -32,8 +32,6 @@ class MultiSoftmaxCrossEntropy(function.Function):
 
         return xp.asarray([(sum(losses) / n_ch)], dtype=xp.float32).reshape(()),
 
-    # grad_outputs may be "xp.array(1.0, dtype=float32)".
-    # because loss_variable.backward() initialize error by 1
     def backward(self, inputs, grad_outputs):
         xp = cuda.get_array_module(*inputs)
         x, t = inputs
