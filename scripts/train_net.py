@@ -19,7 +19,7 @@ if use_gpu:
     cuda.check_cuda_available()
 
 base_path = os.path.dirname(os.path.abspath(__file__))
-db_path = os.path.normpath(os.path.join(base_path, '../deepgo_multi.db'))
+db_path = os.path.normpath(os.path.join(base_path, '../deepgo_multi_omit_prev_strong.db'))
 
 # 12481120 -> max
 # 10551120 -> omit 1d, 2d
@@ -28,20 +28,23 @@ db_path = os.path.normpath(os.path.join(base_path, '../deepgo_multi.db'))
 # data provider (if 39998 sgf => 3898669)
 data = Data(use_gpu=use_gpu,
             db_path=db_path,
-            b_size=2,
-            n_ch=22,
-            n_train_data=50,
-            n_test_data=7,
-            n_layer=3,
+            b_size=200,
+            n_ch=5,
+            n_train_data=13000000,
+            n_test_data=70000,
+            n_layer=6,
             n_y=1,
-            n_epoch=2)
+            n_epoch=1)
 
 
 # Prepare data set
 model = chainer.FunctionSet(
     conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=32, ksize=5, pad=2),
     conv2=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
-    conv3=F.Convolution2D(in_channels=32, out_channels=1, ksize=5, pad=2),
+    conv3=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
+    conv4=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
+    conv5=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
+    conv6=F.Convolution2D(in_channels=32, out_channels=1, ksize=3, pad=1),
     l=F.Linear(361, 361)
 )
 
@@ -68,7 +71,10 @@ def forward(x_batch, y_batch, invalid_batch):
     x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
-    y = y_test = model.l(F.relu(model.conv3(h)))
+    h = F.relu(model.conv3(h))
+    h = F.relu(model.conv4(h))
+    h = F.relu(model.conv5(h))
+    y = y_test = model.l(F.relu(model.conv6(h)))
 
     if invalid_batch is not None:
         y_test = F.softmax(y_test)
@@ -123,7 +129,7 @@ def train():
             sum_accuracy += float(acc.data) * len(y_batch)
 
         print('state: {}\n test loss={}, acc={}'.format(data.printable(), sum_loss / data.n_test_data, sum_accuracy / data.n_test_data))
-        with open('res_{}.txt'.format(start_time), 'a+') as f:
+        with open('g_size_{}.txt'.format(start_time), 'a+') as f:
             f.write(('state: {}\n test mean loss = {}, accuracy = {}\n'.format(data.printable(), sum_loss / data.n_test_data, sum_accuracy / data.n_test_data)))
 
     save_net('white_{}'.format(data.printable()))
