@@ -45,15 +45,17 @@ class Data:
             self.cur.execute(query.format(self.b_size*i+1, self.b_size*i + self.b_size))
             for row in self.cur.fetchall():
                 xs = self.xp.concatenate((xs, self.xp.asarray(str2floats(row[0]), self.xp.float32)))
-                ys = self.xp.concatenate((ys, self.xp.asarray([row[1]], self.xp.int32)))
+                ys = self.xp.concatenate((ys, self.xp.asarray(split_y(row[1], True), self.xp.int32)))
 
+            print('shape')
+            print(ys.shape)
             return xs.reshape(self.b_size, self.n_ch, 19, 19), ys
         else:
             invalids = self.xp.asarray([], dtype=self.xp.float32)
             self.cur.execute(query_test.format(self.b_size*i+1, self.b_size*i + self.b_size))
             for row in self.cur.fetchall():
                 xs = self.xp.concatenate((xs, self.xp.asarray(str2floats(row[0]), self.xp.float32)))
-                ys = self.xp.concatenate((ys, self.xp.asarray([row[1]], self.xp.int32)))
+                ys = self.xp.concatenate((ys, self.xp.asarray(split_y(row[1], True), self.xp.int32)))
                 invalids = self.xp.concatenate((invalids, self.xp.asarray(str2floats_simple(row[2]), self.xp.float32)))
 
             return xs.reshape(self.b_size, self.n_ch, 19, 19), ys,\
@@ -65,6 +67,12 @@ class Data:
             return iter(self.mb_indices_train)
         random.shuffle(self.mb_indices_test)
         return iter(self.mb_indices_test)
+
+
+# return : Array[Int]
+def split_y(string, head):
+    ret = [int(a) for a in string.split(',')]
+    return ret[0:1] if head else ret
 
 
 # convert string consist of channels to float array

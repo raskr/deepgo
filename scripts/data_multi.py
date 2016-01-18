@@ -74,6 +74,7 @@ class DataMulti:
         return iter(self.mb_indices_test)
 
 
+# return : Array[Int]
 def split_y(string):
     return [int(a) for a in string.split(',')]
 

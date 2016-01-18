@@ -53,6 +53,7 @@ if use_gpu:
 start_time = datetime.now()
 start_time_str = start_time.strftime('%Y-%m-%d_%H:%M:%S')
 
+
 def forward(x_batch, y_batch, invalid_batch):
     x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
 

@@ -19,7 +19,7 @@ if use_gpu:
     cuda.check_cuda_available()
 
 base_path = os.path.dirname(os.path.abspath(__file__))
-db_path = os.path.normpath(os.path.join(base_path, '../deepgo_single.db'))
+db_path = os.path.normpath(os.path.join(base_path, '../deepgo_multi.db'))
 
 # 12481120 -> max
 # 10551120 -> omit 1d, 2d
