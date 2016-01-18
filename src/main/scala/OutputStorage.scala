@@ -4,7 +4,6 @@ import scala.collection.mutable.ArrayBuffer
 
 sealed abstract class OutputStorage {
   val color: Char
-  def commit(state: State, target: Move)
   def commit(state: State, targets: Seq[Move])
   def close()
 }
@@ -45,18 +44,6 @@ final class DB(val color: Char) extends OutputStorage {
 
   // statement.whatever() is "not" thread safe.
   // mutex is required.
-  def commit(state: State, target: Move) = DB.lock.synchronized {
-    state.toChannels.foreach { ch =>
-      DB.currentRowCount += 1
-      statement.setString(1, ch)
-      statement.setInt(2, target.pos)
-      statement.setString(3, state.invalidChannel)
-      statement.executeUpdate
-      // save regularly
-      if (DB.currentRowCount % 5000000 == 0) DB.conn.commit()
-    }
-  }
-
   def commit(state: State, targets: Seq[Move]) = DB.lock.synchronized {
     state.toChannels.foreach { ch =>
       DB.currentRowCount += 1
@@ -87,20 +74,6 @@ final class Files(val color: Char) extends OutputStorage {
     println("deleted existing file_out dir")
   }
   d.mkdir()
-
-  def commit(state: State, target: Move) = lock.synchronized {
-    state.toChannels.foreach { ch =>
-      buf.append(ch)
-      bufInvalid.append(state.invalidChannel)
-      bufTarget.append("" + target.pos)
-      currentBufSize += 1
-      if (currentBufSize == maxRowInFile) {
-        push()
-        currentBufSize = 0
-        buf.clear()
-      }
-    }
-  }
 
   def commit(state: State, targets: Seq[Move]) = DB.lock.synchronized {
     state.toChannels.foreach { ch =>

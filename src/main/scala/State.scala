@@ -36,23 +36,27 @@ case class State(board: Array[Char] = Array.fill(all)(Empty),
     dst.mkString
   }
 
+  var nextBoard: Option[Array[Char]] = None
   def toChannels: Option[String] =
-    ownRank map { rank =>
-      new StringBuilder()
+    for {
+      rank <- ownRank
+      nBoard <- nextBoard
+    } yield new StringBuilder()
         .append(board.toBoardChannel)     // 3 tested
         .append(board.toBorderChannel)    // 1 tested
-        .append(board.toLibertyChannel)   // 6 tested
+        .append(nBoard.toLibertyChannel)  // 6 tested
         .append(koPos.toKoChannel)        // 1 tested
         .append(rank.toRankChannel)       // 9 tested
         .append(prevMove.toMoveChannel)   // 1 maybe ok
         .append(board.toGroupSizeChannel) // 2 tested
-        .append(hist.toHistoryChannel)    // 1 tested
         .append(invalidChannel) 	  // 1 tested
+        .append(hist.toHistoryChannel)    // 1 tested
         .toString
-    }
+
 
   def nextStateBy(move: Move): State = {
     val newBoard = board.createNextBoardBy(move)
+    nextBoard = Some(newBoard)
     val ko = board.findKoBy(move, newBoard)
     val his = hist.nextHistory(board, newBoard)
     State(newBoard, his, ko, rankW, rankB, move)
