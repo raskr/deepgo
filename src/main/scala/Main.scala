@@ -19,12 +19,7 @@ object Main {
 
     (dir, color, mode, step, opponentRank) match {
       case (Some(d), Some(c), Some(m), Some(s), _) if m._2 == "db" => // use sqlite3
-        val stp = s._2.charAt(0)-'0'
-        if (stp == 1) {
-          parseSGF_single(d._2, colorsFrom(c._2).map(new DB1(_)), stp, limit=Some(3))
-        } else {
-          parseSGF(d._2, colorsFrom(c._2).map(new DB(_)), stp, limit=Some(3))
-        }
+        parseSGF(d._2, colorsFrom(c._2).map(new DB(_)), s._2.charAt(0)-'0', None)
 
       case (Some(d), Some(c), Some(m), Some(s), _) if m._2 == "f" => // use text files
         parseSGF(d._2, colorsFrom(c._2).map(new Files(_)), s._2.head-'0')
@@ -37,23 +32,6 @@ object Main {
 
       case _ => throw new IllegalArgumentException("No valid arguments were given.")
     }
-  }
-  def parseSGF_single(dir: String, outs: Seq[OutputStorage], step: Int, limit: Option[Int] = None) = {
-    var i = 0
-    try {
-      listFilesIn(dir, limit, Some(".sgf")).par foreach { f =>
-        i += 1; if (i % 1000 == 0) println(i)
-        try {
-          val res = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
-          if (res.successful) processParseResult(res.get, outs.map(_.color)) foreach {
-            commitResult(_, outs)
-          }
-        } catch {
-          case e: java.nio.charset.MalformedInputException =>
-            println("ignore strange file: " + f.getName)
-        }
-      }
-    } finally outs foreach { _.close() }
   }
 
   def parseSGF(dir: String, outs: Seq[OutputStorage], step: Int, limit: Option[Int]=None) = try {
@@ -70,13 +48,6 @@ object Main {
     }
   } catch   { case e: fmtErr => println("ignore strange file")
   } finally { outs foreach (_.close()) }
-
-  private def commitResult(res: (Seq[State], Seq[Move]), outs: Seq[OutputStorage]) = {
-    val (states, moves) = res
-    zipEach(states, moves){ (st, mv) =>
-      outs.foreach {out => if (out.color == mv.color) out.commit(st, mv) }
-    }
-  }
 
   private def commitResult(res: Seq[(State, Seq[Move])], outs: Seq[OutputStorage]) = {
     res foreach { case (st, ts) =>
