@@ -1,6 +1,5 @@
 import Implicits._
 import SGF._
-import Utils._
 import Color._
 import java.nio.charset.{MalformedInputException => fmtErr}
 import scala.collection.mutable.ArrayBuffer
@@ -25,7 +24,7 @@ object Main {
         parseSGF(d._2, colorsFrom(c._2).map(new Files(_)), s._2.head-'0')
 
       case (Some(d), _, _, Some(s), _) => // test
-        parseSGF(d._2, Seq(), 4, limit=Some(1000))
+        parseSGF(d._2, Seq(), s._2.head-'0', limit=Some(10))
 
       case (_, Some(c), Some(m), Some(s), Some(o)) if m._2 == "gtp" =>
         GTP_CmdHandler(o._2, c._2.head).listenAndServe()
@@ -35,7 +34,7 @@ object Main {
   }
 
   private def parseSGF(dir: String, outs: Seq[OutputStorage], step: Int, limit: Option[Int]=None) = try {
-    listFilesIn(dir, limit, Some(".sgf")).par foreach { f =>
+    Utils.listFilesIn(dir, limit, Some(".sgf")).par foreach { f =>
       // getLines() may throw exception
       val parsed = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
       if (parsed.successful) processParseResult(parsed.get, outs.map(_.color)).foreach { pRes =>
@@ -49,11 +48,10 @@ object Main {
   } catch   { case e: fmtErr => println("ignore strange file")
   } finally { outs foreach (_.close()) }
 
-  private def commitResult(res: Seq[(State, Seq[Move])], outs: Seq[OutputStorage]) = {
+  private def commitResult(res: Seq[(State, Seq[Move])], outs: Seq[OutputStorage]) =
     res foreach { case (st, ts) =>
       outs.foreach{ o => if (o.color == ts.head.color) o.commit(st, ts) }
     }
-  }
 
   private def distributeTargetMoves(res: (Seq[State],Seq[Move]), step: Int): Option[Seq[(State, Seq[Move])]] = {
     val (states, moves) = res
