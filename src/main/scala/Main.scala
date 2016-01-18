@@ -18,13 +18,13 @@ object Main {
 
     (dir, color, mode, step, opponentRank) match {
       case (Some(d), Some(c), Some(m), Some(s), _) if m._2 == "db" => // use sqlite3
-        parseSGF(d._2, colorsFrom(c._2).map(new DB(_)), s._2.charAt(0)-'0', None)
+        parseSGF(d._2, colorsFrom(c._2).map(new DB(_)), s._2.charAt(0)-'0', Some(3))
 
       case (Some(d), Some(c), Some(m), Some(s), _) if m._2 == "f" => // use text files
         parseSGF(d._2, colorsFrom(c._2).map(new Files(_)), s._2.head-'0')
 
       case (Some(d), _, _, Some(s), _) => // test
-        parseSGF(d._2, Seq(), s._2.head-'0', limit=Some(10))
+        parseSGF(d._2, Seq(), s._2.head-'0', limit=Some(5))
 
       case (_, Some(c), Some(m), Some(s), Some(o)) if m._2 == "gtp" =>
         GTP_CmdHandler(o._2, c._2.head).listenAndServe()
@@ -34,7 +34,7 @@ object Main {
   }
 
   private def parseSGF(dir: String, outs: Seq[OutputStorage], step: Int, limit: Option[Int]=None) = try {
-    Utils.listFilesIn(dir, limit, Some(".sgf")).par foreach { f =>
+    Utils.listFilesIn(dir, limit, Some(".sgf")) foreach { f =>
       // getLines() may throw exception
       val parsed = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
       if (parsed.successful) processParseResult(parsed.get, outs.map(_.color)).foreach { pRes =>
@@ -82,9 +82,9 @@ object Main {
           prop match {
             // rank
             case Property(PropIdent(a: String), List(PropValue(SimpleText(r: String)))) if a == "WR" =>
-              rankW = Some(r).filter(x => x.isValidRank && x.isStrongRank)
+              rankW = Some(r).filter(x => x.isValidRank)
             case Property(PropIdent(a: String), List(PropValue(SimpleText(r: String)))) if a == "BR" =>
-              rankB = Some(r).filter(x => x.isValidRank && x.isStrongRank)
+              rankB = Some(r).filter(x => x.isValidRank)
             // others
             case _ =>
           }
