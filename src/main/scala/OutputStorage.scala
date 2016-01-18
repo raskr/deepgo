@@ -71,8 +71,6 @@ final class DB(val color: Char) extends OutputStorage {
 
 }
 
-}
-
 final class Files(val color: Char) extends OutputStorage {
   private [this] val lock = new AnyRef
   private [this] val buf = ArrayBuffer[String]()
