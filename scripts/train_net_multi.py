@@ -8,7 +8,7 @@ import chainer.functions as F
 import chainer
 from chainer import cuda, optimizers
 
-from data_multi import DataMulti as Data
+from data import Data as Data
 
 parser = argparse.ArgumentParser(description='train Go')
 parser.add_argument('--gpu', '-g', default=-1, type=int, help='GPU ID (negative value indicates CPU)')

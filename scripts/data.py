@@ -14,15 +14,17 @@ class Data:
     def printable(self):
         return '{}ep_{}data_1pred_{}layer'.format(self.n_epoch,
                                                   self.n_train_data,
+                                                  self.n_y,
                                                   self.n_layer)
 
-    def __init__(self, use_gpu, n_epoch, n_ch, b_size, n_train_data, n_test_data, n_layer, db_path):
+    def __init__(self, use_gpu, n_epoch, n_ch, b_size, n_train_data, n_test_data, n_layer, n_y, db_path):
         self.db_path = db_path
         self.use_gpu = use_gpu
         self.xp = cuda.cupy if use_gpu else np
 
         self.n_epoch = n_epoch
         self.n_ch = n_ch
+        self.n_y = n_y
         self.n_layer = n_layer
         self.n_train_data = n_train_data
         self.n_test_data = n_test_data
@@ -45,20 +47,21 @@ class Data:
             self.cur.execute(query.format(self.b_size*i+1, self.b_size*i + self.b_size))
             for row in self.cur.fetchall():
                 xs = self.xp.concatenate((xs, self.xp.asarray(str2floats(row[0]), self.xp.float32)))
-                ys = self.xp.concatenate((ys, self.xp.asarray(split_y(row[1], True), self.xp.int32)))
+                ys = self.xp.concatenate((ys, self.xp.asarray(split_y(row[1], self.n_y == 1), self.xp.int32)))
 
-            print('shape')
-            print(ys.shape)
-            return xs.reshape(self.b_size, self.n_ch, 19, 19), ys
+            ret_x = xs.reshape(self.b_size, self.n_ch, 19, 19)
+            ret_y = ys if self.n_y == 1 else ys.reshape(self.b_size, self.n_y)
+            return ret_x, ret_y
         else:
             invalids = self.xp.asarray([], dtype=self.xp.float32)
             self.cur.execute(query_test.format(self.b_size*i+1, self.b_size*i + self.b_size))
             for row in self.cur.fetchall():
                 xs = self.xp.concatenate((xs, self.xp.asarray(str2floats(row[0]), self.xp.float32)))
-                ys = self.xp.concatenate((ys, self.xp.asarray(split_y(row[1], True), self.xp.int32)))
+                ys = self.xp.concatenate((ys, self.xp.asarray(split_y(row[1], self.n_y == 1), self.xp.int32)))
                 invalids = self.xp.concatenate((invalids, self.xp.asarray(str2floats_simple(row[2]), self.xp.float32)))
 
-            return xs.reshape(self.b_size, self.n_ch, 19, 19), ys,\
+            ret_y = ys if self.n_y == 1 else ys.reshape(self.b_size, self.n_y)
+            return xs.reshape(self.b_size, self.n_ch, 19, 19), ret_y,\
                    invalids.reshape(self.b_size, 361)
 
     def mb_indices(self, train):

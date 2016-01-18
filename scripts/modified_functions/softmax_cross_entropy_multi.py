@@ -23,7 +23,7 @@ class MultiSoftmaxCrossEntropy(function.Function):
         else:
             self.count = x.shape[0]
 
-        reshaped = x.reshape(x.shape[0], n_ch, x.shape[2] * x.shape[3]),
+        reshaped = x.reshape(x.shape[0], n_ch, x.shape[2] * x.shape[3])
         planes = xp.hsplit(reshaped, n_ch)
         targets = xp.hsplit(t, n_ch)
 

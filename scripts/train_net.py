@@ -33,6 +33,7 @@ data = Data(use_gpu=use_gpu,
             n_train_data=50,
             n_test_data=7,
             n_layer=3,
+            n_y=1,
             n_epoch=2)
 
 
