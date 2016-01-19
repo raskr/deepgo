@@ -49,6 +49,8 @@ class Data:
                 xs = self.xp.concatenate((xs, self.xp.asarray(str2floats(row[0]), self.xp.float32)))
                 ys = self.xp.concatenate((ys, self.xp.asarray(split_y(row[1], self.n_y == 1), self.xp.int32)))
 
+            print(self.b_size* self.n_ch* 19* 19)
+            print(xs.size)
             ret_x = xs.reshape(self.b_size, self.n_ch, 19, 19)
             ret_y = ys if self.n_y == 1 else ys.reshape(self.b_size, self.n_y)
             return ret_x, ret_y

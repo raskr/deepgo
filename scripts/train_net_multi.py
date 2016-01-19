@@ -19,7 +19,7 @@ if use_gpu:
     cuda.check_cuda_available()
 
 base_path = os.path.dirname(os.path.abspath(__file__))
-db_path = os.path.normpath(os.path.join(base_path, '../deepgo_multi_omit_prev_strong.db'))
+db_path = os.path.normpath(os.path.join(base_path, '../deepgo_multi.db'))
 
 # 12481120 -> max
 # 10551120 -> omit 1d, 2d
@@ -28,10 +28,10 @@ db_path = os.path.normpath(os.path.join(base_path, '../deepgo_multi_omit_prev_st
 # data provider (if 39998 sgf => 3898669)
 data = Data(use_gpu=use_gpu,
             db_path=db_path,
-            b_size=200,
-            n_ch=3,
-            n_train_data=13000000,
-            n_test_data=70000,
+            b_size=2,
+            n_ch=5,
+            n_train_data=10,
+            n_test_data=3,
             n_y=3,
             n_layer=6,
             n_epoch=1)
@@ -62,16 +62,19 @@ def forward(x_batch, y_batch, invalid_batch):
 
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
-    y = F.relu(model.conv3(h))
-    y = F.relu(model.conv4(h))
-    y = F.relu(model.conv5(h))
+    h = F.relu(model.conv3(h))
+    h = F.relu(model.conv4(h))
+    h = F.relu(model.conv5(h))
     y = F.relu(model.conv6(h))
     y_reduced_arr = pick_channel_y(y.data, 0)
 
+    y_reduced_arr.flags.c_contiguous = True
+    print(y_reduced_arr.flags.c_contiguous)
+
     if invalid_batch is not None:
-        y_reduced_arr = F.softmax(chainer.Variable(y_reduced_arr))
+        y_reduced_arr = F.softmax(chainer.Variable(y_reduced_arr), use_cudnn=False)
         y_reduced_arr = (y_reduced_arr.data - invalid_batch).clip(0, 1)
-        y_reduced_arr = F.softmax(chainer.Variable(y_reduced_arr)).data
+        y_reduced_arr = F.softmax(chainer.Variable(y_reduced_arr), use_cudnn=False).data
 
     return softmax_cross_entropy_multi(y, t),\
            F.accuracy(chainer.Variable(y_reduced_arr), chainer.Variable(pick_channel_t(y_batch, 0)))
