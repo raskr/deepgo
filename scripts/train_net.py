@@ -33,7 +33,7 @@ data = Data(feat='plane',
             n_test_data=3,
             n_y=1,
             n_layer=6,
-            n_epoch=1)
+            n_epoch=3)
 
 # Prepare data set
 model = chainer.FunctionSet(
@@ -61,12 +61,10 @@ with open(res_filename, 'w+') as f:
 
 def decline_lr(epoch, optimizer):
     if epoch == 2:
-        optimizer.lr = 0.06
-    if epoch == 3:
         optimizer.lr = 0.04
-    if epoch == 4:
+    elif epoch == 3:
         optimizer.lr = 0.02
-    if epoch == 5:
+    elif epoch == 4:
         optimizer.lr = 0.01
 
 def forward_conv(x):
@@ -97,41 +95,45 @@ def train():
     optimizer.setup(model)
     for epoch in six.moves.range(1, data.n_epoch + 1):
         sum_accuracy = sum_loss = mb_count = 0
-        for i in data.mb_indices(True):
-            if mb_count % 20 == 0:
-                print('epoch: {} mini batch: {} of {}'.format(epoch, mb_count, data.n_mb_train))
+        for i_mb in data.mb_indices(True):
+            # print
+            if mb_count % 20 == 0: print('epoch: {} mini batch: {} of {}'.format(epoch, mb_count, data.n_mb_train))
             mb_count += 1
-            x_batch, y_batch = data(True, i)
 
+            # actual task
+            x_batch, y_batch = data(True, i_mb)
             optimizer.zero_grads()
             loss, acc = forward(x_batch, y_batch)
             loss.backward()
             decline_lr(epoch, optimizer)
             optimizer.update()
-
             sum_loss += float(loss.data) * len(y_batch)
             sum_accuracy += float(acc.data) * len(y_batch)
 
+            # write result
             if mb_count % (data.n_mb_train / 2) == 0:
-                print('train mean loss = {}, accuracy = {}\n'.format(sum_loss / data.n_train_data, sum_accuracy / data.n_train_data))
-                with open(res_filename, 'a+') as f:
-                    f.write(('train epoch {} train loss={}, acc={}\n' .format(epoch, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)))
+                res = 'train epoch {} train loss={}, acc={}\n'.format(epoch, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)
+                print(res)
+                with open(res_filename, 'a+') as f: f.write(res)
 
         # evaluation (test)
         sum_accuracy = sum_accuracy_clip = sum_loss = mb_count = 0
-        for i in data.mb_indices(False):
+        for i_mb in data.mb_indices(False):
             print('test mini batch: {} of {}'.format(mb_count, data.n_mb_test))
             mb_count += 1
-            x_batch, y_batch, invalid_batch = data(False, i)
+            x_batch, y_batch, invalid_batch = data(False, i_mb)
 
             loss, acc, acc_clip = forward_test(x_batch, y_batch, invalid_batch)
             sum_loss += float(loss.data) * len(y_batch)
             sum_accuracy += float(acc.data) * len(y_batch)
             sum_accuracy_clip += float(acc_clip.data) * len(y_batch)
 
-        print('test loss={}, acc={}, acc_clip={}'.format(sum_loss / data.n_test_data, sum_accuracy / data.n_test_data, sum_accuracy_clip / data.n_test_data))
-        with open(res_filename, 'a+') as f:
-            f.write(('test epoch={} loss={}, accuracy={}, accuracy_clip={}\n'.format(epoch, sum_loss / data.n_test_data, sum_accuracy / data.n_test_data, sum_accuracy_clip / data.n_test_data)))
+        res = 'test epoch={} loss={}, acc={}, acc_clip={}'.format(epoch,
+                                                                  sum_loss / data.n_test_data,
+                                                                  sum_accuracy / data.n_test_data,
+                                                                  sum_accuracy_clip / data.n_test_data)
+        print(res)
+        with open(res_filename, 'a+') as f: f.write(res)
 
     save_net('white_{}'.format(data.printable()))
     with open(res_filename, 'a+') as f:
