@@ -54,7 +54,7 @@ class Data:
             self.cur.execute(query.format(self.b_size*i+1, self.b_size*i + self.b_size))
             for row in self.cur.fetchall():
                 xs = self.xp.concatenate((xs, self.xp.asarray(str2floats(row[0]), self.xp.float32)))
-                ys = self.xp.concatenate((ys, self.xp.asarray(split_y(row[1], self.n_y == 1), self.xp.int32)))
+                ys = self.xp.concatenate((ys, self.xp.asarray(split_ys(row[1], self.n_y == 1), self.xp.int32)))
 
             ret_x = xs.reshape(self.b_size, self.n_ch, 19, 19)
             ret_y = ys if self.n_y == 1 else ys.reshape(self.b_size, self.n_y)
@@ -64,7 +64,7 @@ class Data:
             self.cur.execute(query_test.format(self.b_size*i+1, self.b_size*i + self.b_size))
             for row in self.cur.fetchall():
                 xs = self.xp.concatenate((xs, self.xp.asarray(str2floats(row[0]), self.xp.float32)))
-                ys = self.xp.concatenate((ys, self.xp.asarray(split_y(row[1], self.n_y == 1), self.xp.int32)))
+                ys = self.xp.concatenate((ys, self.xp.asarray(split_ys(row[1], self.n_y == 1), self.xp.int32)))
                 invalids = self.xp.concatenate((invalids, self.xp.asarray(str2floats_simple(row[2]), self.xp.float32)))
 
             ret_y = ys if self.n_y == 1 else ys.reshape(self.b_size, self.n_y)
@@ -80,7 +80,7 @@ class Data:
 
 
 # return : Array[Int]
-def split_y(string, head):
+def split_ys(string, head):
     ret = [int(a) for a in string.split(',')]
     return ret[0:1] if head else ret
 

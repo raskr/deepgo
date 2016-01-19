@@ -64,21 +64,22 @@ with open(res_filename, 'a+') as f:
     f.write('* {}\n'.format(data.printable()))
 
 
-def forward_test(x_batch, y_batch, invalid_batch):
-    x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
-
+def forward_common(x, t):
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
     h = F.relu(model.conv3(h))
     h = F.relu(model.conv4(h))
     h = F.relu(model.conv5(h))
-    y = F.relu(model.conv6(h))
-    y_reduced_arr_clip = y_reduced_arr = pick_channel_y(y.data, 0)
+    return F.relu(model.conv6(h))
 
+
+def forward_test(x_batch, y_batch, invalid_batch):
+    x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
+    y = forward_common(x, t)
+    y_reduced_arr_clip = y_reduced_arr = pick_channel_y(y.data, 0)
     y_reduced_arr_clip = F.softmax(chainer.Variable(y_reduced_arr_clip), use_cudnn=False)
     y_reduced_arr_clip = (y_reduced_arr_clip.data - invalid_batch).clip(0, 1)
     y_reduced_arr_clip = F.softmax(chainer.Variable(y_reduced_arr_clip), use_cudnn=False).data
-
     return softmax_cross_entropy_multi(y, t),\
            F.accuracy(chainer.Variable(y_reduced_arr),
                       chainer.Variable(pick_channel_t(y_batch, 0))), \
@@ -88,15 +89,8 @@ def forward_test(x_batch, y_batch, invalid_batch):
 
 def forward(x_batch, y_batch):
     x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
-
-    h = F.relu(model.conv1(x))
-    h = F.relu(model.conv2(h))
-    h = F.relu(model.conv3(h))
-    h = F.relu(model.conv4(h))
-    h = F.relu(model.conv5(h))
-    y = F.relu(model.conv6(h))
+    y = forward_common(x, t)
     y_reduced_arr = pick_channel_y(y.data, 0)
-
     return softmax_cross_entropy_multi(y, t),\
            F.accuracy(chainer.Variable(y_reduced_arr), chainer.Variable(pick_channel_t(y_batch, 0)))
 

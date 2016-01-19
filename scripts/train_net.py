@@ -21,12 +21,7 @@ if use_gpu:
 base_path = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.normpath(os.path.join(base_path, '../deepgo_multi.db'))
 
-# 12481120 -> max
-# 10551120 -> omit 1d, 2d
-# 10931120 -> not omitd
-
-# data provider (if 39998 sgf => 3898669)
-
+# data provider
 data = Data(feat='plane',
             opt='SGD',
             use_gpu=use_gpu,
@@ -75,30 +70,27 @@ def decline_lr(epoch, optimizer):
         optimizer.lr = 0.01
 
 
-def forward(x_batch, y_batch):
-    x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
+def forward_common(x, t):
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
     h = F.relu(model.conv3(h))
     h = F.relu(model.conv4(h))
     h = F.relu(model.conv5(h))
-    y = model.l(F.relu(model.conv6(h)))
+    return model.l(F.relu(model.conv6(h)))
+
+
+def forward(x_batch, y_batch):
+    x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
+    y = forward_common(x, t)
     return F.softmax_cross_entropy(y, t), F.accuracy(y, t)
 
 
 def forward_test(x_batch, y_batch, invalid_batch):
     x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
-    h = F.relu(model.conv1(x))
-    h = F.relu(model.conv2(h))
-    h = F.relu(model.conv3(h))
-    h = F.relu(model.conv4(h))
-    h = F.relu(model.conv5(h))
-    y = y_clip = model.l(F.relu(model.conv6(h)))
-
+    y = y_clip = forward_common(x, t)
     y_clip = F.softmax(y_clip)
     y_clip = (y_clip.data - invalid_batch).clip(0, 1)
     y_clip = F.softmax(chainer.Variable(y_clip))
-
     return F.softmax_cross_entropy(y, t), F.accuracy(y, t), F.accuracy(y_clip, t)
 
 
@@ -114,7 +106,6 @@ def train():
             x_batch, y_batch = data(True, i)
 
             optimizer.zero_grads()
-            # loss is result of SoftmaxCrossEntropy#call() (using forward internally)
             loss, acc = forward(x_batch, y_batch)
             loss.backward()
             if epoch == 2:
