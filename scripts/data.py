@@ -12,13 +12,18 @@ query_test = "SELECT state, target, invalid FROM O WHERE _id BETWEEN {} AND {} O
 class Data:
 
     def printable(self):
-        return '{}ep_{}data_1pred_{}layer'.format(self.n_epoch,
-                                                  self.n_train_data,
-                                                  self.n_y,
-                                                  self.n_layer)
+        return '{}_{}ep_{}train_{}test_{}pred_{}layer_{}width'.format(self.feat,
+                                                                      self.n_epoch,
+                                                                      self.n_train_data,
+                                                                      self.n_test_data,
+                                                                      self.n_y,
+                                                                      self.n_layer,
+                                                                      self.layer_width)
 
-    def __init__(self, use_gpu, n_epoch, n_ch, b_size, n_train_data, n_test_data, n_layer, n_y, db_path):
+    def __init__(self, layer_width, feat, use_gpu, n_epoch, n_ch, b_size, n_train_data, n_test_data, n_layer, n_y, db_path):
         self.db_path = db_path
+        self.feat = feat
+        self.layer_width = layer_width
         self.use_gpu = use_gpu
         self.xp = cuda.cupy if use_gpu else np
 
@@ -49,8 +54,6 @@ class Data:
                 xs = self.xp.concatenate((xs, self.xp.asarray(str2floats(row[0]), self.xp.float32)))
                 ys = self.xp.concatenate((ys, self.xp.asarray(split_y(row[1], self.n_y == 1), self.xp.int32)))
 
-            print(self.b_size* self.n_ch* 19* 19)
-            print(xs.size)
             ret_x = xs.reshape(self.b_size, self.n_ch, 19, 19)
             ret_y = ys if self.n_y == 1 else ys.reshape(self.b_size, self.n_y)
             return ret_x, ret_y

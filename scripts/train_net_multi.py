@@ -26,9 +26,11 @@ db_path = os.path.normpath(os.path.join(base_path, '../deepgo_multi.db'))
 # 10931120 -> not omitd
 
 # data provider (if 39998 sgf => 3898669)
-data = Data(use_gpu=use_gpu,
+data = Data(feat='plane',
+            use_gpu=use_gpu,
             db_path=db_path,
             b_size=2,
+            layer_width=32,
             n_ch=5,
             n_train_data=10,
             n_test_data=3,
@@ -43,7 +45,7 @@ model = chainer.FunctionSet(
         conv2=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
         conv3=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
         conv4=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
-        conv5=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
+        conv5=F.Convolution2D(in_channels=32, out_channels=32, ksize=3, pad=1),
         conv6=F.Convolution2D(in_channels=32, out_channels=data.n_y, ksize=3, pad=1),
 )
 
@@ -56,6 +58,10 @@ if use_gpu:
 start_time = datetime.now()
 start_time_str = start_time.strftime('%Y-%m-%d_%H:%M:%S')
 
+res_filename = '{}.txt'.format(data.printable())
+with open(res_filename, 'a+') as f:
+    f.write('* {}\n'.format(data.printable()))
+
 
 def forward(x_batch, y_batch, invalid_batch):
     x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
@@ -67,9 +73,6 @@ def forward(x_batch, y_batch, invalid_batch):
     h = F.relu(model.conv5(h))
     y = F.relu(model.conv6(h))
     y_reduced_arr = pick_channel_y(y.data, 0)
-
-    y_reduced_arr.flags.c_contiguous = True
-    print(y_reduced_arr.flags.c_contiguous)
 
     if invalid_batch is not None:
         y_reduced_arr = F.softmax(chainer.Variable(y_reduced_arr), use_cudnn=False)
@@ -124,9 +127,9 @@ def train():
             sum_accuracy += float(acc.data) * len(y_batch)
 
             if mb_count % (data.n_mb_train / 2) == 0:
-                print('state: {}\ntrain mean loss = {}, accuracy = {}'.format(data.printable(), sum_loss / data.n_train_data, sum_accuracy / data.n_train_data))
-                with open('{}.txt'.format(start_time_str), 'a+') as f:
-                    f.write(('state: {}\ntrain epoch {} train loss={}, acc={}\n' .format(data.printable(), epoch, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)))
+                print('train mean loss = {}, accuracy = {}\n'.format(sum_loss / data.n_train_data, sum_accuracy / data.n_train_data))
+                with open(res_filename, 'a+') as f:
+                    f.write(('train epoch {} train loss={}, acc={}\n' .format(epoch/2, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)))
 
         # test loop
         sum_accuracy = sum_loss = mb_count = 0
@@ -140,12 +143,12 @@ def train():
             sum_loss += float(loss.data) * len(y_batch)
             sum_accuracy += float(acc.data) * len(y_batch)
 
-        print('state: {}\ntest loss={}, acc={}'.format(data.printable(), sum_loss / data.n_test_data, sum_accuracy / data.n_test_data))
-        with open('{}.txt'.format(start_time_str), 'a+') as f:
-            f.write(('state: {}\ntest mean loss = {}, accuracy = {}\n'.format(data.printable(), sum_loss / data.n_test_data, sum_accuracy / data.n_test_data)))
+        print('test loss={}, acc={}'.format(sum_loss / data.n_test_data, sum_accuracy / data.n_test_data))
+        with open(res_filename, 'a+') as f:
+            f.write(('test mean loss = {}, accuracy = {}\n'.format(sum_loss / data.n_test_data, sum_accuracy / data.n_test_data)))
 
     save_net('white_{}'.format(data.printable()))
-    with open('{}.txt'.format(start_time_str), 'a+') as f:
+    with open(res_filename, 'a+') as f:
         f.write('It took total... {}\n\n'.format(datetime.now() - start_time))
 
 
