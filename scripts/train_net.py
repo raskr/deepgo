@@ -19,14 +19,9 @@ if use_gpu:
     cuda.check_cuda_available()
 
 base_path = os.path.dirname(os.path.abspath(__file__))
-db_path = os.path.normpath(os.path.join(base_path, '../deepgo_multi.db'))
+db_path = os.path.normpath(os.path.join(base_path, '../deepgo.db'))
 
-# 12481120 -> max
-# 10551120 -> omit 1d, 2d
-# 10931120 -> not omitd
-
-# data provider (if 39998 sgf => 3898669)
-
+# data provider
 data = Data(feat='plane',
             opt='SGD',
             use_gpu=use_gpu,
@@ -109,10 +104,8 @@ def train():
             x_batch, y_batch = data(True, i)
 
             optimizer.zero_grads()
-            # loss is result of SoftmaxCrossEntropy#call() (using forward internally)
             loss, acc = forward(x_batch, y_batch)
             loss.backward()
-
             decline_lr(epoch, optimizer)
             optimizer.update()
 

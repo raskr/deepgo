@@ -19,7 +19,7 @@ if use_gpu:
     cuda.check_cuda_available()
 
 base_path = os.path.dirname(os.path.abspath(__file__))
-db_path = os.path.normpath(os.path.join(base_path, '../deepgo_multi.db'))
+db_path = os.path.normpath(os.path.join(base_path, '../deepgo.db'))
 
 # 12481120 -> max
 # 10551120 -> omit 1d, 2d
@@ -78,11 +78,11 @@ def forward_test(x_batch, y_batch, invalid_batch):
     y_reduced_arr_clip = y_reduced_arr = pick_channel_y(y.data, 0)
     y_reduced_arr_clip = F.softmax(chainer.Variable(y_reduced_arr_clip), use_cudnn=False)
     y_reduced_arr_clip = (y_reduced_arr_clip.data - invalid_batch).clip(0, 1)
-    y_reduced_arr_clip = F.softmax(chainer.Variable(y_reduced_arr_clip), use_cudnn=False).data
+    y_reduced_arr_clip = F.softmax(chainer.Variable(y_reduced_arr_clip), use_cudnn=False)
     ans = chainer.Variable(pick_channel_t(y_batch, 0))
     return softmax_cross_entropy_multi(y, t),\
            F.accuracy(chainer.Variable(y_reduced_arr), ans), \
-           F.accuracy(chainer.Variable(y_reduced_arr_clip), ans)
+           F.accuracy(y_reduced_arr_clip, ans)
 
 
 def forward(x_batch, y_batch):
@@ -118,7 +118,6 @@ def train():
     optimizer = optimizers.SGD(lr=0.08)
     optimizer.setup(model)
     for epoch in six.moves.range(1, data.n_epoch + 1):
-        decline_lr(epoch, optimizer)
         sum_accuracy = sum_loss = mb_count = 0
 
         # training loop
@@ -130,6 +129,7 @@ def train():
 
             optimizer.zero_grads()
             loss, acc = forward(x_batch, y_batch)
+            decline_lr(epoch, optimizer)
             loss.backward()
             optimizer.update()
 
