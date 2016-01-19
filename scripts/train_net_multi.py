@@ -27,11 +27,12 @@ db_path = os.path.normpath(os.path.join(base_path, '../deepgo_multi.db'))
 
 # data provider (if 39998 sgf => 3898669)
 data = Data(feat='plane',
+            opt='SGD',
             use_gpu=use_gpu,
             db_path=db_path,
             b_size=2,
             layer_width=32,
-            n_ch=5,
+            n_ch=24,
             n_train_data=10,
             n_test_data=3,
             n_y=3,
@@ -63,7 +64,29 @@ with open(res_filename, 'a+') as f:
     f.write('* {}\n'.format(data.printable()))
 
 
-def forward(x_batch, y_batch, invalid_batch):
+def forward_test(x_batch, y_batch, invalid_batch):
+    x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
+
+    h = F.relu(model.conv1(x))
+    h = F.relu(model.conv2(h))
+    h = F.relu(model.conv3(h))
+    h = F.relu(model.conv4(h))
+    h = F.relu(model.conv5(h))
+    y = F.relu(model.conv6(h))
+    y_reduced_arr_clip = y_reduced_arr = pick_channel_y(y.data, 0)
+
+    y_reduced_arr_clip = F.softmax(chainer.Variable(y_reduced_arr_clip), use_cudnn=False)
+    y_reduced_arr_clip = (y_reduced_arr_clip.data - invalid_batch).clip(0, 1)
+    y_reduced_arr_clip = F.softmax(chainer.Variable(y_reduced_arr_clip), use_cudnn=False).data
+
+    return softmax_cross_entropy_multi(y, t),\
+           F.accuracy(chainer.Variable(y_reduced_arr),
+                      chainer.Variable(pick_channel_t(y_batch, 0))), \
+           F.accuracy(chainer.Variable(y_reduced_arr_clip),
+                      chainer.Variable(pick_channel_t(y_batch, 0)))
+
+
+def forward(x_batch, y_batch):
     x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
 
     h = F.relu(model.conv1(x))
@@ -73,11 +96,6 @@ def forward(x_batch, y_batch, invalid_batch):
     h = F.relu(model.conv5(h))
     y = F.relu(model.conv6(h))
     y_reduced_arr = pick_channel_y(y.data, 0)
-
-    if invalid_batch is not None:
-        y_reduced_arr = F.softmax(chainer.Variable(y_reduced_arr), use_cudnn=False)
-        y_reduced_arr = (y_reduced_arr.data - invalid_batch).clip(0, 1)
-        y_reduced_arr = F.softmax(chainer.Variable(y_reduced_arr), use_cudnn=False).data
 
     return softmax_cross_entropy_multi(y, t),\
            F.accuracy(chainer.Variable(y_reduced_arr), chainer.Variable(pick_channel_t(y_batch, 0)))
@@ -119,7 +137,7 @@ def train():
             x_batch, y_batch = data(True, i)
 
             optimizer.zero_grads()
-            loss, acc = forward(x_batch, y_batch, None)
+            loss, acc = forward(x_batch, y_batch)
             loss.backward()
             optimizer.update()
 
@@ -132,20 +150,21 @@ def train():
                     f.write(('train epoch {} train loss={}, acc={}\n' .format(epoch/2, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)))
 
         # test loop
-        sum_accuracy = sum_loss = mb_count = 0
+        sum_accuracy = sum_accuracy_clip = sum_loss = mb_count = 0
         for i in data.mb_indices(False):
             if mb_count % 20 == 0:
                 print('test mini batch: {} of {}'.format(mb_count, data.n_mb_test))
             mb_count += 1
             x_batch, y_batch, invalid_batch = data(False, i)
 
-            loss, acc = forward(x_batch, y_batch, invalid_batch)
+            loss, acc, acc_clip = forward_test(x_batch, y_batch, invalid_batch)
             sum_loss += float(loss.data) * len(y_batch)
             sum_accuracy += float(acc.data) * len(y_batch)
+            sum_accuracy_clip += float(acc_clip.data) * len(y_batch)
 
-        print('test loss={}, acc={}'.format(sum_loss / data.n_test_data, sum_accuracy / data.n_test_data))
+        print('test loss={}, acc={}, acc_clip={}'.format(sum_loss / data.n_test_data, sum_accuracy / data.n_test_data, sum_accuracy_clip / data.n_test_data))
         with open(res_filename, 'a+') as f:
-            f.write(('test mean loss = {}, accuracy = {}\n'.format(sum_loss / data.n_test_data, sum_accuracy / data.n_test_data)))
+            f.write(('test mean loss={}, accuracy={}, accuracy_clip={}\n'.format(sum_loss / data.n_test_data, sum_accuracy / data.n_test_data, sum_accuracy_clip / data.n_test_data)))
 
     save_net('white_{}'.format(data.printable()))
     with open(res_filename, 'a+') as f:

@@ -19,23 +19,26 @@ if use_gpu:
     cuda.check_cuda_available()
 
 base_path = os.path.dirname(os.path.abspath(__file__))
-db_path = os.path.normpath(os.path.join(base_path, '../deepgo_multi_omit_prev_strong.db'))
+db_path = os.path.normpath(os.path.join(base_path, '../deepgo_multi.db'))
 
 # 12481120 -> max
 # 10551120 -> omit 1d, 2d
 # 10931120 -> not omitd
 
 # data provider (if 39998 sgf => 3898669)
-data = Data(use_gpu=use_gpu,
-            db_path=db_path,
-            b_size=200,
-            n_ch=5,
-            n_train_data=13000000,
-            n_test_data=70000,
-            n_layer=6,
-            n_y=1,
-            n_epoch=1)
 
+data = Data(feat='plane',
+            opt='SGD',
+            use_gpu=use_gpu,
+            db_path=db_path,
+            b_size=2,
+            layer_width=32,
+            n_ch=24,
+            n_train_data=10,
+            n_test_data=3,
+            n_y=1,
+            n_layer=6,
+            n_epoch=1)
 
 # Prepare data set
 model = chainer.FunctionSet(
@@ -53,7 +56,12 @@ if use_gpu:
     cuda.get_device(0).use()
     model.to_gpu()
 
-start_time = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+start_time = datetime.now()
+start_time_str = start_time.strftime('%Y-%m-%d_%H:%M:%S')
+
+res_filename = '{}.txt'.format(data.printable())
+with open(res_filename, 'a+') as f:
+    f.write('* {}\n'.format(data.printable()))
 
 
 def decline_lr(epoch, optimizer):
@@ -67,21 +75,31 @@ def decline_lr(epoch, optimizer):
         optimizer.lr = 0.01
 
 
-def forward(x_batch, y_batch, invalid_batch):
+def forward(x_batch, y_batch):
     x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
     h = F.relu(model.conv3(h))
     h = F.relu(model.conv4(h))
     h = F.relu(model.conv5(h))
-    y = y_test = model.l(F.relu(model.conv6(h)))
+    y = model.l(F.relu(model.conv6(h)))
+    return F.softmax_cross_entropy(y, t), F.accuracy(y, t)
 
-    if invalid_batch is not None:
-        y_test = F.softmax(y_test)
-        y_test = (y_test.data - invalid_batch).clip(0, 1)
-        y_test = F.softmax(chainer.Variable(y_test))
 
-    return F.softmax_cross_entropy(y, t), F.accuracy(y_test, t)
+def forward_test(x_batch, y_batch, invalid_batch):
+    x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
+    h = F.relu(model.conv1(x))
+    h = F.relu(model.conv2(h))
+    h = F.relu(model.conv3(h))
+    h = F.relu(model.conv4(h))
+    h = F.relu(model.conv5(h))
+    y = y_clip = model.l(F.relu(model.conv6(h)))
+
+    y_clip = F.softmax(y_clip)
+    y_clip = (y_clip.data - invalid_batch).clip(0, 1)
+    y_clip = F.softmax(chainer.Variable(y_clip))
+
+    return F.softmax_cross_entropy(y, t), F.accuracy(y, t), F.accuracy(y_clip, t)
 
 
 def train():
@@ -97,7 +115,7 @@ def train():
 
             optimizer.zero_grads()
             # loss is result of SoftmaxCrossEntropy#call() (using forward internally)
-            loss, acc = forward(x_batch, y_batch, invalid_batch=None)
+            loss, acc = forward(x_batch, y_batch)
             loss.backward()
             if epoch == 2:
                 optimizer.lr = 0.06
@@ -113,26 +131,29 @@ def train():
             sum_accuracy += float(acc.data) * len(y_batch)
 
             if mb_count % (data.n_mb_train / 2) == 0:
-                print('state: {}\n train mean loss = {}, accuracy = {}'.format(data.printable(), sum_loss / data.n_train_data, sum_accuracy / data.n_train_data))
-                with open('res_{}.txt'.format(start_time), 'a+') as f:
-                    f.write(('state: {}\n train epoch {} train loss={}, acc={}\n' .format(data.printable(), epoch, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)))
+                print('train mean loss = {}, accuracy = {}\n'.format(sum_loss / data.n_train_data, sum_accuracy / data.n_train_data))
+                with open(res_filename, 'a+') as f:
+                    f.write(('train epoch {} train loss={}, acc={}\n' .format(epoch/2, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)))
 
         # evaluation (test)
-        sum_accuracy = sum_loss = mb_count = 0
+        sum_accuracy = sum_accuracy_clip = sum_loss = mb_count = 0
         for i in data.mb_indices(False):
             print('test mini batch: {} of {}'.format(mb_count, data.n_mb_test))
             mb_count += 1
             x_batch, y_batch, invalid_batch = data(False, i)
 
-            loss, acc = forward(x_batch, y_batch, invalid_batch)
+            loss, acc, acc_clip = forward_test(x_batch, y_batch, invalid_batch)
             sum_loss += float(loss.data) * len(y_batch)
             sum_accuracy += float(acc.data) * len(y_batch)
+            sum_accuracy_clip += float(acc_clip.data) * len(y_batch)
 
-        print('state: {}\n test loss={}, acc={}'.format(data.printable(), sum_loss / data.n_test_data, sum_accuracy / data.n_test_data))
-        with open('g_size_{}.txt'.format(start_time), 'a+') as f:
-            f.write(('state: {}\n test mean loss = {}, accuracy = {}\n'.format(data.printable(), sum_loss / data.n_test_data, sum_accuracy / data.n_test_data)))
+        print('test loss={}, acc={}, acc_clip={}'.format(sum_loss / data.n_test_data, sum_accuracy / data.n_test_data, sum_accuracy_clip / data.n_test_data))
+        with open(res_filename, 'a+') as f:
+            f.write(('test mean loss={}, accuracy={}, accuracy_clip={}\n'.format(sum_loss / data.n_test_data, sum_accuracy / data.n_test_data, sum_accuracy_clip / data.n_test_data)))
 
     save_net('white_{}'.format(data.printable()))
+    with open(res_filename, 'a+') as f:
+        f.write('It took total... {}\n\n'.format(datetime.now() - start_time))
 
 
 def save_net(name):

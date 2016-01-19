@@ -12,15 +12,16 @@ query_test = "SELECT state, target, invalid FROM O WHERE _id BETWEEN {} AND {} O
 class Data:
 
     def printable(self):
-        return '{}_{}ep_{}train_{}test_{}pred_{}layer_{}width'.format(self.feat,
-                                                                      self.n_epoch,
-                                                                      self.n_train_data,
-                                                                      self.n_test_data,
-                                                                      self.n_y,
-                                                                      self.n_layer,
-                                                                      self.layer_width)
+        return '{}_{}ep_{}train_{}test_{}pred_{}layer_{}width_{}'.format(self.feat,
+                                                                         self.n_epoch,
+                                                                         self.n_train_data,
+                                                                         self.n_test_data,
+                                                                         self.n_y,
+                                                                         self.n_layer,
+                                                                         self.layer_width,
+                                                                         self.opt)
 
-    def __init__(self, layer_width, feat, use_gpu, n_epoch, n_ch, b_size, n_train_data, n_test_data, n_layer, n_y, db_path):
+    def __init__(self, layer_width, feat, use_gpu, n_epoch, n_ch, b_size, n_train_data, n_test_data, n_layer, n_y, db_path, opt):
         self.db_path = db_path
         self.feat = feat
         self.layer_width = layer_width
@@ -29,6 +30,7 @@ class Data:
 
         self.n_epoch = n_epoch
         self.n_ch = n_ch
+        self.opt = opt
         self.n_y = n_y
         self.n_layer = n_layer
         self.n_train_data = n_train_data
@@ -83,16 +85,20 @@ def split_y(string, head):
     return ret[0:1] if head else ret
 
 
-# convert string consist of channels to float array
+# total 23
 def str2floats(string):
-    #lifespans = [exp(-0.1 * int(c)) for c in string[-361:]]
-    # g_sizes = [exp(0.01 * int(c)) for c in string[-361*3:-361]]
-    #others = [1.0 if x == '1' else 0.0 for x in string[:-361*3]]
+    # print(len(string)/361)
+    base = [1.0 if x == '1' else 0.0 for x in string]
     board = [1.0 if x == '1' else 0.0 for x in string[:361*3]]
-    gSize = [1.0 if x == '1' else 0.0 for x in string[-361*3:-361*1]]
-    # others.extend(g_sizes)
-    board.extend(gSize)
-    return board
+    # border = [1.0 if x == '1' else 0.0 for x in string[361*3:361*4]]
+    # lib = [1.0 if x == '1' else 0.0 for x in string[361*4:361*10]]
+    # ko = [1.0 if x == '1' else 0.0 for x in string[361*10:361*11]]
+    # rank = [1.0 if x == '1' else 0.0 for x in string[361*11:361*20]]
+    # prev = [1.0 if x == '1' else 0.0 for x in string[361*20:361*21]]
+    # g_sizes = [exp(0.1 * int(c)) for c in string[361*21:361*23]]
+    # his = [exp(-0.1 * int(c)) for c in string[-361:]]
+    # board.extend( )
+    return base
 
 
 def str2floats_simple(string):
