@@ -60,8 +60,8 @@ start_time = datetime.now()
 start_time_str = start_time.strftime('%Y-%m-%d_%H:%M:%S')
 
 res_filename = '{}.txt'.format(data.printable())
-with open(res_filename, 'a+') as f:
-    f.write('* {}\n'.format(data.printable()))
+with open(res_filename, 'w+') as f:
+    f.write('************* {}\n'.format(data.printable()))
 
 
 def decline_lr(epoch, optimizer):
@@ -74,31 +74,26 @@ def decline_lr(epoch, optimizer):
     if epoch == 5:
         optimizer.lr = 0.01
 
-
-def forward(x_batch, y_batch):
-    x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
+def forward_conv(x):
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
     h = F.relu(model.conv3(h))
     h = F.relu(model.conv4(h))
     h = F.relu(model.conv5(h))
-    y = model.l(F.relu(model.conv6(h)))
+    return F.relu(model.conv6(h))
+
+def forward(x_batch, y_batch):
+    x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
+    y = model.l(forward_conv(x))
     return F.softmax_cross_entropy(y, t), F.accuracy(y, t)
 
 
 def forward_test(x_batch, y_batch, invalid_batch):
     x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
-    h = F.relu(model.conv1(x))
-    h = F.relu(model.conv2(h))
-    h = F.relu(model.conv3(h))
-    h = F.relu(model.conv4(h))
-    h = F.relu(model.conv5(h))
-    y = y_clip = model.l(F.relu(model.conv6(h)))
-
+    y = y_clip = model.l(forward_conv(x))
     y_clip = F.softmax(y_clip)
     y_clip = (y_clip.data - invalid_batch).clip(0, 1)
     y_clip = F.softmax(chainer.Variable(y_clip))
-
     return F.softmax_cross_entropy(y, t), F.accuracy(y, t), F.accuracy(y_clip, t)
 
 
@@ -117,14 +112,8 @@ def train():
             # loss is result of SoftmaxCrossEntropy#call() (using forward internally)
             loss, acc = forward(x_batch, y_batch)
             loss.backward()
-            if epoch == 2:
-                optimizer.lr = 0.06
-            if epoch == 3:
-                optimizer.lr = 0.04
-            if epoch == 4:
-                optimizer.lr = 0.02
-            if epoch == 5:
-                optimizer.lr = 0.01
+
+            decline_lr(epoch, optimizer)
             optimizer.update()
 
             sum_loss += float(loss.data) * len(y_batch)
@@ -133,7 +122,7 @@ def train():
             if mb_count % (data.n_mb_train / 2) == 0:
                 print('train mean loss = {}, accuracy = {}\n'.format(sum_loss / data.n_train_data, sum_accuracy / data.n_train_data))
                 with open(res_filename, 'a+') as f:
-                    f.write(('train epoch {} train loss={}, acc={}\n' .format(epoch/2, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)))
+                    f.write(('train epoch {} train loss={}, acc={}\n' .format(epoch, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)))
 
         # evaluation (test)
         sum_accuracy = sum_accuracy_clip = sum_loss = mb_count = 0
@@ -149,7 +138,7 @@ def train():
 
         print('test loss={}, acc={}, acc_clip={}'.format(sum_loss / data.n_test_data, sum_accuracy / data.n_test_data, sum_accuracy_clip / data.n_test_data))
         with open(res_filename, 'a+') as f:
-            f.write(('test mean loss={}, accuracy={}, accuracy_clip={}\n'.format(sum_loss / data.n_test_data, sum_accuracy / data.n_test_data, sum_accuracy_clip / data.n_test_data)))
+            f.write(('test epoch={} loss={}, accuracy={}, accuracy_clip={}\n'.format(epoch, sum_loss / data.n_test_data, sum_accuracy / data.n_test_data, sum_accuracy_clip / data.n_test_data)))
 
     save_net('white_{}'.format(data.printable()))
     with open(res_filename, 'a+') as f:
