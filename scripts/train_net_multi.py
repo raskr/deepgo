@@ -36,7 +36,7 @@ data = Data(feat='plane',
             n_train_data=10,
             n_test_data=3,
             n_y=3,
-            n_layer=6,
+            n_layer=4,
             n_epoch=3)
 
 
@@ -45,9 +45,7 @@ model = chainer.FunctionSet(
         conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=32, ksize=5, pad=2),
         conv2=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
         conv3=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
-        conv4=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
-        conv5=F.Convolution2D(in_channels=32, out_channels=32, ksize=3, pad=1),
-        conv6=F.Convolution2D(in_channels=32, out_channels=data.n_y, ksize=3, pad=1),
+        conv4=F.Convolution2D(in_channels=32, out_channels=data.n_y, ksize=3, pad=1),
 )
 
 
@@ -68,9 +66,7 @@ def forward_conv(x):
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
     h = F.relu(model.conv3(h))
-    h = F.relu(model.conv4(h))
-    h = F.relu(model.conv5(h))
-    return F.relu(model.conv6(h))
+    return F.relu(model.conv4(h))
 
 
 def forward_test(x_batch, y_batch, invalid_batch):
@@ -158,7 +154,7 @@ def train():
             sum_accuracy_clip += float(acc_clip.data) * len(y_batch)
 
         # write result
-        res = 'test epoch={} loss={}, acc={}, acc_clip={}'.format(epoch, sum_loss / data.n_test_data, sum_accuracy / data.n_test_data, sum_accuracy_clip / data.n_test_data)
+        res = 'test epoch={} loss={}, acc={}, acc_clip={}\n'.format(epoch, sum_loss / data.n_test_data, sum_accuracy / data.n_test_data, sum_accuracy_clip / data.n_test_data)
         print(res)
         with open(res_filename, 'a+') as f: f.write(res)
 

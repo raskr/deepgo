@@ -40,9 +40,7 @@ model = chainer.FunctionSet(
     conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=32, ksize=5, pad=2),
     conv2=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
     conv3=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
-    conv4=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
-    conv5=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
-    conv6=F.Convolution2D(in_channels=32, out_channels=1, ksize=3, pad=1),
+    conv4=F.Convolution2D(in_channels=32, out_channels=1, ksize=3, pad=1),
     l=F.Linear(361, 361)
 )
 
@@ -54,7 +52,7 @@ if use_gpu:
 start_time = datetime.now()
 start_time_str = start_time.strftime('%Y-%m-%d_%H:%M:%S')
 
-res_filename = '{}.txt'.format(data.printable())
+res_filename = '{}_{}.txt'.format(data.printable(), start_time)
 with open(res_filename, 'w+') as f:
     f.write('************* {}\n'.format(data.printable()))
 
@@ -72,9 +70,7 @@ def forward_conv(x):
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
     h = F.relu(model.conv3(h))
-    h = F.relu(model.conv4(h))
-    h = F.relu(model.conv5(h))
-    return model.l(F.relu(model.conv6(h)))
+    return F.relu(model.conv4(h))
 
 
 def forward(x_batch, y_batch):
@@ -131,7 +127,7 @@ def train():
             sum_accuracy += float(acc.data) * len(y_batch)
             sum_accuracy_clip += float(acc_clip.data) * len(y_batch)
 
-        res = 'test epoch={} loss={}, acc={}, acc_clip={}'.format(epoch,
+        res = 'test epoch={} loss={}, acc={}, acc_clip={}\n'.format(epoch,
                                                                   sum_loss / data.n_test_data,
                                                                   sum_accuracy / data.n_test_data,
                                                                   sum_accuracy_clip / data.n_test_data)
