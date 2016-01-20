@@ -21,33 +21,27 @@ if use_gpu:
 base_path = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.normpath(os.path.join(base_path, '../deepgo.db'))
 
-# 12481120 -> max
-# 10551120 -> omit 1d, 2d
-# 10931120 -> not omitd
-
-# data provider (if 39998 sgf => 3898669)
+# data provider
 data = Data(feat='plane',
             opt='SGD',
             use_gpu=use_gpu,
             db_path=db_path,
-            b_size=2,
-            layer_width=32,
+            b_size=180,
+            layer_width=64,
             n_ch=3,
-            n_train_data=10,
-            n_test_data=3,
+            n_train_data=16500000,
+            n_test_data=100000,
             n_y=3,
-            n_layer=6,
+            n_layer=4,
             n_epoch=3)
 
 
 # Prepare data set
 model = chainer.FunctionSet(
-        conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=32, ksize=5, pad=2),
-        conv2=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
-        conv3=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
-        conv4=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
-        conv5=F.Convolution2D(in_channels=32, out_channels=32, ksize=3, pad=1),
-        conv6=F.Convolution2D(in_channels=32, out_channels=data.n_y, ksize=3, pad=1),
+        conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=64, ksize=5, pad=2),
+        conv2=F.Convolution2D(in_channels=64, out_channels=64, ksize=5, pad=2),
+        conv3=F.Convolution2D(in_channels=64, out_channels=64, ksize=5, pad=2),
+        conv4=F.Convolution2D(in_channels=64, out_channels=data.n_y, ksize=3, pad=1),
 )
 
 
@@ -68,9 +62,7 @@ def forward_conv(x):
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
     h = F.relu(model.conv3(h))
-    h = F.relu(model.conv4(h))
-    h = F.relu(model.conv5(h))
-    return F.relu(model.conv6(h))
+    return F.relu(model.conv4(h))
 
 
 def forward_test(x_batch, y_batch, invalid_batch):
@@ -158,7 +150,7 @@ def train():
             sum_accuracy_clip += float(acc_clip.data) * len(y_batch)
 
         # write result
-        res = 'test epoch={} loss={}, acc={}, acc_clip={}'.format(epoch, sum_loss / data.n_test_data, sum_accuracy / data.n_test_data, sum_accuracy_clip / data.n_test_data)
+        res = 'test epoch={} loss={}, acc={}, acc_clip={}\n'.format(epoch, sum_loss / data.n_test_data, sum_accuracy / data.n_test_data, sum_accuracy_clip / data.n_test_data)
         print(res)
         with open(res_filename, 'a+') as f: f.write(res)
 
