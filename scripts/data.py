@@ -98,9 +98,9 @@ def str2floats(string):
     # prev = [1.0 if x == '1' else 0.0 for x in string[361*20:361*21]] # 1
     # invalid = [1.0 if x == '1' else 0.0  for x in string[361*21:361*22]] # 1
     # g_sizes = [exp(0.01 * int(c)) for c in string[361*22:361*24]] # 2
-    # his = [exp(-0.1 * int(c)) for c in string[361*24:361*25]] # 1
+    #his = [exp(-0.1 * int(c)) for c in string[361*24:361*25]] # 1
 
-    # board.extend(rank)
+    #board.extend(his)
     return board
 
 
