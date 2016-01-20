@@ -22,15 +22,15 @@ here = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.normpath(os.path.join(here, '../deepgo.db'))
 
 # data provider
-data = Data(feat='lib',
+data = Data(feat='plain',
             opt='SGD',
             use_gpu=use_gpu,
             db_path=db_path,
             b_size=200,
             layer_width=64,
-            n_ch=12,
-            n_train_data=16500000,
-            n_test_data=100000,
+            n_ch=3,
+            n_train_data=16000000,
+            n_test_data=700000,
             n_y=1,
             n_layer=6,
             n_epoch=3)
@@ -70,7 +70,7 @@ def forward_conv(x):
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
     h = F.relu(model.conv3(h))
-    return model.l(F.relu(model.conv4(h)))
+    return F.relu(model.conv4(h))
 
 
 def forward(x_batch, y_batch):

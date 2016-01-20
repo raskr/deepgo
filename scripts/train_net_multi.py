@@ -38,10 +38,17 @@ data = Data(feat='plane',
 
 # Prepare data set
 model = chainer.FunctionSet(
+<<<<<<< HEAD
         conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=64, ksize=5, pad=2),
         conv2=F.Convolution2D(in_channels=64, out_channels=64, ksize=5, pad=2),
         conv3=F.Convolution2D(in_channels=64, out_channels=64, ksize=5, pad=2),
         conv4=F.Convolution2D(in_channels=64, out_channels=data.n_y, ksize=3, pad=1),
+=======
+        conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=32, ksize=5, pad=2),
+        conv2=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
+        conv3=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
+        conv4=F.Convolution2D(in_channels=32, out_channels=data.n_y, ksize=3, pad=1),
+>>>>>>> cf4ae88837cb549df38a74769999235787ac2c6a
 )
 
 

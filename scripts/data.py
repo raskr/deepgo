@@ -40,8 +40,8 @@ class Data:
 
         self.n_mb_train = int(n_train_data/b_size)
         self.n_mb_test = int(n_test_data/b_size)
-        self.mb_indices_train = list(range(self.n_mb_train))
-        self.mb_indices_test = list(range(self.n_mb_test + 1, self.n_mb_test + 1 + self.n_mb_test))
+        self.mb_indices_train = np.arange(self.n_mb_train)
+        self.mb_indices_test = np.arange(self.n_mb_test + 1, self.n_mb_test * 2 + 1)
 
         conn = db.connect(db_path)
         self.cur = conn.cursor()
@@ -73,10 +73,10 @@ class Data:
 
     def mb_indices(self, train):
         if train:
-            random.shuffle(self.mb_indices_train)
-            return iter(self.mb_indices_train)
-        random.shuffle(self.mb_indices_test)
-        return iter(self.mb_indices_test)
+            np.random.shuffle(self.mb_indices_train)
+            return self.mb_indices_train
+        np.random.shuffle(self.mb_indices_test)
+        return self.mb_indices_test
 
 
 # return : Array[Int]
@@ -94,13 +94,13 @@ def str2floats(string):
     # border = [1.0 if x == '1' else 0.0 for x in string[361*3:361*4]] # 1
     # lib = [1.0 if x == '1' else 0.0 for x in string[361*4:361*10]] # 6
     # ko = [1.0 if x == '1' else 0.0 for x in string[361*10:361*11]] # 1
-    rank = [1.0 if x == '1' else 0.0 for x in string[361*11:361*20]] # 9
+    # rank = [1.0 if x == '1' else 0.0 for x in string[361*11:361*20]] # 9
     # prev = [1.0 if x == '1' else 0.0 for x in string[361*20:361*21]] # 1
     # invalid = [1.0 if x == '1' else 0.0  for x in string[361*21:361*22]] # 1
     # g_sizes = [exp(0.01 * int(c)) for c in string[361*22:361*24]] # 2
     # his = [exp(-0.1 * int(c)) for c in string[361*24:361*25]] # 1
 
-    board.extend(rank)
+    # board.extend(rank)
     return board
 
 
