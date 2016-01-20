@@ -179,18 +179,10 @@ object GenMove extends Cmd {
   }
 }
 
-object  GTP_CmdHandler {
-  def apply(opponentRank: String, myColor: Char) =
-    new GTP_CmdHandler(opponentRank, myColor)
-}
 
-class GTP_CmdHandler(opponentRank: String, myColor: Char) {
+object GTP_CmdHandler {
 
   import scala.io.StdIn.readLine
-
-  if (TextUtils.isEmpty(opponentRank)) throw new RuntimeException("opponentRank is required")
-  GameState.opponentRank = opponentRank
-  GameState.myColor = myColor
 
   def listenAndServe(): Unit = {
 
@@ -228,17 +220,16 @@ class GTP_CmdHandler(opponentRank: String, myColor: Char) {
 
 object GameState {
   import scala.collection.mutable.ArrayBuffer
-  var opponentRank = ""
-  var myColor = ' '
   val states = ArrayBuffer[State]()
   def updateBy(move: Move) = states.append(states.last.nextStateBy(move))
   def currentState = states.last
+
+  // initiative is black
   def reset() = {
     states.clear()
-    if (myColor == White) {
-      states.append(State(rankW=Some(opponentRank), rankB=None, prevMove=Move('?','?','?', isValid=false)))
-    } else {
-      states.append(State(rankB=Some(opponentRank), rankW=None, prevMove=Move('?','?','?', isValid=false)))
-    }
+    states.append(State(
+      rankW=Some(Config.wRank),
+      rankB=Some(Config.bRank),
+      prevMove=Move('?','?','?', isValid=false)))
   }
 }

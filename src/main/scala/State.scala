@@ -48,6 +48,7 @@ case class State(board: Array[Char] = Array.fill(all)(Empty),
     .append(koPos.toKoChannel) // 1 tested
     .append(rank.toRankChannel) // 9 tested
     .append(prevMove.toMoveChannel) // 1 maybe ok
+    .append(invalidChannel) // 1 maybe ok
     .append(board.toGroupSizeChannel) // 2 tested
     .append(hist.toHistoryChannel) // 1 tested
     .toString()
