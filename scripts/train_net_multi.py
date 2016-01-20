@@ -32,12 +32,12 @@ data = Data(feat='plane',
             db_path=db_path,
             b_size=2,
             layer_width=32,
-            n_ch=24,
+            n_ch=3,
             n_train_data=10,
             n_test_data=3,
             n_y=3,
             n_layer=6,
-            n_epoch=1)
+            n_epoch=3)
 
 
 # Prepare data set
@@ -60,11 +60,11 @@ start_time = datetime.now()
 start_time_str = start_time.strftime('%Y-%m-%d_%H:%M:%S')
 
 res_filename = '{}.txt'.format(data.printable())
-with open(res_filename, 'a+') as f:
-    f.write('* {}\n'.format(data.printable()))
+with open(res_filename, 'w+') as f:
+    f.write('********** {}\n'.format(data.printable()))
 
 
-def forward_common(x, t):
+def forward_conv(x):
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
     h = F.relu(model.conv3(h))
@@ -75,21 +75,20 @@ def forward_common(x, t):
 
 def forward_test(x_batch, y_batch, invalid_batch):
     x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
-    y = forward_common(x, t)
+    y = forward_conv(x)
     y_reduced_arr_clip = y_reduced_arr = pick_channel_y(y.data, 0)
-    y_reduced_arr_clip = F.softmax(chainer.Variable(y_reduced_arr_clip), use_cudnn=False)
+    y_reduced_arr_clip = F.softmax(chainer.Variable(y_reduced_arr_clip), use_cudnn=True)
     y_reduced_arr_clip = (y_reduced_arr_clip.data - invalid_batch).clip(0, 1)
-    y_reduced_arr_clip = F.softmax(chainer.Variable(y_reduced_arr_clip), use_cudnn=False).data
+    y_reduced_arr_clip = F.softmax(chainer.Variable(y_reduced_arr_clip), use_cudnn=True)
+    ans = chainer.Variable(pick_channel_t(y_batch, 0))
     return softmax_cross_entropy_multi(y, t),\
-           F.accuracy(chainer.Variable(y_reduced_arr),
-                      chainer.Variable(pick_channel_t(y_batch, 0))), \
-           F.accuracy(chainer.Variable(y_reduced_arr_clip),
-                      chainer.Variable(pick_channel_t(y_batch, 0)))
+           F.accuracy(chainer.Variable(y_reduced_arr), ans), \
+           F.accuracy(y_reduced_arr_clip, ans)
 
 
 def forward(x_batch, y_batch):
     x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
-    y = forward_common(x, t)
+    y = forward_conv(x)
     y_reduced_arr = pick_channel_y(y.data, 0)
     return softmax_cross_entropy_multi(y, t),\
            F.accuracy(chainer.Variable(y_reduced_arr), chainer.Variable(pick_channel_t(y_batch, 0)))
@@ -107,12 +106,10 @@ def pick_channel_y(array, idx):
 
 def decline_lr(epoch, optimizer):
     if epoch == 2:
-        optimizer.lr = 0.06
-    elif epoch == 3:
         optimizer.lr = 0.04
-    elif epoch == 4:
+    elif epoch == 3:
         optimizer.lr = 0.02
-    elif epoch == 5:
+    elif epoch == 4:
         optimizer.lr = 0.01
 
 
@@ -120,45 +117,50 @@ def train():
     optimizer = optimizers.SGD(lr=0.08)
     optimizer.setup(model)
     for epoch in six.moves.range(1, data.n_epoch + 1):
-        decline_lr(epoch, optimizer)
         sum_accuracy = sum_loss = mb_count = 0
 
         # training loop
         for i in data.mb_indices(True):
+            # print
             if mb_count % 20 == 0:
                 print('epoch: {} mini batch: {} of {}'.format(epoch, mb_count, data.n_mb_train))
             mb_count += 1
-            x_batch, y_batch = data(True, i)
 
+            # actual task
+            x_batch, y_batch = data(True, i)
             optimizer.zero_grads()
             loss, acc = forward(x_batch, y_batch)
+            decline_lr(epoch, optimizer)
             loss.backward()
             optimizer.update()
-
             sum_loss += float(loss.data) * len(y_batch)
             sum_accuracy += float(acc.data) * len(y_batch)
 
+            # write result
             if mb_count % (data.n_mb_train / 2) == 0:
-                print('train mean loss = {}, accuracy = {}\n'.format(sum_loss / data.n_train_data, sum_accuracy / data.n_train_data))
-                with open(res_filename, 'a+') as f:
-                    f.write(('train epoch {} train loss={}, acc={}\n' .format(epoch/2, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)))
+                n_data = data.n_train_data if mb_count == data.n_mb_train else data.n_train_data / 2
+                res = ('train epoch {} train loss={}, acc={}\n' .format(epoch, sum_loss / n_data, sum_accuracy / n_data))
+                print(res)
+                with open(res_filename, 'a+') as f: f.write(res)
 
         # test loop
         sum_accuracy = sum_accuracy_clip = sum_loss = mb_count = 0
         for i in data.mb_indices(False):
-            if mb_count % 20 == 0:
-                print('test mini batch: {} of {}'.format(mb_count, data.n_mb_test))
+            # print
+            if mb_count % 20 == 0: print('epoch{} test mini batch: {} of {}'.format(epoch, mb_count, data.n_mb_test))
             mb_count += 1
             x_batch, y_batch, invalid_batch = data(False, i)
 
+            # actual task
             loss, acc, acc_clip = forward_test(x_batch, y_batch, invalid_batch)
             sum_loss += float(loss.data) * len(y_batch)
             sum_accuracy += float(acc.data) * len(y_batch)
             sum_accuracy_clip += float(acc_clip.data) * len(y_batch)
 
-        print('test loss={}, acc={}, acc_clip={}'.format(sum_loss / data.n_test_data, sum_accuracy / data.n_test_data, sum_accuracy_clip / data.n_test_data))
-        with open(res_filename, 'a+') as f:
-            f.write(('test mean loss={}, accuracy={}, accuracy_clip={}\n'.format(sum_loss / data.n_test_data, sum_accuracy / data.n_test_data, sum_accuracy_clip / data.n_test_data)))
+        # write result
+        res = 'test epoch={} loss={}, acc={}, acc_clip={}'.format(epoch, sum_loss / data.n_test_data, sum_accuracy / data.n_test_data, sum_accuracy_clip / data.n_test_data)
+        print(res)
+        with open(res_filename, 'a+') as f: f.write(res)
 
     save_net('white_{}'.format(data.printable()))
     with open(res_filename, 'a+') as f:

@@ -85,20 +85,22 @@ def split_ys(string, head):
     return ret[0:1] if head else ret
 
 
-# total 23
+# total 24
 def str2floats(string):
     # print(len(string)/361)
-    base = [1.0 if x == '1' else 0.0 for x in string]
-    board = [1.0 if x == '1' else 0.0 for x in string[:361*3]]
-    # border = [1.0 if x == '1' else 0.0 for x in string[361*3:361*4]]
-    # lib = [1.0 if x == '1' else 0.0 for x in string[361*4:361*10]]
-    # ko = [1.0 if x == '1' else 0.0 for x in string[361*10:361*11]]
-    # rank = [1.0 if x == '1' else 0.0 for x in string[361*11:361*20]]
-    # prev = [1.0 if x == '1' else 0.0 for x in string[361*20:361*21]]
-    # g_sizes = [exp(0.1 * int(c)) for c in string[361*21:361*23]]
-    # his = [exp(-0.1 * int(c)) for c in string[-361:]]
+    # full = [1.0 if x == '1' else 0.0 for x in string]
+
+    board = [1.0 if x == '1' else 0.0 for x in string[:361*3]] # 3
+    border = [1.0 if x == '1' else 0.0 for x in string[361*3:361*4]] # 1
+    lib = [1.0 if x == '1' else 0.0 for x in string[361*4:361*10]] # 6
+    ko = [1.0 if x == '1' else 0.0 for x in string[361*10:361*11]] # 1
+    rank = [1.0 if x == '1' else 0.0 for x in string[361*11:361*20]] # 9
+    prev = [1.0 if x == '1' else 0.0 for x in string[361*20:361*21]] # 1
+    g_sizes = [exp(0.01 * int(c)) for c in string[361*21:361*23]] # 2
+    his = [exp(-0.1 * int(c)) for c in string[361*23:361*24]] # 1
+
     # board.extend( )
-    return base
+    return board
 
 
 def str2floats_simple(string):
