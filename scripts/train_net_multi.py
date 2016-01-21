@@ -124,9 +124,9 @@ def train():
             sum_accuracy += float(acc.data) * len(y_batch)
 
             # write result
-    	res = ('train epoch {} train loss={}, acc={}\n' .format(epoch, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data))
-    	print(res)
-    	with open(res_filename, 'a+') as f: f.write(res)
+        res = ('train epoch {} train loss={}, acc={}\n' .format(epoch, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data))
+        print(res)
+        with open(res_filename, 'a+') as f: f.write(res)
 
         # test loop
         sum_accuracy = sum_accuracy_clip = sum_loss = mb_count = 0
