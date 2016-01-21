@@ -46,7 +46,7 @@ model = chainer.FunctionSet(
 
 
 if use_gpu:
-    cuda.get_device(0).use()
+    cuda.get_device(args.gpu).use()
     model.to_gpu()
 
 start_time = datetime.now()
@@ -58,12 +58,8 @@ with open(res_filename, 'w+') as f:
 
 
 def decline_lr(epoch, optimizer):
-    if epoch == 2:
-        optimizer.lr = 0.04
-    elif epoch == 3:
-        optimizer.lr = 0.02
-    elif epoch == 4:
-        optimizer.lr = 0.01
+    lr = optimizer.lr
+    optimizer.lr = lr / 2
 
 
 def forward_conv(x):

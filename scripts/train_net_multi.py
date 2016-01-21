@@ -38,22 +38,15 @@ data = Data(feat='plane',
 
 # Prepare data set
 model = chainer.FunctionSet(
-<<<<<<< HEAD
         conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=64, ksize=5, pad=2),
         conv2=F.Convolution2D(in_channels=64, out_channels=64, ksize=5, pad=2),
         conv3=F.Convolution2D(in_channels=64, out_channels=64, ksize=5, pad=2),
         conv4=F.Convolution2D(in_channels=64, out_channels=data.n_y, ksize=3, pad=1),
-=======
-        conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=32, ksize=5, pad=2),
-        conv2=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
-        conv3=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
-        conv4=F.Convolution2D(in_channels=32, out_channels=data.n_y, ksize=3, pad=1),
->>>>>>> cf4ae88837cb549df38a74769999235787ac2c6a
 )
 
 
 if use_gpu:
-    cuda.get_device(0).use()
+    cuda.get_device(args.gpu).use()
     model.to_gpu()
 
 
@@ -104,12 +97,8 @@ def pick_channel_y(array, idx):
 
 
 def decline_lr(epoch, optimizer):
-    if epoch == 2:
-        optimizer.lr = 0.04
-    elif epoch == 3:
-        optimizer.lr = 0.02
-    elif epoch == 4:
-        optimizer.lr = 0.01
+    lr = optimizer.lr
+    optimizer.lr = lr / 2
 
 
 def train():
