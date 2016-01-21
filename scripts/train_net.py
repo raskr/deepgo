@@ -22,13 +22,13 @@ here = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.normpath(os.path.join(here, '../deepgo.db'))
 
 # data provider
-data = Data(feat='plain',
+data = Data(feat='his',
             opt='SGD',
             use_gpu=use_gpu,
             db_path=db_path,
             b_size=200,
             layer_width=64,
-            n_ch=3,
+            n_ch=4,
             n_train_data=16000000,
             n_test_data=700000,
             n_y=1,
@@ -52,7 +52,7 @@ if use_gpu:
 start_time = datetime.now()
 start_time_str = start_time.strftime('%Y-%m-%d_%H:%M:%S')
 
-res_filename = '{}_{}.txt'.format(data.printable(), start_time)
+res_filename = '{}_{}.txt'.format(data.printable(), start_time_str)
 with open(res_filename, 'w+') as f:
     f.write('************* {}\n'.format(data.printable()))
 
@@ -87,6 +87,7 @@ def forward_test(x_batch, y_batch, invalid_batch):
 def train():
     optimizer = optimizers.SGD(lr=0.08)
     optimizer.setup(model)
+    half = False
     for epoch in six.moves.range(1, data.n_epoch + 1):
         sum_accuracy = sum_loss = mb_count = 0
         for i_mb in data.mb_indices(True):
@@ -105,11 +106,9 @@ def train():
             sum_accuracy += float(acc.data) * len(y_batch)
 
             # write result
-            if mb_count % (data.n_mb_train / 2) == 0:
-                n_data = data.n_train_data if mb_count == data.n_mb_train else data.n_train_data / 2
-                res = 'train epoch {} train loss={}, acc={}\n'.format(epoch, sum_loss / n_data, sum_accuracy / n_data)
-                print(res)
-                with open(res_filename, 'a+') as f: f.write(res)
+    	res = 'train epoch {} train loss={}, acc={}\n'.format(epoch, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)
+    	print(res)
+    	with open(res_filename, 'a+') as f: f.write(res)
 
         # evaluation (test)
         sum_accuracy = sum_accuracy_clip = sum_loss = mb_count = 0
@@ -129,6 +128,7 @@ def train():
                                                                   sum_accuracy_clip / data.n_test_data)
         print(res)
         with open(res_filename, 'a+') as f: f.write(res)
+	optimizer.lr = 0.08
 
     save_net('white_{}'.format(data.printable()))
     with open(res_filename, 'a+') as f:
