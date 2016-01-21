@@ -123,7 +123,7 @@ object Implicits {
   }
 
   implicit class RichCharArray(val in: Array[Char]) extends AnyVal {
-    
+
     def printSelf() = {
       for (x <- in) print(x)
       println()
@@ -215,7 +215,7 @@ object Implicits {
         }
 
         else {
-          throw new RuntimeException
+          // do nothibg (remain it zero
         }
 
         i += 1

@@ -22,25 +22,24 @@ here = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.normpath(os.path.join(here, '../deepgo.db'))
 
 # data provider
-data = Data(feat='his',
+data = Data(feat='lib',
             opt='SGD',
             use_gpu=use_gpu,
             db_path=db_path,
-            b_size=200,
+            b_size=30,
             layer_width=64,
-            n_ch=4,
-            n_train_data=16000000,
-            n_test_data=700000,
+            n_ch=9,
+            n_train_data=13000000,
+            n_test_data=100000,
             n_y=1,
-            n_layer=6,
+            n_layer=4,
             n_epoch=3)
 
 # Prepare data set
 model = chainer.FunctionSet(
-    conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=64, ksize=5, pad=2),
-    conv2=F.Convolution2D(in_channels=64, out_channels=64, ksize=5, pad=2),
-    conv3=F.Convolution2D(in_channels=64, out_channels=64, ksize=5, pad=2),
-    conv4=F.Convolution2D(in_channels=64, out_channels=1, ksize=3, pad=1),
+    conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=30, ksize=5, pad=2, use_cudnn=False),
+    conv2=F.Convolution2D(in_channels=30, out_channels=30, ksize=5, pad=2, use_cudnn=False),
+    conv3=F.Convolution2D(in_channels=30, out_channels=1, ksize=3, pad=1, use_cudnn=False),
     l=F.Linear(361, 361)
 )
 
@@ -63,24 +62,23 @@ def decline_lr(optimizer):
 
 
 def forward_conv(x):
-    h = F.relu(model.conv1(x))
-    h = F.relu(model.conv2(h))
-    h = F.relu(model.conv3(h))
-    return F.relu(model.conv4(h))
+    h = F.relu(model.conv1(x), use_cudnn=False)
+    h = F.relu(model.conv2(h), use_cudnn=False)
+    return F.relu(model.conv3(h), use_cudnn=False)
 
 
 def forward(x_batch, y_batch):
     x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
     y = model.l(forward_conv(x))
-    return F.softmax_cross_entropy(y, t), F.accuracy(y, t)
+    return F.softmax_cross_entropy(y, t, use_cudnn=False), F.accuracy(y, t)
 
 
 def forward_test(x_batch, y_batch, invalid_batch):
     x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
     y = y_clip = model.l(forward_conv(x))
-    y_clip = F.softmax(y_clip)
+    y_clip = F.softmax(y_clip, use_cudnn=False)
     y_clip = (y_clip.data - invalid_batch).clip(0, 1)
-    y_clip = F.softmax(chainer.Variable(y_clip))
+    y_clip = F.softmax(chainer.Variable(y_clip), use_cudnn=False)
     return F.softmax_cross_entropy(y, t), F.accuracy(y, t), F.accuracy(y_clip, t)
 
 

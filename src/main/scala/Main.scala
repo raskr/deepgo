@@ -18,7 +18,7 @@ object Main {
 
     (dir, color, mode, step, opponentRank) match {
       case (Some(d), Some(c), Some(m), Some(s), _) if m._2 == "db" => // use sqlite3
-        parseSGF(d._2, colorsFrom(c._2).map(new DB(_)), s._2.charAt(0)-'0', Some(3))
+        parseSGF(d._2, colorsFrom(c._2).map(new DB(_)), s._2.charAt(0)-'0', None)
 
       case (Some(d), Some(c), Some(m), Some(s), _) if m._2 == "f" => // use text files
         parseSGF(d._2, colorsFrom(c._2).map(new Files(_)), s._2.head-'0')
@@ -82,9 +82,9 @@ object Main {
           prop match {
             // rank
             case Property(PropIdent(a: String), List(PropValue(SimpleText(r: String)))) if a == "WR" =>
-              rankW = Some(r).filter(x => x.isValidRank)
+              rankW = Some(r).filter(x => x.isValidRank && x.isStrongRank)
             case Property(PropIdent(a: String), List(PropValue(SimpleText(r: String)))) if a == "BR" =>
-              rankB = Some(r).filter(x => x.isValidRank)
+              rankB = Some(r).filter(x => x.isValidRank && x.isStrongRank)
             // others
             case _ =>
           }
