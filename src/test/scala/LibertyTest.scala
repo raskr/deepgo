@@ -10,4 +10,8 @@ object LibertyTest extends App {
 
   // result
   liberties(board).printState(19, 19)
+
+  // channel test
+  board.toLibertyChannel.toCharArray.printSelf(6, 361)
+
 }

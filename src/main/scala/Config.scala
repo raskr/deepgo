@@ -10,6 +10,7 @@ object Config {
   def padDia = dia + 2
   def padAll = (dia + 2) * (dia + 2)
 
+  var numPrevMoves = 0
 
   // ---------------------------------
   // -------------- GTP --------------

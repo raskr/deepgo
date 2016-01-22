@@ -4,6 +4,17 @@ object Implicits {
 
   import Color._
 
+  implicit class RichSeq(val x: Seq[Move]) extends AnyVal {
+    // performance may poor, but it is no matter in this case
+    def toPrevMoveChannel = {
+      x.map { move =>
+        val a = Utils.zeros(Config.all)
+        a(move.pos) = '1'
+        a
+      }.reduce(Array.concat(_, _)).mkString
+    }
+  }
+
   implicit class RichString(val x: String) extends AnyVal {
 
     // 9ch (tested)

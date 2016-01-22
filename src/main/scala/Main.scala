@@ -14,17 +14,17 @@ object Main {
     val color        = res find (_._1.matches("-c||--color"))
     val mode         = res find (_._1.matches("-m||--mode"))
     val step         = res find (_._1.matches("-s||--step")) // prediction step num
-    val opponentRank = res find (_._1.matches("-r||--rank")) // use when gtp mode
+    val prevStep     = res find (_._1.matches("-p||--prev"))
 
-    (dir, color, mode, step, opponentRank) match {
-      case (Some(d), Some(c), Some(m), Some(s), _) if m._2 == "db" => // use sqlite3
-        parseSGF(d._2, colorsFrom(c._2).map(new DB(_)), s._2.charAt(0)-'0', None)
+    (dir, color, mode, step, prevStep) match {
+      case (Some(d), Some(c), Some(m), Some(s), Some(p)) if m._2 == "db" => // use sqlite3
+        parseSGF(d._2, colorsFrom(c._2).map(new DB(_)), s._2.head-'0', p._2.head-'0')
 
-      case (Some(d), Some(c), Some(m), Some(s), _) if m._2 == "f" => // use text files
-        parseSGF(d._2, colorsFrom(c._2).map(new Files(_)), s._2.head-'0')
+      case (Some(d), Some(c), Some(m), Some(s), Some(p)) if m._2 == "f" => // use text files
+        parseSGF(d._2, colorsFrom(c._2).map(new Files(_)), s._2.head-'0', p._2.head-'0')
 
-      case (Some(d), _, _, Some(s), _) => // test
-        parseSGF(d._2, Seq(), s._2.head-'0', limit=Some(5))
+      case (Some(d), _, _, Some(s), Some(p)) => // test
+        parseSGF(d._2, Seq(), s._2.head-'0', p._2.head-'0', limit=Some(5))
 
       case (_, Some(c), Some(m), Some(s), Some(o)) if m._2 == "gtp" =>
         GTP_CmdHandler.listenAndServe()
@@ -33,14 +33,16 @@ object Main {
     }
   }
 
-  private def parseSGF(dir: String, outs: Seq[OutputStorage], step: Int, limit: Option[Int]=None) = try {
+  private def parseSGF(dir: String, outs: Seq[OutputStorage],
+                       step: Int, prevStep: Int, limit: Option[Int]=None) = try {
+    Config.numPrevMoves = prevStep
     Utils.listFilesIn(dir, limit, Some(".sgf")) foreach { f =>
       // getLines() may throw exception
       val parsed = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
       if (parsed.successful) processParseResult(parsed.get, outs.map(_.color)).foreach { pRes =>
         val res = distributeTargetMoves(pRes, step)
         res foreach { x =>
-          if (outs.isEmpty) TargetDistributionTest(x)
+          //if (outs.isEmpty) TargetDistributionTest(x)
           commitResult(x, outs)
         }
       }
@@ -94,7 +96,7 @@ object Main {
         // ============================================
 
         val dummyMv = Move(White, '?', '?', isValid=false)
-        val states = ArrayBuffer(State(rankW=rankW, rankB=rankB, prevMove=dummyMv))
+        val states = ArrayBuffer(State(rankW=rankW, rankB=rankB, prevMoves=Seq(dummyMv)))
         val moves = ArrayBuffer(dummyMv)
 
         // ============================================
@@ -106,8 +108,9 @@ object Main {
             case List(Property(PropIdent(col: String), List(PropValue(Point(a: Char, b: Char))))) =>
               val mv = Move(if (col.head.toLower == 'w') White else Black, a-'a', b-'a', isValid=true)
               if (mv.x <= 18 && mv.y <= 18) {
-                states append states.last.nextStateBy(mv)
+                // ↓ Do not change the order! Move appending should be first.
                 moves append mv
+                states append states.last.nextStateBy(moves)
               }
             // not a move
             case _ =>

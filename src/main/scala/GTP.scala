@@ -221,7 +221,11 @@ object GTP_CmdHandler {
 object GameState {
   import scala.collection.mutable.ArrayBuffer
   val states = ArrayBuffer[State]()
-  def updateBy(move: Move) = states.append(states.last.nextStateBy(move))
+  val moves = ArrayBuffer[Move]()
+  def updateBy(move: Move) = {
+    moves.append(move)
+    states.append(states.last.nextStateBy(moves))
+  }
   def currentState = states.last
 
   // initiative is black
@@ -230,6 +234,6 @@ object GameState {
     states.append(State(
       rankW=Some(Config.wRank),
       rankB=Some(Config.bRank),
-      prevMove=Move('?','?','?', isValid=false)))
+      prevMoves=Seq(Move(Color.White,'?','?', isValid=false))))
   }
 }

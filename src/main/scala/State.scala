@@ -8,16 +8,23 @@ import Config._
  *
  * @param board current board
  * @param koPos position next player can't play
- * @param prevMove move created this state
+ * @param prevMoves
  */
 case class State(board: Array[Char] = Array.fill(all)(Empty),
                  hist: Array[Int] = Array.fill(all)(0),
                  koPos: Int = -1,
                  rankW: Option[String],
                  rankB: Option[String],
-                 prevMove: Move) {
+                 prevMoves: Seq[Move]) {
 
+  val prevMovesValidated = {
+    val a = prevMoves.filter(_.isValid)
+    if (a.size >= Config.numPrevMoves) Some(a) else None
+  }
+
+  val prevMove = prevMoves.last
   val ansColor = prevMove.color.opponent
+
 
   def ownRank: Option[String] =
     if (prevMove.color.opponent == White) rankB else rankW
@@ -36,10 +43,12 @@ case class State(board: Array[Char] = Array.fill(all)(Empty),
     dst.mkString
   }
 
+  // for `liberty'. Not for future moves
   var nextBoard: Option[Array[Char]] = None
 
   def toChannels: Option[String] = for {
     rank <- ownRank
+    prevMvs <- prevMovesValidated
     nBoard <- nextBoard
   } yield new StringBuilder()
     .append(board.toBoardChannel) // 3 tested
@@ -47,19 +56,20 @@ case class State(board: Array[Char] = Array.fill(all)(Empty),
     .append(nBoard.toLibertyChannel) // 6 tested
     .append(koPos.toKoChannel) // 1 tested
     .append(rank.toRankChannel) // 9 tested
-    .append(prevMove.toMoveChannel) // 1 maybe ok
+    .append(prevMvs.toPrevMoveChannel) // n maybe ok
     .append(invalidChannel) // 1 maybe ok
     .append(board.toGroupSizeChannel) // 2 tested
     .append(hist.toHistoryChannel) // 1 tested
     .toString()
 
 
-  def nextStateBy(move: Move): State = {
+  def nextStateBy(moves: Seq[Move]): State = {
+    val move = moves.last
     val newBoard = board.createNextBoardBy(move)
     nextBoard = Some(newBoard)
     val ko = board.findKoBy(move, newBoard)
     val his = hist.nextHistory(board, newBoard)
-    State(newBoard, his, ko, rankW, rankB, move)
+    State(newBoard, his, ko, rankW, rankB, moves)
   }
 
 }
