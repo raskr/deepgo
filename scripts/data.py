@@ -40,7 +40,7 @@ class Data:
         self.n_mb_train = int(n_train_data/b_size)
         self.n_mb_test = int(n_test_data/b_size)
         self.mb_indices_train = np.arange(self.n_mb_train)
-        self.mb_indices_test = np.arange(self.n_mb_test + 1, self.n_mb_test * 2 + 1)
+        self.mb_indices_test = np.arange(self.n_mb_train + 1, self.n_mb_train + self.n_mb_test + 1)
 
         conn = db.connect(db_path)
         self.cur = conn.cursor()
