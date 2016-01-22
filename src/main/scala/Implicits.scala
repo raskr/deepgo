@@ -188,18 +188,36 @@ object Implicits {
       while (i < Config.all) {
         val lib = liberties(i)
         val col = in(i)
-        if (lib == 1) {
-          if      (col == White) dst(i) = '1'
-          else if (col == Black) dst(Config.all * 3 + i) = '1'
+        val all = Config.all
+
+        if (col == White) {
+          if (lib == 1) {
+            dst(i) = '1'
+          }
+          else if (lib == 2) {
+            dst(all + i) = '1'
+          }
+          else if (lib >= 3) {
+            dst(all * 2 + i) = '1'
+          }
         }
-        else if (lib == 2) {
-          if      (col == White) dst(Config.all + i) = '1'
-          else if (col == Black) dst(Config.all * 4 + i) = '1'
+
+        else if (col == Black) {
+          if (lib == 1) {
+            dst(all * 3 + i) = '1'
+          }
+          else if (lib == 2) {
+            dst(all * 4 + i) = '1'
+          }
+          else if (lib >= 3) {
+            dst(all * 5 + i) = '1'
+          }
         }
-        else if (lib >= 3) {
-          if      (col == White) dst(Config.all * 2 + i) = '1'
-          else if (col == Black) dst(Config.all * 5 + i) = '1'
+
+        else {
+          throw new RuntimeException
         }
+
         i += 1
       }
       dst.mkString
