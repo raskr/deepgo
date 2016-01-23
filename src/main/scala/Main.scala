@@ -108,7 +108,7 @@ object Main {
             case List(Property(PropIdent(col: String), List(PropValue(Point(a: Char, b: Char))))) =>
               val mv = Move(if (col.head.toLower == 'w') White else Black, a-'a', b-'a', isValid=true)
               if (mv.x <= 18 && mv.y <= 18) {
-                // ↓ Do not change the order! Move appending should be first.
+                // ↓ Do not change the order! Move appending should be the first.
                 moves append mv
                 states append states.last.nextStateBy(moves)
               }

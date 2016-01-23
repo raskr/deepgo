@@ -19,12 +19,11 @@ case class State(board: Array[Char] = Array.fill(all)(Empty),
 
   val prevMovesValidated = {
     val a = prevMoves.filter(_.isValid)
-    if (a.size >= Config.numPrevMoves) Some(a) else None
+    if (a.size >= Config.numPrevMoves) Some(a.take(Config.numPrevMoves)) else None
   }
 
   val prevMove = prevMoves.last
   val ansColor = prevMove.color.opponent
-
 
   def ownRank: Option[String] =
     if (prevMove.color.opponent == White) rankB else rankW
@@ -40,33 +39,43 @@ case class State(board: Array[Char] = Array.fill(all)(Empty),
     }
     // ko
     if (koPos != -1) dst(koPos) = '1'
+    dst
+  }
+
+  def legalChannel = {
+    var i = 0
+    val dst = invalidChannel
+    while (i < all) {
+      dst(i) = if (dst(i) == '1') 0 else 1
+      i += 1
+    }
     dst.mkString
   }
 
   // for `liberty'. Not for future moves
-  var nextBoard: Option[Array[Char]] = None
+  //var nextBoard: Option[Array[Char]] = None
 
   def toChannels: Option[String] = for {
     rank <- ownRank
     prevMvs <- prevMovesValidated
-    nBoard <- nextBoard
   } yield new StringBuilder()
+    .append(hist.toHistoryChannel) // 1 tested
+
+    .append(board.toLibertyChannel) // 6 tested
     .append(board.toBoardChannel) // 3 tested
     .append(board.toBorderChannel) // 1 tested
-    .append(nBoard.toLibertyChannel) // 6 tested
     .append(koPos.toKoChannel) // 1 tested
     .append(rank.toRankChannel) // 9 tested
+    .append(legalChannel) // 1 maybe ok
+
     .append(prevMvs.toPrevMoveChannel) // n maybe ok
-    .append(invalidChannel) // 1 maybe ok
-    .append(board.toGroupSizeChannel) // 2 tested
-    .append(hist.toHistoryChannel) // 1 tested
     .toString()
 
 
   def nextStateBy(moves: Seq[Move]): State = {
     val move = moves.last
     val newBoard = board.createNextBoardBy(move)
-    nextBoard = Some(newBoard)
+    //nextBoard = Some(newBoard)
     val ko = board.findKoBy(move, newBoard)
     val his = hist.nextHistory(board, newBoard)
     State(newBoard, his, ko, rankW, rankB, moves)

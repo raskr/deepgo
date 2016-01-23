@@ -49,7 +49,7 @@ final class DB(val color: Char) extends OutputStorage {
       DB.currentRowCount += 1
       statement.setString(1, ch)
       statement.setString(2, targets.map(_.pos).mkString(","))
-      statement.setString(3, state.invalidChannel)
+      statement.setString(3, state.invalidChannel.mkString)
       statement.executeUpdate
       // save regularly
       if (DB.currentRowCount % 5000000 == 0) DB.conn.commit()
@@ -78,7 +78,7 @@ final class Files(val color: Char) extends OutputStorage {
   def commit(state: State, targets: Seq[Move]) = DB.lock.synchronized {
     state.toChannels.foreach { ch =>
       buf.append(ch)
-      bufInvalid.append(state.invalidChannel)
+      bufInvalid.append(state.invalidChannel.mkString)
       bufTarget.append("" + targets.map(_.pos).mkString(","))
       currentBufSize += 1
       if (currentBufSize == maxRowInFile) {
