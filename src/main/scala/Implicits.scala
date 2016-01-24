@@ -9,7 +9,7 @@ object Implicits {
     def toPrevMoveChannel = {
       x.map { move =>
         val a = Utils.zeros(Config.all)
-        a(move.pos) = '1'
+        if (move.isValid) a(move.pos) = '1'
         a
       }.reduce(Array.concat(_, _)).mkString
     }

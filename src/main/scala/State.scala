@@ -15,11 +15,34 @@ case class State(board: Array[Char],
                  koPos: Int = -1,
                  rankW: Option[String],
                  rankB: Option[String],
-                 prevMoves: Seq[Move]) {
+                 prevMoves: Array[Move]) {
 
-  def prevMovesValidated = {
-    val a = prevMoves.filter(_.isValid)
-    if (a.size >= Config.numPrevMoves) Some(a.take(Config.numPrevMoves)) else None
+  def prevMovesChannel = {
+    val size = prevMoves.length
+
+    if (size == Config.numPrevMoves) {
+      prevMoves.map { move =>
+        val b = Utils.zeros(Config.all)
+        if (move.isValid) b(move.pos) = '1'
+        b
+      }.reduce(Array.concat(_, _)).mkString
+    }
+    else if (size > Config.numPrevMoves ){
+      prevMoves.take(Config.numPrevMoves).map { move =>
+        val b = Utils.zeros(Config.all)
+        if (move.isValid) b(move.pos) = '1'
+        b
+      }.reduce(Array.concat(_, _)).mkString
+    }
+    else { // few moves
+      val dst = prevMoves.map { move =>
+        val b = Utils.zeros(Config.all)
+        if (move.isValid) b(move.pos) = '1'
+        b
+      }.reduce(Array.concat(_, _))
+
+      Array.concat(dst, Utils.zeros((Config.numPrevMoves - size) * Config.all)).mkString
+    }
   }
 
   val prevMove = prevMoves.last

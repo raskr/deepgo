@@ -231,10 +231,15 @@ object GameState {
   // initiative is black
   def reset() = {
     states.clear()
+    moves.clear()
+
+    val dummyMv = Move(Config.opponentColor,'?','?', isValid=false)
+
+    moves.append(dummyMv)
     states.append(State(
       board = Rules.genInitialBoard(None), // no handicap
       rankW=Some(Config.wRank),
       rankB=Some(Config.bRank),
-      prevMoves=Seq(Move(Color.Black,'?','?', isValid=false))))
+      prevMoves=Array(dummyMv)))
   }
 }
