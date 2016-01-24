@@ -150,7 +150,11 @@ object Rules {
     dst(move.pos) = move.color
     positionsCapturedBy(move, dst).foreach{ dst(_) = Empty }
     if (!Utils.checkBoardLegality(dst)) {
-      throw new RuntimeException
+      println("bad before")
+      board.printState(19, 19, Some(move), None)
+      println("bad after ")
+      println(board.printState(19, 19, None, None)
+      throw new RuntimeException("error!!!!!!!!!!!!!!!!!!!")
     }
     dst
   }
@@ -240,7 +244,8 @@ object Rules {
       }
     }
     lib.value == 0 && {
-      val a = board.clone(); a(move.pos) = move.color
+      val a = board.clone()
+      a(move.pos) = move.color
       positionsCapturedBy(move, a).isEmpty
     }
   }
