@@ -153,7 +153,7 @@ object Rules {
       println("bad before")
       board.printState(19, 19, Some(move), None)
       println("bad after ")
-      println(board.printState(19, 19, None, None)
+      board.printState(19, 19, None, None)
       throw new RuntimeException("error!!!!!!!!!!!!!!!!!!!")
     }
     dst
