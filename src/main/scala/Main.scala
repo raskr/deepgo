@@ -26,10 +26,10 @@ object Main {
       case (Some(d), _, _, Some(s), Some(p)) => // test
         parseSGF(d._2, Seq(), s._2.head-'0', p._2.head-'0', limit=Some(5))
 
-      case (_, Some(c), Some(m), Some(s), Some(o)) if m._2 == "gtp" =>
+      case (_, _, Some(m), _, _)  =>
         GTP_CmdHandler.listenAndServe()
 
-      case _ => throw new IllegalArgumentException("No valid arguments were given.")
+      case _ => throw new IllegalArgumentException("No valid arguments were given!!!")
     }
   }
 

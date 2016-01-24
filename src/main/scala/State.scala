@@ -17,7 +17,7 @@ case class State(board: Array[Char],
                  rankB: Option[String],
                  prevMoves: Seq[Move]) {
 
-  val prevMovesValidated = {
+  def prevMovesValidated = {
     val a = prevMoves.filter(_.isValid)
     if (a.size >= Config.numPrevMoves) Some(a.take(Config.numPrevMoves)) else None
   }

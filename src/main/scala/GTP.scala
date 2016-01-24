@@ -235,6 +235,6 @@ object GameState {
       board = Rules.genInitialBoard(None), // no handicap
       rankW=Some(Config.wRank),
       rankB=Some(Config.bRank),
-      prevMoves=Seq(Move(Color.White,'?','?', isValid=false))))
+      prevMoves=Seq(Move(Color.Black,'?','?', isValid=false))))
   }
 }
