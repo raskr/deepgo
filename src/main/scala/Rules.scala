@@ -4,15 +4,16 @@ object Rules {
   import Implicits._
   import Color._
 
-  // dead position is the position that liberty is 0
-  def deadPositions(move: Move, board: Array[Char]): mutable.Set[Int] = {
+  // You should reflect the move to board before call this function
+  def positionsCapturedBy(move: Move, board: Array[Char]): mutable.Set[Int] = {
     val padded = board.pad(Config.dia, Config.dia, 1, Outside)
     val dst = mutable.Set[Int]()
     val movePos = (move.y+1)*21 + (move.x+1)
     val checked = mutable.Set[Int]()
 
     Array(movePos+1, movePos-1, movePos+21, movePos-21) foreach { idx =>
-      if (padded(idx).isStone) {
+      val a = padded(idx)
+      if (a.isStone && a.isOpponentOf(move.color)) {
         val blo, skip = mutable.Set[Int]()
         val lib = new MutableInt(0)
         loop(idx, padded(idx), lib, skip, blo)
@@ -147,13 +148,8 @@ object Rules {
   def boardAfterCaptured(move: Move, board: Array[Char]): Array[Char] = {
     val dst = board.clone()
     dst(move.pos) = move.color
-    deadPositions(move, dst).foreach{ dst(_) = Empty }
-    val a = Utils.checkBoardLegality(dst)
-    println("before...")
-    board.printState(19, 19, Some(move), None)
-    println("after...")
-    dst.printState(19, 19, None, None)
-    if (!a) {
+    positionsCapturedBy(move, dst).foreach{ dst(_) = Empty }
+    if (!Utils.checkBoardLegality(dst)) {
       throw new RuntimeException
     }
     dst
@@ -216,6 +212,7 @@ object Rules {
     val padded = board.pad(Config.dia, Config.dia, 1, Outside)
     val movePos = (move.y+1)*21 + (move.x+1)
 
+    // This is needed for performance
     if (padded(movePos+1) == Empty) return false
     if (padded(movePos-1) == Empty) return false
     if (padded(movePos+21) == Empty) return false
@@ -233,6 +230,7 @@ object Rules {
     {
       if (shouldSkip(i)) return
       shouldSkip.add(i)
+
       val col = padded(i)
       if (col == Empty) lib += 1
       else if (col == checkColor) { // same color
@@ -241,8 +239,10 @@ object Rules {
           .foreach {loop(_, checkColor, lib, shouldSkip, block)}
       }
     }
-
-    lib.value == 0
+    lib.value == 0 && {
+      val a = board.clone(); a(move.pos) = move.color
+      positionsCapturedBy(move, a).isEmpty
+    }
   }
 
 }

@@ -36,7 +36,7 @@ object Main {
   private def parseSGF(dir: String, outs: Seq[OutputStorage],
                        step: Int, prevStep: Int, limit: Option[Int]=None) = try {
     Config.numPrevMoves = prevStep
-    Utils.listFilesIn(dir, limit, Some(".sgf_test")) foreach { f =>
+    Utils.listFilesIn(dir, limit, Some(".sgf")) foreach { f =>
       println(f.getName)
       // getLines() may throw exception
       val parsed = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
@@ -77,7 +77,8 @@ object Main {
 
         var rankW: Option[String] = None
         var rankB: Option[String] = None
-        var ha: Option[Int] = None
+        var initialBoard = Utils.empties(Config.all)
+        var dummyMv = Move(White, '?', '?', isValid=false)
 
         // ============================================
         // Header of sgf
@@ -87,12 +88,26 @@ object Main {
             // rank W
             case Property(PropIdent(a: String), List(PropValue(SimpleText(r: String)))) if a == "WR" =>
               rankW = Some(r).filter(x => x.isValidRank && x.isStrongRank)
+
             // rank B
             case Property(PropIdent(a: String), List(PropValue(SimpleText(r: String)))) if a == "BR" =>
               rankB = Some(r).filter(x => x.isValidRank && x.isStrongRank)
-            // handicap
-            case Property(PropIdent(a: String), List(PropValue(SimpleText(h: String)))) if a == "HA" =>
-              ha = Some(h.charAt(0).getNumericValue)
+
+            // handicap for W
+            case Property(PropIdent(id: String), mvs: List[PropValue]) if id == "AB" =>
+              initialBoard = mvs.foldLeft(Utils.empties(361)){ (board, mv) => mv match {
+                case PropValue(Point(a: Char, b: Char)) =>
+                  board.createNextBoardBy(Move(Black, a-'a', b-'a', isValid=true))
+              }}
+              dummyMv = Move(Black, '?', '?', isValid=false)
+
+            // handicap for B
+            case Property(PropIdent(id: String), mvs: List[PropValue]) if id == "AW" =>
+              initialBoard = mvs.foldLeft(Utils.empties(361)){ (board, mv) => mv match {
+                case PropValue(Point(a: Char, b: Char)) =>
+                  board.createNextBoardBy(Move(White, a-'a', b-'a', isValid=true))
+              }}
+              dummyMv = Move(White, '?', '?', isValid=false)
             // others
             case _ =>
           }
@@ -101,8 +116,7 @@ object Main {
         // Header end
         // ============================================
 
-        val dummyMv = Move(White, '?', '?', isValid=false)
-        val states = ArrayBuffer(State(board = Rules.genInitialBoard(ha),
+        val states = ArrayBuffer(State(board = initialBoard,
           rankW=rankW, rankB=rankB, prevMoves=Seq(dummyMv)))
         val moves = ArrayBuffer(dummyMv)
 
