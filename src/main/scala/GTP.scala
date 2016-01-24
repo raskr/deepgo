@@ -224,7 +224,7 @@ object GameState {
   val moves = ArrayBuffer[Move]()
   def updateBy(move: Move) = {
     moves.append(move)
-    states.append(states.last.nextStateBy(moves))
+    states.append(states.last.nextStateBy(moves.toArray))
   }
   def currentState = states.last
 

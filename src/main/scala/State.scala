@@ -80,7 +80,6 @@ case class State(board: Array[Char],
 
   def toChannels: Option[String] = for {
     rank <- ownRank
-    prevMvs <- prevMovesValidated
   } yield new StringBuilder()
     .append(hist.toHistoryChannel) // 1 tested
 
@@ -91,11 +90,11 @@ case class State(board: Array[Char],
     .append(rank.toRankChannel) // 9 tested
     .append(legalChannel) // 1 maybe ok
 
-    .append(prevMvs.toPrevMoveChannel) // n maybe ok
+    .append(prevMovesChannel) // n maybe ok
     .toString()
 
 
-  def nextStateBy(moves: Seq[Move]): State = {
+  def nextStateBy(moves: Array[Move]): State = {
     val move = moves.last
     val newBoard = board.createNextBoardBy(move)
     //nextBoard = Some(newBoard)

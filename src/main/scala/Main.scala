@@ -117,7 +117,7 @@ object Main {
         // ============================================
 
         val states = ArrayBuffer(State(board = initialBoard,
-          rankW=rankW, rankB=rankB, prevMoves=Seq(dummyMv)))
+          rankW=rankW, rankB=rankB, prevMoves=Array(dummyMv)))
         val moves = ArrayBuffer(dummyMv)
 
         // ============================================
@@ -131,7 +131,7 @@ object Main {
               if (mv.x <= 18 && mv.y <= 18) {
                 // ↓ Do not change the order! Move appending should be the first.
                 moves append mv
-                states append states.last.nextStateBy(moves)
+                states append states.last.nextStateBy(moves.toArray)
               }
             // not a move
             case _ =>
