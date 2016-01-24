@@ -10,7 +10,7 @@ import Config._
  * @param koPos position next player can't play
  * @param prevMoves
  */
-case class State(board: Array[Char] = Array.fill(all)(Empty),
+case class State(board: Array[Char],
                  hist: Array[Int] = Array.fill(all)(0),
                  koPos: Int = -1,
                  rankW: Option[String],

@@ -73,10 +73,89 @@ object Rules {
     dst.clip(paddedDia, paddedDia, 1)
   }
 
+  // replacing these ugly codes with loop is so difficult maybe...
+  def genInitialBoard(ha: Option[Int]) = {
+    val init = Utils.empties(Config.all)
+    ha.foreach { h =>
+      val ur = 19 * 4 - 3 - 1
+      val dl = 19 * 15 + 4 - 1
+      val dr = 19 * 19 - 19 * 3 - 3 - 1
+      val ul = 19 * 3 + 4 - 1
+      val c = 19 * 9 + 10 - 1
+      val l = 19 * 9 + 4 - 1
+      val r = 19 * 10 - 3 - 1
+      val u = 19 * 3 + 10 - 1
+      val d = 19 * 19 - 19 * 4 + 10 - 1
+
+      if (h == 2) {
+        init(ur) = Color.Black
+        init(dl) = Color.Black
+      } else if (h == 3) {
+        init(ur) = Color.Black
+        init(dl) = Color.Black
+        init(dr) = Color.Black
+      } else if (h == 4) {
+        init(ur) = Color.Black
+        init(dl) = Color.Black
+        init(dr) = Color.Black
+        init(ul) = Color.Black
+      } else if (h == 5) {
+        init(ur) = Color.Black
+        init(dl) = Color.Black
+        init(dr) = Color.Black
+        init(ul) = Color.Black
+        init(c) = Color.Black
+      } else if (h == 6) {
+        init(ur) = Color.Black
+        init(dl) = Color.Black
+        init(dr) = Color.Black
+        init(ul) = Color.Black
+        init(l) = Color.Black
+        init(r) = Color.Black
+      } else if (h == 7) {
+        init(ur) = Color.Black
+        init(dl) = Color.Black
+        init(dr) = Color.Black
+        init(ul) = Color.Black
+        init(l) = Color.Black
+        init(r) = Color.Black
+        init(c) = Color.Black
+      } else if (h == 8) {
+        init(ur) = Color.Black
+        init(dl) = Color.Black
+        init(dr) = Color.Black
+        init(ul) = Color.Black
+        init(l) = Color.Black
+        init(r) = Color.Black
+        init(u) = Color.Black
+        init(d) = Color.Black
+      } else if (h == 9) {
+        init(ur) = Color.Black
+        init(dl) = Color.Black
+        init(dr) = Color.Black
+        init(ul) = Color.Black
+        init(l) = Color.Black
+        init(r) = Color.Black
+        init(u) = Color.Black
+        init(d) = Color.Black
+        init(c) = Color.Black
+      }
+    }
+    init
+  }
+
   def boardAfterCaptured(move: Move, board: Array[Char]): Array[Char] = {
     val dst = board.clone()
     dst(move.pos) = move.color
     deadPositions(move, dst).foreach{ dst(_) = Empty }
+    val a = Utils.checkBoardLegality(dst)
+    println("before...")
+    board.printState(19, 19, Some(move), None)
+    println("after...")
+    dst.printState(19, 19, None, None)
+    if (!a) {
+      throw new RuntimeException
+    }
     dst
   }
 

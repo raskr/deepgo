@@ -36,7 +36,8 @@ object Main {
   private def parseSGF(dir: String, outs: Seq[OutputStorage],
                        step: Int, prevStep: Int, limit: Option[Int]=None) = try {
     Config.numPrevMoves = prevStep
-    Utils.listFilesIn(dir, limit, Some(".sgf")) foreach { f =>
+    Utils.listFilesIn(dir, limit, Some(".sgf_test")) foreach { f =>
+      println(f.getName)
       // getLines() may throw exception
       val parsed = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
       if (parsed.successful) processParseResult(parsed.get, outs.map(_.color)).foreach { pRes =>
@@ -76,17 +77,22 @@ object Main {
 
         var rankW: Option[String] = None
         var rankB: Option[String] = None
+        var ha: Option[Int] = None
 
         // ============================================
         // Header of sgf
         // ============================================
         nodes.head.props foreach { prop: Property =>
           prop match {
-            // rank
+            // rank W
             case Property(PropIdent(a: String), List(PropValue(SimpleText(r: String)))) if a == "WR" =>
               rankW = Some(r).filter(x => x.isValidRank && x.isStrongRank)
+            // rank B
             case Property(PropIdent(a: String), List(PropValue(SimpleText(r: String)))) if a == "BR" =>
               rankB = Some(r).filter(x => x.isValidRank && x.isStrongRank)
+            // handicap
+            case Property(PropIdent(a: String), List(PropValue(SimpleText(h: String)))) if a == "HA" =>
+              ha = Some(h.charAt(0).getNumericValue)
             // others
             case _ =>
           }
@@ -96,7 +102,8 @@ object Main {
         // ============================================
 
         val dummyMv = Move(White, '?', '?', isValid=false)
-        val states = ArrayBuffer(State(rankW=rankW, rankB=rankB, prevMoves=Seq(dummyMv)))
+        val states = ArrayBuffer(State(board = Rules.genInitialBoard(ha),
+          rankW=rankW, rankB=rankB, prevMoves=Seq(dummyMv)))
         val moves = ArrayBuffer(dummyMv)
 
         // ============================================

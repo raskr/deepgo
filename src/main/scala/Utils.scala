@@ -7,6 +7,7 @@ object Utils {
 
   def zeros(size: Int): Array[Char] = Array.fill(size)('0')
   def ones(size: Int): Array[Char] = Array.fill(size)('1')
+  def empties(size: Int): Array[Char] = Array.fill(size)(Color.Empty)
 
   def listFilesIn(dir: String, limit: Option[Int], extension: Option[String]) = {
     val d = new File(dir)
@@ -123,6 +124,23 @@ object Utils {
   // arg parsing end
 
   def execCmd(cmd: String): String = scala.sys.process.Process(cmd).!!
+
+  def checkBoardLegality(in: Array[Char]): Boolean = {
+    val liberties = Rules.liberties(in)
+    var i = 0
+    while (i < Config.all) {
+      val col = in(i)
+      val lib = liberties(i)
+      if (col != Color.Empty) {
+        if (lib <= 0) {
+          //in.printState(19, 19, None, None)
+          return false
+        }
+      }
+      i += 1
+    }
+    true
+  }
 
   // pad the array around with the provided element
   def pad(in: Array[Char], row: Int, col: Int, padSize: Int, padElem: Char) = {

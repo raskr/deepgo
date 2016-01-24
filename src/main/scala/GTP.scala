@@ -232,6 +232,7 @@ object GameState {
   def reset() = {
     states.clear()
     states.append(State(
+      board = Rules.genInitialBoard(None), // no handicap
       rankW=Some(Config.wRank),
       rankB=Some(Config.bRank),
       prevMoves=Seq(Move(Color.White,'?','?', isValid=false))))

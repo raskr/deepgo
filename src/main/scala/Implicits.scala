@@ -211,6 +211,11 @@ object Implicits {
           else if (lib >= 3) {
             dst(all * 2 + i) = '1'
           }
+          else {
+//            in.printState(19, 19, None, None)
+//            in.printState(19, 19, None, Some(i))
+//            throw new RuntimeException("bbbbbb " + lib)
+          }
         }
 
         else if (col == Black) {
@@ -223,10 +228,15 @@ object Implicits {
           else if (lib >= 3) {
             dst(all * 5 + i) = '1'
           }
+          else {
+//            in.printState(19, 19, None, None)
+//            in.printState(19, 19, None, Some(i))
+//            throw new RuntimeException("aaaaaaa " + lib)
+          }
         }
 
         else {
-          // do nothibg (remain it zero
+          // do nothing (remain it zero
         }
 
         i += 1
