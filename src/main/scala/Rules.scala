@@ -154,7 +154,7 @@ object Rules {
       board.printState(19, 19, Some(move), None)
       println("bad after ")
       board.printState(19, 19, None, None)
-      throw new RuntimeException("error!!!!!!!!!!!!!!!!!!!")
+      //throw new RuntimeException("error!!!!!!!!!!!!!!!!!!!")
     }
     dst
   }
