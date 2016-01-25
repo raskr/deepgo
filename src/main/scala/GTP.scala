@@ -163,7 +163,7 @@ object GenMove extends Cmd {
     val color = args.head
     val state = GameState.currentState
 
-    val cmd = s"python scripts/predict_move.py -b ${state.toChannels} -i ${state.invalidChannel} -c $color"
+    val cmd = s"python scripts/predict_move.py -b ${state.toChannels.get} -i ${state.invalidChannel.mkString} -c $color"
     // TODO: reduce the command execution (For now execute python script every time genmove called)
     // `init` get rid of the "\n"
     val pos = Utils.execCmd(cmd).init.toInt

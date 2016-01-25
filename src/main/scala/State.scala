@@ -55,7 +55,7 @@ case class State(board: Array[Char],
   def opponentRank: Option[String] =
     if (prevMove.color.opponent == White) rankW else rankB
 
-  def invalidChannel = {
+  def invalidChannel: Array[Char] = {
     val dst = Array.range(0, all) map { i =>
       // already occupied or suicide move
       val cantPlay = board(i) != Empty || i.isSuicideMovePos(ansColor, board)
@@ -66,7 +66,7 @@ case class State(board: Array[Char],
     dst
   }
 
-  def legalChannel = {
+  def legalChannel: String = {
     var i = 0
     val dst = invalidChannel
     while (i < all) {
