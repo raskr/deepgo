@@ -26,22 +26,26 @@ data = Data(feat='plane',
             opt='SGD',
             use_gpu=use_gpu,
             db_path=db_path,
-            b_size=200,
-            layer_width=64,
-            n_ch=3,
-            n_train_data=16000000,
-            n_test_data=700000,
+            b_size=256,
+            layer_width=128,
+            n_ch=25,
+            n_train_data=15600000,
+            n_test_data=300000,
             n_y=3,
             n_layer=4,
-            n_epoch=3)
+            n_epoch=7)
 
 
 # Prepare data set
 model = chainer.FunctionSet(
         conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=64, ksize=5, pad=2),
-        conv2=F.Convolution2D(in_channels=64, out_channels=64, ksize=5, pad=2),
-        conv3=F.Convolution2D(in_channels=64, out_channels=64, ksize=5, pad=2),
-        conv4=F.Convolution2D(in_channels=64, out_channels=data.n_y, ksize=3, pad=1),
+        conv2=F.Convolution2D(in_channels=64, out_channels=128, ksize=5, pad=2),
+        conv3=F.Convolution2D(in_channels=128, out_channels=128, ksize=5, pad=2),
+        conv4=F.Convolution2D(in_channels=128, out_channels=128, ksize=5, pad=2),
+        conv5=F.Convolution2D(in_channels=128, out_channels=128, ksize=5, pad=2),
+        conv6=F.Convolution2D(in_channels=128, out_channels=128, ksize=5, pad=2),
+        conv7=F.Convolution2D(in_channels=128, out_channels=128, ksize=3, pad=1),
+        conv8=F.Convolution2D(in_channels=128, out_channels=data.n_y, ksize=3, pad=1),
 )
 
 
@@ -62,7 +66,11 @@ def forward_conv(x):
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
     h = F.relu(model.conv3(h))
-    return F.relu(model.conv4(h))
+    h = F.relu(model.conv4(h))
+    h = F.relu(model.conv5(h))
+    h = F.relu(model.conv6(h))
+    h = F.relu(model.conv7(h))
+    return F.relu(model.conv8(h))
 
 
 def forward_test(x_batch, y_batch, invalid_batch):

@@ -89,15 +89,16 @@ def str2floats(string):
     # print(len(string)/361)
     # full = [1.0 if x == '1' else 0.0 for x in string]
 
-    board = [1.0 if x == '1' else 0.0 for x in string[:361*3]] # 3
+    board = [1.0 if x == '1' else 0.0 for x in string[361:361*4]] # 3
+    #others = [1.0 if x == '1' else 0.0 for x in string[361:]] # 3
     # border = [1.0 if x == '1' else 0.0 for x in string[361*3:361*4]] # 1
-    lib = [1.0 if x == '1' else 0.0 for x in string[361*4:361*10]] # 6
+    lib = [1.0 if x == '1' else 0.0 for x in string[-361*9:-361*3]] # 6
     # ko = [1.0 if x == '1' else 0.0 for x in string[361*10:361*11]] # 1
     #rank = [1.0 if x == '1' else 0.0 for x in string[361*11:361*20]] # 9
     # prev = [1.0 if x == '1' else 0.0 for x in string[361*20:361*21]] # 1
     # invalid = [1.0 if x == '1' else 0.0  for x in string[361*21:361*22]] # 1
     # g_sizes = [exp(0.01 * int(c)) for c in string[361*22:361*24]] # 2
-    #his = [exp(-0.1 * int(c)) for c in string[361*24:361*25]] # 1
+    # his = [exp(-0.1 * int(c)) for c in string[:361]] # 1
 
     board.extend(lib)
     return board

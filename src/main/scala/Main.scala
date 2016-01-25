@@ -38,7 +38,7 @@ object Main {
   private def parseSGF(dir: String, outs: Seq[OutputStorage],
                        step: Int, prevStep: Int, limit: Option[Int]=None) = try {
     Config.numPrevMoves = prevStep
-    Utils.listFilesIn(dir, limit, Some(".sgf")) foreach { f =>
+    Utils.listFilesIn(dir, limit, Some(".sgf")).par foreach { f =>
       println(f.getName)
       // getLines() may throw exception
       val parsed = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
