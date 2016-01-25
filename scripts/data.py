@@ -55,9 +55,10 @@ class Data:
                 xs = self.xp.concatenate((xs, self.xp.asarray(str2floats(row[0]), self.xp.float32)))
                 ys = self.xp.concatenate((ys, self.xp.asarray(split_ys(row[1], self.n_y == 1), self.xp.int32)))
 
-            ret_x = xs.reshape(self.b_size, self.n_ch, 19, 19)
             ret_y = ys if self.n_y == 1 else ys.reshape(self.b_size, self.n_y)
-            return ret_x, ret_y
+            print(len(xs))
+            print(self.b_size* self.n_ch* 19* 19)
+            return xs.reshape(self.b_size, self.n_ch, 19, 19), ret_y
         else:
             invalids = self.xp.asarray([], dtype=self.xp.float32)
             self.cur.execute(query_test.format(self.b_size*i+1, self.b_size*i + self.b_size))
@@ -92,7 +93,7 @@ def str2floats(string):
     board = [1.0 if x == '1' else 0.0 for x in string[361:361*4]] # 3
     #others = [1.0 if x == '1' else 0.0 for x in string[361:]] # 3
     # border = [1.0 if x == '1' else 0.0 for x in string[361*3:361*4]] # 1
-    lib = [1.0 if x == '1' else 0.0 for x in string[-361*9:-361*3]] # 6
+    # lib = [1.0 if x == '1' else 0.0 for x in string[361*4:361*10]] # 6
     # ko = [1.0 if x == '1' else 0.0 for x in string[361*10:361*11]] # 1
     #rank = [1.0 if x == '1' else 0.0 for x in string[361*11:361*20]] # 9
     # prev = [1.0 if x == '1' else 0.0 for x in string[361*20:361*21]] # 1
@@ -100,7 +101,7 @@ def str2floats(string):
     # g_sizes = [exp(0.01 * int(c)) for c in string[361*22:361*24]] # 2
     # his = [exp(-0.1 * int(c)) for c in string[:361]] # 1
 
-    board.extend(lib)
+    # board.extend(lib)
     return board
 
 

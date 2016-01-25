@@ -3,9 +3,6 @@ import Implicits._
 import Config._
 
 /**
- * board(3ch), ko(1ch), liberty(6ch), border(1ch), groupSizes(2ch)
- * rank(9ch), lifeTime(1ch), invalid(1ch) -> 24ch
- *
  * @param board current board
  * @param koPos position next player can't play
  * @param prevMoves
@@ -82,14 +79,14 @@ case class State(board: Array[Char],
   def toChannels: Option[String] = for {
     rank <- ownRank
   } yield new StringBuilder()
-    .append(hist.toHistoryChannel) // 1 tested
+    //.append(hist.toHistoryChannel) // 1 tested
     .append(board.toBoardChannel) // 3 tested
-    .append(board.toBorderChannel) // 1 tested
-    .append(koPos.toKoChannel) // 1 tested
-    .append(rank.toRankChannel) // 9 tested
-    .append(legalChannel) // 1 maybe ok
-    .append(board.toLibertyChannel) // 6 tested
-    .append(prevMovesChannel) // n maybe ok
+//    .append(board.toBorderChannel) // 1 tested
+//    .append(koPos.toKoChannel) // 1 tested
+//    .append(rank.toRankChannel) // 9 tested
+//    .append(legalChannel) // 1 maybe ok
+//    .append(board.toLibertyChannel) // 6 tested
+//    .append(prevMovesChannel) // n maybe ok
     .toString()
 
 

@@ -40,7 +40,8 @@ object ClearBoard extends Cmd {
 // Did'nt support showboard but this is required from protocol.
 // I leave it to the opponent engine...
 object ShowBoard extends Cmd {
-  def apply(args: Array[String]) = sendResponse("stub!!!!")
+  def apply(args: Array[String]) =
+    sendResponse(GameState.states.last.board.stateAsString(Config.dia, Config.dia))
 }
 
 // argument: mew komi (float)
@@ -118,8 +119,10 @@ object Play extends Cmd {
 
   // ex) args = [black, B13]
   def apply(args: Array[String]) = {
-    val move = createMove(args.head, args(1))
-    GameState updateBy move
+    if (!args(1).startsWith("pass")) {
+      val move = createMove(args.head, args(1))
+      GameState updateBy move
+    }
     sendEmptyOkResponse()
   }
 
@@ -160,25 +163,33 @@ object Play extends Cmd {
 // The controller is allowed to use this command for either color,
 // regardless who played the last move.
 object GenMove extends Cmd {
-  def apply(args: Array[String]) = {
-    // update state
-    val color = args.head
-    val state = GameState.currentState
+  def apply(args: Array[String]): Unit = {
+    try {
+      // update state
+      val color = args.head
+      val state = GameState.currentState
 
-    val cmd = s"python scripts/predict_move.py -b ${state.toChannels.get} -i ${state.invalidChannel.mkString} -c $color"
-    // TODO: reduce the command execution (For now execute python script every time genmove called)
-    // `init` get rid of the "\n"
-    val pos = Utils.execCmd(cmd).init.toInt
+      if (state.invalidChannel.forall(_ == '1')) {
+        sendResponse("pass")
+        return
+      }
 
-    new File("outtt.txt").write("pos ....." + pos)
-    val (x, y) = pos.toCoordinate
-    val (xAlpha, yAlpha) = (x.toAlpha, y.toAlpha)
+      val cmd = s"python scripts/predict_move.py -b ${state.toChannels.get} -i ${state.invalidChannel.mkString} -c $color"
+      // TODO: reduce the command execution (For now execute python script every time genmove called)
+      // `init` get rid of the "\n"
+      val pos = Utils.execCmd(cmd).init.toInt
 
-    val move = Move(if (color == "white") White else Black, x, y, isValid=true)
-    GameState updateBy move
-    // return to stderr
-    val (xGtp, yGtp) = (if (xAlpha < 'i') xAlpha else (xAlpha+1).toChar, Config.dia - y)
-    sendResponse(s"${Character.toUpperCase(xGtp)}$yGtp")
+      val (x, y) = pos.toCoordinate
+      val (xAlpha, yAlpha) = (x.toAlpha, y.toAlpha)
+
+      val move = Move(if (color == "white") White else Black, x, y, isValid=true)
+      GameState updateBy move
+      // return to stderr
+      val (xGtp, yGtp) = (if (xAlpha < 'i') xAlpha else (xAlpha+1).toChar, Config.dia - y)
+      sendResponse(s"${Character.toUpperCase(xGtp)}$yGtp")
+    } catch {
+      case e: Exception => sendResponse("aaa\n\n")
+    }
   }
 }
 

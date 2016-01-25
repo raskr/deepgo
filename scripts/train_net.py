@@ -56,11 +56,6 @@ with open(res_filename, 'w+') as f:
     f.write('************* {}\n'.format(data.printable()))
 
 
-def decline_lr(optimizer):
-    lr = optimizer.lr
-    optimizer.lr = lr / 2
-
-
 def forward_conv(x):
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
@@ -77,13 +72,12 @@ def forward_test(x_batch, y_batch, invalid_batch):
     x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
     y = y_clip = model.l(forward_conv(x))
     y_clip = F.softmax(y_clip, use_cudnn=False)
-    y_clip = (y_clip.data - invalid_batch).clip(0, 1)
-    y_clip = F.softmax(chainer.Variable(y_clip), use_cudnn=False)
+    y_clip = chainer.Variable(y_clip.data - invalid_batch)
     return F.softmax_cross_entropy(y, t), F.accuracy(y, t), F.accuracy(y_clip, t)
 
 
 def train():
-    optimizer = optimizers.SGD(lr=0.08)
+    optimizer = optimizers.SGD(lr=0.1)
     optimizer.setup(model)
     for epoch in six.moves.range(1, data.n_epoch + 1):
         sum_accuracy = sum_loss = mb_count = 0
@@ -109,7 +103,7 @@ def train():
 	    sum_loss += float(loss.data) * len(y_batch)
 	    sum_accuracy += float(acc.data) * len(y_batch)
 
-            # write result
+	    # write result
         res = 'train epoch {} train loss={}, acc={}\n'.format(epoch, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)
         print(res)
         with open(res_filename, 'a+') as f: f.write(res)
@@ -128,10 +122,14 @@ def train():
             sum_accuracy += float(acc.data) * len(y_batch)
             sum_accuracy_clip += float(acc_clip.data) * len(y_batch)
 
-        res = 'test epoch={} loss={}, acc={}, acc_clip={}\n'.format(epoch, sum_loss / data.n_test_data, sum_accuracy / data.n_test_data, sum_accuracy_clip / data.n_test_data)
+        res = 'test epoch={} loss={}, acc={}, acc_clip={}\n'.format(epoch,
+                                                                    sum_loss / data.n_test_data,
+                                                                    sum_accuracy / data.n_test_data,
+                                                                    sum_accuracy_clip / data.n_test_data)
         print(res)
         with open(res_filename, 'a+') as f: f.write(res)
-        decline_lr(optimizer)
+        optimizer.lr /= 1.5
+
     save_net('white_{}'.format(data.printable()))
     with open(res_filename, 'a+') as f:
         f.write('It took total... {}\n\n'.format(datetime.now() - start_time))
