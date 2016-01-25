@@ -55,7 +55,7 @@ case class State(board: Array[Char],
   def opponentRank: Option[String] =
     if (prevMove.color.opponent == White) rankW else rankB
 
-  def invalidChannel: Array[Char] = {
+  lazy val invalidChannel: Array[Char] = {
     val dst = Array.range(0, all) map { i =>
       // already occupied or suicide move
       val cantPlay = board(i) != Empty || i.isSuicideMovePos(ansColor, board)
@@ -70,7 +70,7 @@ case class State(board: Array[Char],
     var i = 0
     val dst = invalidChannel
     while (i < all) {
-      dst(i) = if (dst(i) == '1') 0 else 1
+      dst(i) = if (dst(i) == '1') '0' else '1'
       i += 1
     }
     dst.mkString
@@ -83,14 +83,12 @@ case class State(board: Array[Char],
     rank <- ownRank
   } yield new StringBuilder()
     .append(hist.toHistoryChannel) // 1 tested
-
-    .append(board.toLibertyChannel) // 6 tested
     .append(board.toBoardChannel) // 3 tested
     .append(board.toBorderChannel) // 1 tested
     .append(koPos.toKoChannel) // 1 tested
     .append(rank.toRankChannel) // 9 tested
     .append(legalChannel) // 1 maybe ok
-
+    .append(board.toLibertyChannel) // 6 tested
     .append(prevMovesChannel) // n maybe ok
     .toString()
 

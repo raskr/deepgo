@@ -89,11 +89,11 @@ object Main {
           prop match {
             // rank W
             case Property(PropIdent(a: String), List(PropValue(SimpleText(r: String)))) if a == "WR" =>
-              rankW = Some(r).filter(x => x.isValidRank && x.isStrongRank)
+              rankW = Some(r).filter(x => x.isValidRank)
 
             // rank B
             case Property(PropIdent(a: String), List(PropValue(SimpleText(r: String)))) if a == "BR" =>
-              rankB = Some(r).filter(x => x.isValidRank && x.isStrongRank)
+              rankB = Some(r).filter(x => x.isValidRank)
 
             // handicap for W
             case Property(PropIdent(id: String), mvs: List[PropValue]) if id == "AB" =>

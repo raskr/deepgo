@@ -1,3 +1,5 @@
+import java.io.File
+
 import Color._
 import Implicits._
 
@@ -168,10 +170,11 @@ object GenMove extends Cmd {
     // `init` get rid of the "\n"
     val pos = Utils.execCmd(cmd).init.toInt
 
+    new File("outtt.txt").write("pos ....." + pos)
     val (x, y) = pos.toCoordinate
     val (xAlpha, yAlpha) = (x.toAlpha, y.toAlpha)
 
-    val move = Move(if (color == "white") White else Black, xAlpha, yAlpha, isValid=true)
+    val move = Move(if (color == "white") White else Black, x, y, isValid=true)
     GameState updateBy move
     // return to stderr
     val (xGtp, yGtp) = (if (xAlpha < 'i') xAlpha else (xAlpha+1).toChar, Config.dia - y)

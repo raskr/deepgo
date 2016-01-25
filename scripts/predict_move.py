@@ -1,4 +1,5 @@
 import argparse
+from math import exp
 import numpy as np
 import six
 import chainer.functions as F
@@ -23,17 +24,19 @@ def forward_once(x, invalid):
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
     h = F.relu(model.conv3(h))
-    y = model.l1(h)
+    h = F.relu(model.conv4(h))
+    y = model.l(h)
     y = F.softmax(y)
-    y = (y.data - invalid).clip(0)
+    y = (y.data - invalid).clip(0, 1)
     return np.argmax(y)
 
 
 def str2floats(string):
     # print(len(string)/361)
     # full = [1.0 if x == '1' else 0.0 for x in string]
+    others = [1.0 if x == '1' else 0.0 for x in string[361:]]
 
-    board = [1.0 if x == '1' else 0.0 for x in string[:361*3]] # 3
+    # board = [1.0 if x == '1' else 0.0 for x in string[:361*3]] # 3
     # border = [1.0 if x == '1' else 0.0 for x in string[361*3:361*4]] # 1
     # lib = [1.0 if x == '1' else 0.0 for x in string[361*4:361*10]] # 6
     # ko = [1.0 if x == '1' else 0.0 for x in string[361*10:361*11]] # 1
@@ -41,10 +44,10 @@ def str2floats(string):
     # prev = [1.0 if x == '1' else 0.0 for x in string[361*20:361*21]] # 1
     # invalid = [1.0 if x == '1' else 0.0  for x in string[361*21:361*22]] # 1
     # g_sizes = [exp(0.01 * int(c)) for c in string[361*22:361*24]] # 2
-    # his = [exp(-0.1 * int(c)) for c in string[361*24:361*25]] # 1
+    his = [exp(-0.1 * int(c)) for c in string[0:361]] # 1
 
-    # board.extend(lib)
-    return board
+    others.extend(his)
+    return others
 
 
 def str2floats_simple(string):

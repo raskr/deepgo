@@ -37,9 +37,9 @@ data = Data(feat='lib',
 
 # Prepare data set
 model = chainer.FunctionSet(
-    conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=30, ksize=5, pad=2, use_cudnn=False),
-    conv2=F.Convolution2D(in_channels=30, out_channels=30, ksize=5, pad=2, use_cudnn=False),
-    conv3=F.Convolution2D(in_channels=30, out_channels=1, ksize=3, pad=1, use_cudnn=False),
+    conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=30, ksize=5, pad=2),
+    conv2=F.Convolution2D(in_channels=30, out_channels=30, ksize=5, pad=2),
+    conv3=F.Convolution2D(in_channels=30, out_channels=1, ksize=3, pad=1),
     l=F.Linear(361, 361)
 )
 
@@ -62,15 +62,15 @@ def decline_lr(optimizer):
 
 
 def forward_conv(x):
-    h = F.relu(model.conv1(x), use_cudnn=False)
-    h = F.relu(model.conv2(h), use_cudnn=False)
-    return F.relu(model.conv3(h), use_cudnn=False)
+    h = F.relu(model.conv1(x))
+    h = F.relu(model.conv2(h))
+    return F.relu(model.conv3(h))
 
 
 def forward(x_batch, y_batch):
     x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
     y = model.l(forward_conv(x))
-    return F.softmax_cross_entropy(y, t, use_cudnn=False), F.accuracy(y, t)
+    return F.softmax_cross_entropy(y, t), F.accuracy(y, t)
 
 
 def forward_test(x_batch, y_batch, invalid_batch):
