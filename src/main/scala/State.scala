@@ -17,7 +17,8 @@ case class State(board: Array[Char],
                  rankB: Option[String],
                  prevMoves: Array[Move]) {
 
-  def prevMovesChannel = {
+  def prevMovesChannel: String = {
+    if (Config.numPrevMoves == 0) return ""
     val size = prevMoves.length
 
     if (size == Config.numPrevMoves) {

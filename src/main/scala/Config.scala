@@ -11,6 +11,7 @@ object Config {
   def padAll = (dia + 2) * (dia + 2)
 
   var numPrevMoves = 0
+  var numPred = 0
 
   // ---------------------------------
   // -------------- GTP --------------
