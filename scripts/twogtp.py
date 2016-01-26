@@ -420,7 +420,10 @@ class GTP_game:
                 to_play = "B"
 
             if verbose >= 2:
+                print("gnugo print...")
                 print self.blackplayer.showboard() + "\n"
+                print("my print...")
+                print self.whiteplayer.showboard() + "\n"
 
         if won_by_resignation == "":
             # ↓ initial ... self.resultw = self.whiteplayer.final_score()
