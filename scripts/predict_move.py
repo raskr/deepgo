@@ -22,7 +22,6 @@ def forward_once(x, invalid):
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
     h = F.relu(model.conv3(h))
-    h = F.relu(model.conv4(h))
     y = model.l(h)
     y = F.softmax(y)
     return np.argmax(y.data - invalid)

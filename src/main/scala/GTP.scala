@@ -122,7 +122,6 @@ object Play extends Cmd {
     if (!args(1).startsWith("pass")) {
       val move = createMove(args.head, args(1))
       GameState updateBy move
-//      GameState.opponentPassed = true
     }
     sendEmptyOkResponse()
   }
@@ -183,6 +182,7 @@ object GenMove extends Cmd {
         val pos = Utils.execCmd(cmd).init.toInt
         val (x, y) = pos.toCoordinate
         val move = Move(if (color == "white") White else Black, x, y, isValid=true)
+        new File("test.txt").write(move.toString)
         GameState updateBy move
         // return to stderr
         val (xGtp, yGtp) = (if (x.toAlpha < 'i') x.toAlpha else (x.toAlpha+1).toChar, Config.dia - y)
