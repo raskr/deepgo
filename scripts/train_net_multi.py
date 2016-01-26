@@ -31,10 +31,10 @@ data = Data(feat='plane',
             layer_width=128,
             n_ch=25,
             n_train_data=15600000,
-            n_test_data=100000,
+            n_test_data=300000,
             n_y=3,
             n_layer=8,
-            n_epoch=3)
+            n_epoch=7)
 
 
 # Prepare data set
@@ -67,7 +67,11 @@ def forward_conv(x):
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
     h = F.relu(model.conv3(h))
-    return F.relu(model.conv4(h))
+    h = F.relu(model.conv4(h))
+    h = F.relu(model.conv5(h))
+    h = F.relu(model.conv6(h))
+    h = F.relu(model.conv7(h))
+    return F.relu(model.conv8(h))
 
 
 def forward_test(x_batch, y_batch, invalid_batch):

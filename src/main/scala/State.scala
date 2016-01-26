@@ -76,6 +76,7 @@ case class State(board: Array[Char],
   def toChannels: Option[String] = for {
     rank <- ownRank
   } yield new StringBuilder()
+    .append(prevMovesChannel) // n maybe ok
     .append(hist.toHistoryChannel) // 1 tested
     .append(board.toBoardChannel) // 3 tested
     .append(board.toBorderChannel) // 1 tested
@@ -83,7 +84,6 @@ case class State(board: Array[Char],
     .append(rank.toRankChannel) // 9 tested
     .append(legalChannel) // 1 maybe ok
     .append(board.toLibertyChannel) // 6 tested
-    .append(prevMovesChannel) // n maybe ok
     .toString()
 
 

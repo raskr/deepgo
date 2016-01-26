@@ -250,7 +250,7 @@ object GameState {
 
     val dummyMv = Move(Config.opponentColor,'?','?', isValid=false)
 
-    moves.append(dummyMv)
+    moves.prepend(dummyMv)
     states.append(State(
       board = Rules.genInitialBoard(None), // no handicap
       rankW=Some(Config.wRank),
