@@ -160,20 +160,15 @@ object Implicits {
     // 3ch
     // tested
     def toBoardChannel: String = {
-      val (empty, white, black) = (
-        Utils.zeros(Config.all),
-        Utils.zeros(Config.all),
-        Utils.zeros(Config.all)
-        )
+      val dst = Utils.zeros(Config.all * 3)
       var i = 0
       while (i < Config.all) {
         val color = in(i)
-        if      (color == Empty) empty(i) = '1'
-        else if (color == White) white(i) = '1'
-        else if (color == Black) black(i) = '1'
+        if      (color == Empty) dst(i) = '1'
+        else if (color == White) dst(Config.all + i) = '1'
+        else if (color == Black) dst(Config.all * 2 + i) = '1'
         i += 1
       }
-      val dst = empty ++ (white ++ black)
       dst.mkString
     }
 
@@ -262,6 +257,29 @@ object Implicits {
 
     def pad(row: Int, col: Int, padSize: Int, padElem: Char) =
       Utils.pad(in, row, col, padSize, padElem)
+
+    def stateAsString(row: Int, col: Int) = {
+      assert(in.length == row * col)
+
+      val x = in.clone()
+      var dst = Array[Char]()
+
+      def push(a: String) = {
+        dst = Array.concat(dst, a.toCharArray)
+      }
+
+      // actual print
+      push("  ")
+      Array.range(0, Config.dia).foreach{i => push(('a' + i).toChar + " ") }
+      push("\n")
+      for (i <- 0 until row) {
+        push(('a' + i).toChar + " ")
+        for (j <- 0 until col) push(x(col * i + j) + " ")
+        push("\n")
+      }
+//      push("\n\n")
+      dst.mkString
+    }
 
     def printState(row: Int, col: Int, move: Option[Move], ko: Option[Int]) = {
       assert(in.length == row * col)

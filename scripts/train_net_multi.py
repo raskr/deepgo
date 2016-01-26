@@ -1,4 +1,5 @@
 import argparse
+from chainer import computational_graph
 import os
 from datetime import datetime
 
@@ -70,8 +71,7 @@ def forward_test(x_batch, y_batch, invalid_batch):
     y = forward_conv(x)
     y_reduced_arr_clip = y_reduced_arr = pick_channel_y(y.data, 0)
     y_reduced_arr_clip = F.softmax(chainer.Variable(y_reduced_arr_clip), use_cudnn=False)
-    y_reduced_arr_clip = (y_reduced_arr_clip.data - invalid_batch).clip(0, 1)
-    y_reduced_arr_clip = F.softmax(chainer.Variable(y_reduced_arr_clip), use_cudnn=False)
+    y_reduced_arr_clip = chainer.Variable(y_reduced_arr_clip.data - invalid_batch)
     ans = chainer.Variable(pick_channel_t(y_batch, 0))
     return softmax_cross_entropy_multi(y, t),\
            F.accuracy(chainer.Variable(y_reduced_arr), ans), \
@@ -96,28 +96,32 @@ def pick_channel_y(array, idx):
     return data.xp.hsplit(reshaped, data.n_y)[idx].squeeze()
 
 
-def decline_lr(optimizer):
-    lr = optimizer.lr
-    optimizer.lr = lr / 2
 
 
 def train():
-    optimizer = optimizers.SGD(lr=0.08)
+    optimizer = optimizers.SGD(lr=0.1)
     optimizer.setup(model)
     for epoch in six.moves.range(1, data.n_epoch + 1):
         sum_accuracy = sum_loss = mb_count = 0
 
         # training loop
-        for i in data.mb_indices(True):
+        for i_mb in data.mb_indices(True):
             # print
             if mb_count % 20 == 0:
                 print('epoch: {} mini batch: {} of {}'.format(epoch, mb_count, data.n_mb_train))
             mb_count += 1
 
             # actual task
-            x_batch, y_batch = data(True, i)
+            x_batch, y_batch = data(True, i_mb)
             optimizer.zero_grads()
             loss, acc = forward(x_batch, y_batch)
+
+            if epoch == 1 and mb_count == 0:
+                with open('graph.dot', 'w') as o:
+                    g = computational_graph.build_computational_graph((loss, ), remove_split=True)
+                    o.write(g.dump())
+                print('graph generated')
+
             loss.backward()
             optimizer.update()
             sum_loss += float(loss.data) * len(y_batch)
@@ -130,11 +134,11 @@ def train():
 
         # test loop
         sum_accuracy = sum_accuracy_clip = sum_loss = mb_count = 0
-        for i in data.mb_indices(False):
+        for i_mb in data.mb_indices(False):
             # print
             if mb_count % 20 == 0: print('epoch{} test mini batch: {} of {}'.format(epoch, mb_count, data.n_mb_test))
             mb_count += 1
-            x_batch, y_batch, invalid_batch = data(False, i)
+            x_batch, y_batch, invalid_batch = data(False, i_mb)
 
             # actual task
             loss, acc, acc_clip = forward_test(x_batch, y_batch, invalid_batch)
@@ -146,7 +150,7 @@ def train():
         res = 'test epoch={} loss={}, acc={}, acc_clip={}\n'.format(epoch, sum_loss / data.n_test_data, sum_accuracy / data.n_test_data, sum_accuracy_clip / data.n_test_data)
         print(res)
         with open(res_filename, 'a+') as f: f.write(res)
-        decline_lr(optimizer)
+        optimizer.lr /= 1.5
 
     save_net('white_{}'.format(data.printable()))
     with open(res_filename, 'a+') as f:

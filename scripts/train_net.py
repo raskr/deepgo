@@ -1,5 +1,5 @@
 import argparse
-
+from chainer import computational_graph
 from datetime import datetime
 import os
 
@@ -26,11 +26,11 @@ data = Data(feat='lib',
             opt='SGD',
             use_gpu=use_gpu,
             db_path=db_path,
-            b_size=30,
+            b_size=3,
             layer_width=64,
-            n_ch=9,
-            n_train_data=13000000,
-            n_test_data=100000,
+            n_ch=3,
+            n_train_data=20,
+            n_test_data=10,
             n_y=1,
             n_layer=4,
             n_epoch=3)
@@ -56,11 +56,6 @@ with open(res_filename, 'w+') as f:
     f.write('************* {}\n'.format(data.printable()))
 
 
-def decline_lr(optimizer):
-    lr = optimizer.lr
-    optimizer.lr = lr / 2
-
-
 def forward_conv(x):
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
@@ -77,13 +72,12 @@ def forward_test(x_batch, y_batch, invalid_batch):
     x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
     y = y_clip = model.l(forward_conv(x))
     y_clip = F.softmax(y_clip, use_cudnn=False)
-    y_clip = (y_clip.data - invalid_batch).clip(0, 1)
-    y_clip = F.softmax(chainer.Variable(y_clip), use_cudnn=False)
+    y_clip = chainer.Variable(y_clip.data - invalid_batch)
     return F.softmax_cross_entropy(y, t), F.accuracy(y, t), F.accuracy(y_clip, t)
 
 
 def train():
-    optimizer = optimizers.SGD(lr=0.08)
+    optimizer = optimizers.SGD(lr=0.1)
     optimizer.setup(model)
     for epoch in six.moves.range(1, data.n_epoch + 1):
         sum_accuracy = sum_loss = mb_count = 0
@@ -98,6 +92,13 @@ def train():
             loss, acc = forward(x_batch, y_batch)
             loss.backward()
             optimizer.update()
+
+            if epoch == 1 and i_mb == 0:
+                with open('graph.dot', 'w') as o:
+                    g = computational_graph.build_computational_graph((loss, ), remove_split=True)
+                    o.write(g.dump())
+                print('graph generated')
+
             sum_loss += float(loss.data) * len(y_batch)
             sum_accuracy += float(acc.data) * len(y_batch)
 
@@ -118,10 +119,14 @@ def train():
             sum_accuracy += float(acc.data) * len(y_batch)
             sum_accuracy_clip += float(acc_clip.data) * len(y_batch)
 
-        res = 'test epoch={} loss={}, acc={}, acc_clip={}\n'.format(epoch, sum_loss / data.n_test_data, sum_accuracy / data.n_test_data, sum_accuracy_clip / data.n_test_data)
+        res = 'test epoch={} loss={}, acc={}, acc_clip={}\n'.format(epoch,
+                                                                    sum_loss / data.n_test_data,
+                                                                    sum_accuracy / data.n_test_data,
+                                                                    sum_accuracy_clip / data.n_test_data)
         print(res)
         with open(res_filename, 'a+') as f: f.write(res)
-        decline_lr(optimizer)
+        optimizer.lr /= 1.5
+
     save_net('white_{}'.format(data.printable()))
     with open(res_filename, 'a+') as f:
         f.write('It took total... {}\n\n'.format(datetime.now() - start_time))
