@@ -56,8 +56,6 @@ class Data:
                 ys = self.xp.concatenate((ys, self.xp.asarray(split_ys(row[1], self.n_y == 1), self.xp.int32)))
 
             ret_y = ys if self.n_y == 1 else ys.reshape(self.b_size, self.n_y)
-            print(len(xs))
-            print(self.b_size* self.n_ch* 19* 19)
             return xs.reshape(self.b_size, self.n_ch, 19, 19), ret_y
         else:
             invalids = self.xp.asarray([], dtype=self.xp.float32)

@@ -22,14 +22,14 @@ here = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.normpath(os.path.join(here, '../deepgo.db'))
 
 # data provider
-data = Data(feat='liber',
+data = Data(feat='plain_test',
             opt='SGD',
             use_gpu=use_gpu,
             db_path=db_path,
             b_size=256,
             layer_width=32,
-            n_ch=9,
-            n_train_data=13000000,
+            n_ch=3,
+            n_train_data=10000000,
             n_test_data=100000,
             n_y=1,
             n_layer=3,
@@ -37,9 +37,9 @@ data = Data(feat='liber',
 
 # Prepare data set
 model = chainer.FunctionSet(
-    conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=32, ksize=5, pad=2),
-    conv2=F.Convolution2D(in_channels=32, out_channels=32, ksize=5, pad=2),
-    conv3=F.Convolution2D(in_channels=32, out_channels=1, ksize=5, pad=2),
+    conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=16, ksize=5, pad=2),
+    conv2=F.Convolution2D(in_channels=16, out_channels=16, ksize=5, pad=2),
+    conv3=F.Convolution2D(in_channels=16, out_channels=1, ksize=5, pad=2),
     l=F.Linear(361, 361)
 )
 
