@@ -33,20 +33,20 @@ data = Data(feat='plane',
             n_train_data=15600000,
             n_test_data=300000,
             n_y=3,
-            n_layer=4,
+            n_layer=8,
             n_epoch=7)
 
 
 # Prepare data set
 model = chainer.FunctionSet(
-        conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=64, ksize=5, pad=2),
-        conv2=F.Convolution2D(in_channels=64, out_channels=128, ksize=5, pad=2),
-        conv3=F.Convolution2D(in_channels=128, out_channels=128, ksize=5, pad=2),
-        conv4=F.Convolution2D(in_channels=128, out_channels=128, ksize=5, pad=2),
-        conv5=F.Convolution2D(in_channels=128, out_channels=128, ksize=5, pad=2),
-        conv6=F.Convolution2D(in_channels=128, out_channels=128, ksize=5, pad=2),
-        conv7=F.Convolution2D(in_channels=128, out_channels=128, ksize=3, pad=1),
-        conv8=F.Convolution2D(in_channels=128, out_channels=data.n_y, ksize=3, pad=1),
+    conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=64, ksize=5, pad=2),
+    conv2=F.Convolution2D(in_channels=64, out_channels=128, ksize=5, pad=2),
+    conv3=F.Convolution2D(in_channels=128, out_channels=128, ksize=5, pad=2),
+    conv4=F.Convolution2D(in_channels=128, out_channels=128, ksize=5, pad=2),
+    conv5=F.Convolution2D(in_channels=128, out_channels=128, ksize=5, pad=2),
+    conv6=F.Convolution2D(in_channels=128, out_channels=128, ksize=3, pad=1),
+    conv7=F.Convolution2D(in_channels=128, out_channels=128, ksize=3, pad=1),
+    conv8=F.Convolution2D(in_channels=64, out_channels=data.n_y, ksize=3, pad=1),
 )
 
 
@@ -104,10 +104,8 @@ def pick_channel_y(array, idx):
     return data.xp.hsplit(reshaped, data.n_y)[idx].squeeze()
 
 
-
-
 def train():
-    optimizer = optimizers.SGD(lr=0.1)
+    optimizer = optimizers.Adam(0.02)
     optimizer.setup(model)
     for epoch in six.moves.range(1, data.n_epoch + 1):
         sum_accuracy = sum_loss = mb_count = 0
@@ -158,9 +156,9 @@ def train():
         res = 'test epoch={} loss={}, acc={}, acc_clip={}\n'.format(epoch, sum_loss / data.n_test_data, sum_accuracy / data.n_test_data, sum_accuracy_clip / data.n_test_data)
         print(res)
         with open(res_filename, 'a+') as f: f.write(res)
-        optimizer.lr /= 1.5
+        # optimizer.lr /= 1.5
+        save_net('white_{}'.format(data.printable()))
 
-    save_net('white_{}'.format(data.printable()))
     with open(res_filename, 'a+') as f:
         f.write('It took total... {}\n\n'.format(datetime.now() - start_time))
 

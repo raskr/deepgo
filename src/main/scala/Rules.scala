@@ -149,12 +149,12 @@ object Rules {
     val dst = board.clone()
     dst(move.pos) = move.color
     positionsCapturedBy(move, dst).foreach{ dst(_) = Empty }
-    if (!Utils.checkBoardLegality(dst)) {
-      println("bad before")
-      board.printState(19, 19, Some(move), None)
-      println("bad after ")
-      board.printState(19, 19, None, None)
-    }
+    //if (!Utils.checkBoardLegality(dst)) {
+    //  println("bad before")
+    //  board.printState(19, 19, Some(move), None)
+    //  println("bad after ")
+    //  board.printState(19, 19, None, None)
+    //}
     dst
   }
 

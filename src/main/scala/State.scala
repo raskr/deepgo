@@ -47,10 +47,7 @@ case class State(board: Array[Char],
   val ansColor = prevMove.color.opponent
 
   def ownRank: Option[String] =
-    if (prevMove.color.opponent == White) rankB else rankW
-
-  def opponentRank: Option[String] =
-    if (prevMove.color.opponent == White) rankW else rankB
+    if (ansColor == White) rankW else rankB
 
   lazy val invalidChannel: Array[Char] = {
     val dst = Array.range(0, all) map { i =>
@@ -64,8 +61,8 @@ case class State(board: Array[Char],
   }
 
   def legalChannel: String = {
-    var i = 0
     val dst = invalidChannel
+    var i = 0
     while (i < all) {
       dst(i) = if (dst(i) == '1') '0' else '1'
       i += 1
@@ -79,14 +76,14 @@ case class State(board: Array[Char],
   def toChannels: Option[String] = for {
     rank <- ownRank
   } yield new StringBuilder()
-    //.append(hist.toHistoryChannel) // 1 tested
+    .append(prevMovesChannel) // n maybe ok
+    .append(hist.toHistoryChannel) // 1 tested
     .append(board.toBoardChannel) // 3 tested
-//    .append(board.toBorderChannel) // 1 tested
-//    .append(koPos.toKoChannel) // 1 tested
-//    .append(rank.toRankChannel) // 9 tested
-//    .append(legalChannel) // 1 maybe ok
-//    .append(board.toLibertyChannel) // 6 tested
-//    .append(prevMovesChannel) // n maybe ok
+    .append(board.toBorderChannel) // 1 tested
+    .append(koPos.toKoChannel) // 1 tested
+    .append(rank.toRankChannel) // 9 tested
+    .append(legalChannel) // 1 maybe ok
+    .append(board.toLibertyChannel) // 6 tested
     .toString()
 
 

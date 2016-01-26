@@ -27,9 +27,9 @@ data = Data(feat='plain_test',
             use_gpu=use_gpu,
             db_path=db_path,
             b_size=256,
-            layer_width=32,
-            n_ch=3,
-            n_train_data=10000000,
+            layer_width=128,
+            n_ch=25,
+            n_train_data=15600000,
             n_test_data=100000,
             n_y=1,
             n_layer=3,
@@ -93,17 +93,10 @@ def train():
             loss.backward()
             optimizer.update()
 
+            sum_loss += float(loss.data) * len(y_batch)
+            sum_accuracy += float(acc.data) * len(y_batch)
 
-	    if epoch == 1 and i_mb == 0:
-	        with open('graph.dot',  'w') as o:
-	    	    g = cg.build_computational_graph((loss,  ),  remove_split=True)
-		    o.write(g.dump())
-	        print('graph generated')
-
-	    sum_loss += float(loss.data) * len(y_batch)
-	    sum_accuracy += float(acc.data) * len(y_batch)
-
-	    # write result
+            # write result
         res = 'train epoch {} train loss={}, acc={}\n'.format(epoch, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)
         print(res)
         with open(res_filename, 'a+') as f: f.write(res)
@@ -117,7 +110,6 @@ def train():
 
             loss, acc, acc_clip = forward_test(x_batch, y_batch, invalid_batch)
 
-
             sum_loss += float(loss.data) * len(y_batch)
             sum_accuracy += float(acc.data) * len(y_batch)
             sum_accuracy_clip += float(acc_clip.data) * len(y_batch)
@@ -130,7 +122,7 @@ def train():
         with open(res_filename, 'a+') as f: f.write(res)
         optimizer.lr /= 1.5
 
-    save_net('white_{}'.format(data.printable()))
+        save_net('white_{}'.format(data.printable()))
     with open(res_filename, 'a+') as f:
         f.write('It took total... {}\n\n'.format(datetime.now() - start_time))
 

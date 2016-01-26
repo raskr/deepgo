@@ -122,6 +122,7 @@ object Play extends Cmd {
     if (!args(1).startsWith("pass")) {
       val move = createMove(args.head, args(1))
       GameState updateBy move
+//      GameState.opponentPassed = true
     }
     sendEmptyOkResponse()
   }
@@ -163,33 +164,32 @@ object Play extends Cmd {
 // The controller is allowed to use this command for either color,
 // regardless who played the last move.
 object GenMove extends Cmd {
-  def apply(args: Array[String]): Unit = {
-    try {
+  def apply(args: Array[String]) = {
       // update state
       val color = args.head
       val state = GameState.currentState
 
-      if (state.invalidChannel.forall(_ == '1')) {
-        sendResponse("pass")
-        return
+      if (GameState.opponentPassed || state.invalidChannel.forall(_ == '1')) {
+//        new File("aaaaaaaa").write("pass. flag ... " + GameState.opponentPassed)
+//        GameState.opponentPassed = false
+      } else {
+        val cmd = s"python scripts/predict_move.py -b ${state.toChannels.get} -i ${state.invalidChannel.mkString} -c $color"
+        // TODO: reduce the command execution (For now execute python script every time genmove called)
+        // `init` get rid of the "\n"
+        val pos = Utils.execCmd(cmd).init.toInt
+        new File("aaaaaaaa").write("" + pos)
+
+        val (x, y) = pos.toCoordinate
+        val (xAlpha, yAlpha) = (x.toAlpha, y.toAlpha)
+
+        val move = Move(if (color == "white") White else Black, x, y, isValid=true)
+        GameState updateBy move
+        // return to stderr
+        val (xGtp, yGtp) = (if (xAlpha < 'i') xAlpha else (xAlpha+1).toChar, Config.dia - y)
+        sendResponse(s"${Character.toUpperCase(xGtp)}$yGtp")
+
       }
 
-      val cmd = s"python scripts/predict_move.py -b ${state.toChannels.get} -i ${state.invalidChannel.mkString} -c $color"
-      // TODO: reduce the command execution (For now execute python script every time genmove called)
-      // `init` get rid of the "\n"
-      val pos = Utils.execCmd(cmd).init.toInt
-
-      val (x, y) = pos.toCoordinate
-      val (xAlpha, yAlpha) = (x.toAlpha, y.toAlpha)
-
-      val move = Move(if (color == "white") White else Black, x, y, isValid=true)
-      GameState updateBy move
-      // return to stderr
-      val (xGtp, yGtp) = (if (xAlpha < 'i') xAlpha else (xAlpha+1).toChar, Config.dia - y)
-      sendResponse(s"${Character.toUpperCase(xGtp)}$yGtp")
-    } catch {
-      case e: Exception => sendResponse("aaa\n\n")
-    }
   }
 }
 
@@ -236,6 +236,7 @@ object GameState {
   import scala.collection.mutable.ArrayBuffer
   val states = ArrayBuffer[State]()
   val moves = ArrayBuffer[Move]()
+  var opponentPassed = false
   def updateBy(move: Move) = {
     moves.append(move)
     states.append(states.last.nextStateBy(moves.toArray))
@@ -249,7 +250,7 @@ object GameState {
 
     val dummyMv = Move(Config.opponentColor,'?','?', isValid=false)
 
-    moves.append(dummyMv)
+    moves.prepend(dummyMv)
     states.append(State(
       board = Rules.genInitialBoard(None), // no handicap
       rankW=Some(Config.wRank),
