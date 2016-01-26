@@ -25,8 +25,7 @@ def forward_once(x, invalid):
     h = F.relu(model.conv4(h))
     y = model.l(h)
     y = F.softmax(y)
-    y = (y.data - invalid).clip(0, 1)
-    return np.argmax(y)
+    return np.argmax(y.data - invalid)
 
 
 def str2floats(string):
