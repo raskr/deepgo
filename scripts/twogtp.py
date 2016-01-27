@@ -2,7 +2,7 @@
 # coding=utf-8
 
 # use like
-# python twogtp.py --white 'sbt --error "run --mode gtp -s 1 -p 1"' --black 'gnugo --mode gtp' --verbose
+# python twogtp.py --white 'sbt --error "run --mode gtp -s 1 -p 1"' --black 'gnugo --mode gtp' --verbose 2
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # This program is distributed with GNU Go, a Go program.            #

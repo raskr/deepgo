@@ -24,11 +24,6 @@ object Config {
   val ownColor = White
   val opponentColor = if (ownColor == White) Black else White
 
-  // useful value
-  val wRank = if (ownColor == White) ownRank else opponentRank
-  val bRank = if (ownColor == Black) ownRank else opponentRank
-
-
   // BoardSize command only can change Komi
   var Komi = 5.5
 
