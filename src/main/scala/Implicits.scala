@@ -274,6 +274,7 @@ object Implicits {
       push("\n")
       for (i <- 0 until row) {
         push(('a' + i).toChar + " ")
+        // actual board
         for (j <- 0 until col) push(x(col * i + j) + " ")
         push("\n")
       }

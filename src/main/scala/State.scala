@@ -1,3 +1,5 @@
+import java.io.File
+
 import Color._
 import Implicits._
 import Config._
@@ -49,10 +51,11 @@ case class State(board: Array[Char],
   def ownRank: Option[String] =
     if (ansColor == White) rankW else rankB
 
-  lazy val invalidChannel: Array[Char] = {
+  def invalidChannel: Array[Char] = {
     val dst = Array.range(0, all) map { i =>
       // already occupied or suicide move
-      val cantPlay = board(i) != Empty || i.isSuicideMovePos(ansColor, board)
+      val occupied = board(i) != Empty
+      val cantPlay = occupied || i.isSuicideMovePos(ansColor, board)
       if (cantPlay) '1' else '0'
     }
     // ko
@@ -75,16 +78,18 @@ case class State(board: Array[Char],
 
   def toChannels: Option[String] = for {
     rank <- ownRank
-  } yield new StringBuilder()
-    .append(prevMovesChannel) // n maybe ok
-    .append(hist.toHistoryChannel) // 1 tested
-    .append(board.toBoardChannel) // 3 tested
-    .append(board.toBorderChannel) // 1 tested
-    .append(koPos.toKoChannel) // 1 tested
-    .append(rank.toRankChannel) // 9 tested
-    .append(legalChannel) // 1 maybe ok
-    .append(board.toLibertyChannel) // 6 tested
-    .toString()
+  } yield {
+    new StringBuilder()
+      .append(prevMovesChannel) // n maybe ok
+      .append(hist.toHistoryChannel) // 1 tested
+      .append(board.toBoardChannel) // 3 tested
+      .append(board.toBorderChannel) // 1 tested
+      .append(koPos.toKoChannel) // 1 tested
+      .append(rank.toRankChannel) // 9 tested
+//      .append(legalChannel) // 1 maybe ok
+      .append(board.toLibertyChannel) // 6 tested
+      .toString()
+  }
 
 
   def nextStateBy(moves: Array[Move]): State = {

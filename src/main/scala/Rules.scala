@@ -211,17 +211,22 @@ object Rules {
     ko21.rectify(from = Config.padDia, to = Config.dia)
   }
 
+  // Has side effect. change the padded board in-place.
+  // Idx should be the padded pos
+  def fillEmptyNeighbor(idx: Int, fillColor: Char, paddedBoard: Array[Char]) = {
+    loop(idx)
+    def loop(i: Int): Unit = {
+      if (paddedBoard(i) == Empty) paddedBoard(i) = fillColor
+      Array(i+1, i-1, i+21, i-21).filter(paddedBoard(_) == Empty) foreach loop
+    }
+  }
+
   def isSuicideMove(move: Move, board: Array[Char]): Boolean = {
     val padded = board.pad(Config.dia, Config.dia, 1, Outside)
     val movePos = (move.y+1)*21 + (move.x+1)
 
-    // This is needed for performance
-    if (padded(movePos+1) == Empty) return false
-    if (padded(movePos-1) == Empty) return false
-    if (padded(movePos+21) == Empty) return false
-    if (padded(movePos-21) == Empty) return false
-
     padded(movePos) = move.color
+//    fillEmptyNeighbor(movePos, move.color, padded)
 
     val blo = mutable.Set[Int]()
     val lib = new MutableInt(0)

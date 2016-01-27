@@ -1,9 +1,9 @@
 import argparse
-from math import exp
-import numpy as np
+from modified_functions.softmax_cross_entropy_multi import softmax_cross_entropy_multi
 import six
 import chainer.functions as F
 import chainer
+import numpy as np
 
 
 parser = argparse.ArgumentParser(description='eval network')
@@ -14,19 +14,25 @@ args = parser.parse_args()
 
 model = six.moves.cPickle.load(open("{}.pkl".format(args.color), "rb"))
 n_channel = 3
+n_y = 3
+
+
+def pick_channel_y(array, idx):
+    reshaped = array.reshape(1, n_y, 361)
+    return np.hsplit(reshaped, n_y)[idx].squeeze()
 
 
 def forward_once(x, invalid):
-    x = chainer.Variable(np.asarray(x, dtype=np.float32).reshape(1, n_channel, 19, 19))
+    x = chainer.Variable(x)
     invalid = np.asarray(invalid, dtype=np.float32)
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
     h = F.relu(model.conv3(h))
-    h = F.relu(model.conv4(h))
-    y = model.l(h)
-    y = F.softmax(y)
-    y = (y.data - invalid).clip(0, 1)
-    return np.argmax(y)
+    y = F.relu(model.conv4(h))
+
+    y_reduced_arr_clip = pick_channel_y(y.data, 0)
+    y_reduced_arr_clip = F.softmax(chainer.Variable(y_reduced_arr_clip), use_cudnn=False)
+    return np.argmax(y_reduced_arr_clip.data - invalid)
 
 
 def str2floats(string):

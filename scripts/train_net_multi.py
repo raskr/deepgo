@@ -1,4 +1,5 @@
 import argparse
+
 from chainer import computational_graph
 import os
 from datetime import datetime

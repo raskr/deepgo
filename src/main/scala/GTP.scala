@@ -151,12 +151,6 @@ object Play extends Cmd {
 
 }
 
-// 問題を整理。相手が pass し、ボード更新をせずにこのメソッドが呼ばれた場合、事故る。
-// 可能性があるのは自分のボードアップデートが間違っていること。
-// それにより、invalid なところに打ってしまい、 gnugo がその手をプレイすることで、gnugo が内部エラーを発生して落ちてるのではないか。
-// やること。。。自分の show_board() と相手のshow_board() を比較する。show_board() の時点では自分も
-// genmove() で状態を更新してるはずだし、相手の play も呼び出してあるはず。
-
 // arguments: my own color
 // effects: A stone of the requested color is played where the engine
 // output: vertex
@@ -175,18 +169,29 @@ object GenMove extends Cmd {
       val color = args.head
       val state = GameState.currentState
 
-      if (state.invalidChannel.forall(_ == '1')) {
+      new File("test3.txt").write(color + " " + state.prevMove.color.opponent)
+      new File("test1.txt").write(state.board.stateAsString(19, 19))
+      new File("test2.txt").write(state.invalidChannel.stateAsString(19, 19))
+
+      if (!state.legalChannel.exists(_ == '1')) {
+        new File("test.txt").write("pass")
         sendResponse("pass")
-      } else {
+      }
+
+      else {
         val cmd = s"python scripts/predict_move.py -b ${state.toChannels.get} -i ${state.invalidChannel.mkString} -c $color"
         val pos = Utils.execCmd(cmd).init.toInt
         val (x, y) = pos.toCoordinate
+
         val move = Move(if (color == "white") White else Black, x, y, isValid=true)
-        new File("test.txt").write(move.toString)
+
         GameState updateBy move
         // return to stderr
-        val (xGtp, yGtp) = (if (x.toAlpha < 'i') x.toAlpha else (x.toAlpha+1).toChar, Config.dia - y)
-        sendResponse(s"${Character.toUpperCase(xGtp)}$yGtp")
+        val (xGtp, yGtp) = (if (x.toAlpha < 'i') x.toAlpha else (x+1).toAlpha, Config.dia - y)
+
+        val res = s"${Character.toUpperCase(xGtp)}$yGtp"
+        new File("test.txt").write(res)
+        sendResponse(res)
       }
   }
 }
@@ -220,9 +225,7 @@ object GTP_CmdHandler {
       else if (cmd == "showboard")        ShowBoard(args)
       else if (cmd == "komi")         	  Komi(args)
       else if (cmd == "quit")            {Quit(args); sys.exit(1)}
-      else {
-        throw new RuntimeException("Error!! Unsupported Command: " + cmd + "\n\n")
-      }
+      else throw new RuntimeException("Error!! Unsupported Command: " + cmd + "\n\n")
       // ok response from script
       if (readLine().isEmpty) loop()
     }
@@ -238,6 +241,7 @@ object GameState {
   val moves = ArrayBuffer[Move]()
 
   def updateBy(move: Move) = {
+    new File("log.txt").write("update by " + move.toString)
     moves append move
     states append currentState.nextStateBy(moves.toArray)
   }

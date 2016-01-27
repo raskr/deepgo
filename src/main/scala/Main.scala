@@ -18,7 +18,7 @@ object Main {
 
     (dir, color, mode, step, prevStep) match {
       case (Some(d), Some(c), Some(m), Some(s), Some(p)) if m._2 == "db" => // use sqlite3
-        parseSGF(d._2, colorsFrom(c._2).map(new DB(_)), s._2.head-'0', p._2.head-'0', Some(1))
+        parseSGF(d._2, colorsFrom(c._2).map(new DB(_)), s._2.head-'0', p._2.head-'0', None)
 
       case (Some(d), Some(c), Some(m), Some(s), Some(p)) if m._2 == "f" => // use text files
         parseSGF(d._2, colorsFrom(c._2).map(new Files(_)), s._2.head-'0', p._2.head-'0')
