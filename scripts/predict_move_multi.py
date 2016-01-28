@@ -39,6 +39,7 @@ def forward_once(x, invalid):
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
     h = F.relu(model.conv3(h))
+    h = F.relu(model.conv4(h))
     h = F.relu(model.conv5(h))
     h = F.relu(model.conv6(h))
     h = F.relu(model.conv7(h))
@@ -51,7 +52,7 @@ def forward_once(x, invalid):
 
 def str2floats(string):
     # print(len(string)/361)
-    #full = [1.0 if x == '1' else 0.0 for x in string]
+    full = [1.0 if x == '1' else 0.0 for x in string]
     others = [1.0 if x == '1' else 0.0 for x in string[361*4:]]
 
     #board = [1.0 if x == '1' else 0.0 for x in string[:361*3]] # 3
@@ -64,8 +65,8 @@ def str2floats(string):
     # invalid = [1.0 if x == '1' else 0.0  for x in string[361*21:361*22]] # 1
     # g_sizes = [exp(0.01 * int(c)) for c in string[361*22:361*24]] # 2
     his = [exp(-0.1 * int(c)) for c in string[361*3:361*4]] # 1
-    his.extend(others)
-    return others
+    #his.extend(others)
+    return full
 
 
 def str2floats_simple(string):

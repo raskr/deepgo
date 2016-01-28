@@ -85,19 +85,21 @@ def split_ys(string, head):
 
 # total 24
 def str2floats(string):
+    #with open(testtest.txt, 'a+') as f: f.write("{}\n".format(len(string)/361))
+    #with open(testtest.txt, 'a+') as f: f.write("{}".format(len(string)/361))
     # print(len(string)/361)
     # full = [1.0 if x == '1' else 0.0 for x in string]
 
-    others = [1.0 if x == '1' else 0.0 for x in string[361*3:]]
-
-    #prev = [1.0 if x == '1' else 0.0 for x in string[361*20:361*21]] # 1
+    others = [1.0 if x == '1' else 0.0 for x in string[:-361]]
+    # board = [1.0 if x == '1' else 0.0 for x in string[:361*3]] # 3
+    # border = [1.0 if x == '1' else 0.0 for x in string[361*3:361*4]] # 1
+    # lib = [1.0 if x == '1' else 0.0 for x in string[361*4:361*10]] # 6
+    # ko = [1.0 if x == '1' else 0.0 for x in string[361*10:361*11]] # 1
+    # rank = [1.0 if x == '1' else 0.0 for x in string[361*11:361*20]] # 9
+    # prev = [1.0 if x == '1' else 0.0 for x in string[361*20:361*21]] # 1
+    # invalid = [1.0 if x == '1' else 0.0  for x in string[361*21:361*22]] # 1
+    # g_sizes = [exp(0.01 * int(c)) for c in string[361*22:361*24]] # 2
     his = [exp(-0.1 * int(c)) for c in string[-361:]] # 1
-    #board = [1.0 if x == '1' else 0.0 for x in string[:361*3]] # 3
-    #border = [1.0 if x == '1' else 0.0 for x in string[361*3:361*4]] # 1
-    #ko = [1.0 if x == '1' else 0.0 for x in string[361*10:361*11]] # 1
-    #rank = [1.0 if x == '1' else 0.0 for x in string[361*11:361*20]] # 9
-    #lib = [1.0 if x == '1' else 0.0 for x in string[361*4:361*10]] # 6
-    #invalid = [1.0 if x == '1' else 0.0  for x in string[361*21:361*22]] # 1
     his.extend(others)
     return his
 
