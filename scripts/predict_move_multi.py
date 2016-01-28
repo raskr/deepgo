@@ -1,5 +1,5 @@
 import argparse
-from modified_functions.softmax_cross_entropy_multi import softmax_cross_entropy_multi
+import sys
 import six
 import chainer.functions as F
 import chainer
@@ -11,10 +11,7 @@ from math import exp
 parser = argparse.ArgumentParser(description='eval network')
 parser.add_argument('--board', '-b', default='', type=str, help='current board state in 22 ch')
 parser.add_argument('--invalids', '-i', default='', type=str, help='invalid positions')
-parser.add_argument('--color', '-c', default='', type=str, help='my color')
 args = parser.parse_args()
-
-model = six.moves.cPickle.load(open("{}.pkl".format(args.color), "rb"))
 
 use_gpu = True
 
@@ -22,7 +19,7 @@ if use_gpu:
     cuda.get_device(0).use()
     model.to_gpu()
 
-n_channel = 21
+model = six.moves.cPickle.load(open("white.pkl", "rb"))
 n_y = 3
 xp = cp if use_gpu else np
 
@@ -72,8 +69,11 @@ def str2floats(string):
 def str2floats_simple(string):
     return [1.0 if x == '1' else 0.0 for x in string]
 
-result = forward_once(str2floats(args.board), str2floats_simple(args.invalids))
-# with open('test', 'a+') as f:
-#     f.write(str(result))
-# return result to stdout
-print(str(result))
+
+line = sys.stdin.readline()
+while line is not None:
+    inpt = line.split(',')
+    channels, invalid = inpt[0], inpt[1]
+
+    print(str(result))
+    line = sys.stdin.readline()
