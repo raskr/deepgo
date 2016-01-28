@@ -120,7 +120,8 @@ object Play extends Cmd {
   // ex) args = [black, B13]
   def apply(args: Array[String]) = {
     if (args(1) startsWith "pass") {
-      GameState updateBy Move(GameState.whoToPlayNext, -1, -1, isValid=true, pass=true)
+      val color = if (args.head == "white") White else Black
+      GameState updateBy Move(color, -1, -1, isValid=true, pass=true)
     } else {
       GameState updateBy createMove(args.head, args(1))
     }
