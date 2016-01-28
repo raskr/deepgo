@@ -2,7 +2,7 @@
 # coding=utf-8
 
 # use like
-# python twogtp.py --white 'sbt --error "run --mode gtp -s 1 -p 1"' --black 'gnugo --mode gtp'
+# python twogtp.py --white 'sbt --error "run --mode gtp -s 1 -p 1"' --black 'gnugo --mode gtp' --verbose 2
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # This program is distributed with GNU Go, a Go program.            #
@@ -420,6 +420,9 @@ class GTP_game:
                 to_play = "B"
 
             if verbose >= 2:
+                print 'my....'
+                print self.whiteplayer.showboard() + "\n"
+                print 'opponent....'
                 print self.blackplayer.showboard() + "\n"
 
         if won_by_resignation == "":

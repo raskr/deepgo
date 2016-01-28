@@ -122,7 +122,6 @@ object Play extends Cmd {
     if (!args(1).startsWith("pass")) {
       val move = createMove(args.head, args(1))
       GameState updateBy move
-//      GameState.opponentPassed = true
     }
     sendEmptyOkResponse()
   }
@@ -164,32 +163,33 @@ object Play extends Cmd {
 // The controller is allowed to use this command for either color,
 // regardless who played the last move.
 object GenMove extends Cmd {
+
+  // TODO: reduce the command execution (For now execute python script every time genmove called)
   def apply(args: Array[String]) = {
-      // update state
       val color = args.head
       val state = GameState.currentState
 
-      if (GameState.opponentPassed || state.invalidChannel.forall(_ == '1')) {
-//        new File("aaaaaaaa").write("pass. flag ... " + GameState.opponentPassed)
-//        GameState.opponentPassed = false
-      } else {
-        val cmd = s"python scripts/predict_move.py -b ${state.toChannels.get} -i ${state.invalidChannel.mkString} -c $color"
-        // TODO: reduce the command execution (For now execute python script every time genmove called)
-        // `init` get rid of the "\n"
-        val pos = Utils.execCmd(cmd).init.toInt
-        new File("aaaaaaaa").write("" + pos)
-
-        val (x, y) = pos.toCoordinate
-        val (xAlpha, yAlpha) = (x.toAlpha, y.toAlpha)
-
-        val move = Move(if (color == "white") White else Black, x, y, isValid=true)
-        GameState updateBy move
-        // return to stderr
-        val (xGtp, yGtp) = (if (xAlpha < 'i') xAlpha else (xAlpha+1).toChar, Config.dia - y)
-        sendResponse(s"${Character.toUpperCase(xGtp)}$yGtp")
-
+      if (!state.legalChannel.exists(_ == '1')) {
+        new File("test.txt").write("pass")
+        sendResponse("pass")
       }
 
+      else {
+        val cmd = s"python scripts/predict_move_multi.py -b ${state.toChannels.get} -i ${state.invalidChannel.mkString} -c $color"
+	new File("test.txt").write("" + ((state.toChannels.get.size)/361))
+        val pos = Utils.execCmd(cmd).init.toInt
+        val (x, y) = pos.toCoordinate
+
+        val move = Move(if (color == "white") White else Black, x, y, isValid=true)
+
+        GameState updateBy move
+        // return to stderr
+        val (xGtp, yGtp) = (if (x.toAlpha < 'i') x.toAlpha else (x+1).toAlpha, Config.dia - y)
+
+        val res = s"${Character.toUpperCase(xGtp)}$yGtp"
+        new File("test.txt").write(res)
+        sendResponse(res)
+      }
   }
 }
 
@@ -222,9 +222,7 @@ object GTP_CmdHandler {
       else if (cmd == "showboard")        ShowBoard(args)
       else if (cmd == "komi")         	  Komi(args)
       else if (cmd == "quit")            {Quit(args); sys.exit(1)}
-      else {
-        throw new RuntimeException("Error!! Unsupported Command: " + cmd + "\n\n")
-      }
+      else throw new RuntimeException("Error!! Unsupported Command: " + cmd + "\n\n")
       // ok response from script
       if (readLine().isEmpty) loop()
     }
@@ -233,14 +231,18 @@ object GTP_CmdHandler {
 }
 
 object GameState {
+
   import scala.collection.mutable.ArrayBuffer
+
   val states = ArrayBuffer[State]()
   val moves = ArrayBuffer[Move]()
-  var opponentPassed = false
+
   def updateBy(move: Move) = {
-    moves.append(move)
-    states.append(states.last.nextStateBy(moves.toArray))
+    new File("log.txt").write("update by " + move.toString)
+    moves append move
+    states append currentState.nextStateBy(moves.toArray)
   }
+
   def currentState = states.last
 
   // initiative is black
@@ -250,11 +252,12 @@ object GameState {
 
     val dummyMv = Move(Config.opponentColor,'?','?', isValid=false)
 
-    moves.prepend(dummyMv)
+    moves.append(dummyMv)
+
     states.append(State(
       board = Rules.genInitialBoard(None), // no handicap
-      rankW=Some(Config.wRank),
-      rankB=Some(Config.bRank),
+      rankW=Some(Config.ownRank),
+      rankB=Some(Config.opponentRank),
       prevMoves=Array(dummyMv)))
   }
 }

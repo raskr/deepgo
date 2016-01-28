@@ -1,4 +1,5 @@
 import argparse
+
 from chainer import computational_graph
 import os
 from datetime import datetime
@@ -29,12 +30,12 @@ data = Data(feat='plane',
             db_path=db_path,
             b_size=256,
             layer_width=128,
-            n_ch=25,
+            n_ch=21,
             n_train_data=15600000,
             n_test_data=300000,
             n_y=3,
             n_layer=8,
-            n_epoch=7)
+            n_epoch=6)
 
 
 # Prepare data set
@@ -46,7 +47,7 @@ model = chainer.FunctionSet(
     conv5=F.Convolution2D(in_channels=128, out_channels=128, ksize=5, pad=2),
     conv6=F.Convolution2D(in_channels=128, out_channels=128, ksize=3, pad=1),
     conv7=F.Convolution2D(in_channels=128, out_channels=128, ksize=3, pad=1),
-    conv8=F.Convolution2D(in_channels=64, out_channels=data.n_y, ksize=3, pad=1),
+    conv8=F.Convolution2D(in_channels=128, out_channels=data.n_y, ksize=3, pad=1),
 )
 
 
@@ -105,7 +106,7 @@ def pick_channel_y(array, idx):
 
 
 def train():
-    optimizer = optimizers.Adam(0.02)
+    optimizer = optimizers.Adam()
     optimizer.setup(model)
     for epoch in six.moves.range(1, data.n_epoch + 1):
         sum_accuracy = sum_loss = mb_count = 0
@@ -121,12 +122,6 @@ def train():
             x_batch, y_batch = data(True, i_mb)
             optimizer.zero_grads()
             loss, acc = forward(x_batch, y_batch)
-
-            if epoch == 1 and mb_count == 0:
-                with open('graph.dot', 'w') as o:
-                    g = computational_graph.build_computational_graph((loss, ), remove_split=True)
-                    o.write(g.dump())
-                print('graph generated')
 
             loss.backward()
             optimizer.update()
@@ -157,7 +152,7 @@ def train():
         print(res)
         with open(res_filename, 'a+') as f: f.write(res)
         # optimizer.lr /= 1.5
-        save_net('white_{}'.format(data.printable()))
+        save_net('white_{}ep_{}'.format(epoch, data.printable()))
 
     with open(res_filename, 'a+') as f:
         f.write('It took total... {}\n\n'.format(datetime.now() - start_time))
