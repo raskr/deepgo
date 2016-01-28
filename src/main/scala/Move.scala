@@ -1,5 +1,5 @@
 // top-left is origin
-case class Move(color: Char, x: Int, y: Int, isValid: Boolean) {
+case class Move(color: Char, x: Int, y: Int, isValid: Boolean, var pass: Boolean = false) {
 
   val pos = y * 19 + x
 

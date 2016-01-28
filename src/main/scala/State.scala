@@ -1,5 +1,3 @@
-import java.io.File
-
 import Color._
 import Implicits._
 import Config._
@@ -73,30 +71,23 @@ case class State(board: Array[Char],
     dst.mkString
   }
 
-  // for `liberty'. Not for future moves
-  //var nextBoard: Option[Array[Char]] = None
-
-  def toChannels: Option[String] = for {
-    rank <- ownRank
-  } yield {
+  // 23ch
+  def toChannels: Option[String] = ownRank map { rank =>
     new StringBuilder()
-      .append(prevMovesChannel) // n maybe ok
-      .append(hist.toHistoryChannel) // 1 tested
-      .append(board.toBoardChannel) // 3 tested
-      .append(board.toBorderChannel) // 1 tested
-      .append(koPos.toKoChannel) // 1 tested
-      .append(rank.toRankChannel) // 9 tested
-//      .append(legalChannel) // 1 maybe ok
-      .append(board.toLibertyChannel) // 6 tested
+      .append(prevMovesChannel)       // 2
+      .append(hist.toHistoryChannel)  // 1
+      .append(board.toBoardChannel)   // 3
+      .append(board.toBorderChannel)  // 1
+      .append(koPos.toKoChannel)      // 1
+      .append(rank.toRankChannel)     // 9
+      .append(board.toLibertyChannel) // 6
       .toString()
   }
 
-
   def nextStateBy(moves: Array[Move]): State = {
     val move = moves.last
-    val newBoard = board.createNextBoardBy(move)
-    //nextBoard = Some(newBoard)
-    val ko = board.findKoBy(move, newBoard)
+    val newBoard = if (!move.pass) board.createNextBoardBy(move) else board
+    val ko = if (move.pass) board.findKoBy(move, newBoard) else -1
     val his = hist.nextHistory(board, newBoard)
     State(newBoard, his, ko, rankW, rankB, moves)
   }

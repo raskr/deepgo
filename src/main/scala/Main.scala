@@ -121,13 +121,15 @@ object Main {
         val states = ArrayBuffer(State(board = initialBoard,
           rankW=rankW, rankB=rankB, prevMoves=Array(dummyMv)))
         val moves = ArrayBuffer(dummyMv)
+        var pass = 0
 
         // ============================================
         // moves
         // ============================================
+//        println(nodes.tail)
         nodes.tail.foreach {
           _.props match {
-            // the move
+            // a move
             case List(Property(PropIdent(col: String), List(PropValue(Point(a: Char, b: Char))))) =>
               val mv = Move(if (col.head.toLower == 'w') White else Black, a-'a', b-'a', isValid=true)
               if (mv.x <= 18 && mv.y <= 18) {
@@ -135,6 +137,11 @@ object Main {
                 moves append mv
                 states append states.last.nextStateBy(moves.toArray)
               }
+
+            // pass
+            case List(Property(PropIdent(col: String), List())) =>
+              pass += 1
+
             // not a move
             case _ =>
           }
@@ -143,7 +150,8 @@ object Main {
         // moves end
         // ============================================
 
-        Some((states.init, moves.tail))
+        if (pass >= 3) None
+        else Some((states.init, moves.tail))
     }
   }
 

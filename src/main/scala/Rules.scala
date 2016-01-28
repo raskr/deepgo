@@ -159,9 +159,9 @@ object Rules {
   }
 
   // 1ch
-  def nextLifespans(curLifespan: Array[Int],
-                    prevBoard: Array[Char],
-                    curBoard: Array[Char]): Array[Int] =
+  def nextHistory(curLifespan: Array[Int],
+                  prevBoard: Array[Char],
+                  curBoard: Array[Char]): Array[Int] =
   {
     val dst = Array.range(0, Config.all) map { i =>
       val (prev, cur) = (prevBoard(i), curBoard(i))
@@ -211,6 +211,7 @@ object Rules {
     ko21.rectify(from = Config.padDia, to = Config.dia)
   }
 
+  // Currently, not used.
   // Has side effect. change the padded board in-place.
   // Idx should be the padded pos
   def fillEmptyNeighbor(idx: Int, fillColor: Char, paddedBoard: Array[Char]) = {

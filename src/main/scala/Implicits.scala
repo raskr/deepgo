@@ -103,7 +103,7 @@ object Implicits {
     }
 
     def nextHistory(prevBoard: Array[Char], curBoard: Array[Char]) =
-      Rules.nextLifespans(x, prevBoard, curBoard)
+      Rules.nextHistory(x, prevBoard, curBoard)
 
     def printSelf(row: Int, col: Int) = {
       assert(x.length == row * col)

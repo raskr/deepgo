@@ -7,7 +7,7 @@ sealed abstract class Cmd {
   protected final def sendEmptyOkResponse() = println("= \n")
   protected final def sendResponse(str: String) = println(s"= $str \n")
   // Main task of the command.
-  // This function has many side effect. the return value will be stdout
+  // This function has side effects. the return value will be to stdout
   def apply(args: Array[String])
 }
 
@@ -119,9 +119,10 @@ object Play extends Cmd {
 
   // ex) args = [black, B13]
   def apply(args: Array[String]) = {
-    if (!args(1).startsWith("pass")) {
-      val move = createMove(args.head, args(1))
-      GameState updateBy move
+    if (args(1) startsWith "pass") {
+      GameState updateBy Move(GameState.whoToPlayNext, -1, -1, isValid=true, pass=true)
+    } else {
+      GameState updateBy createMove(args.head, args(1))
     }
     sendEmptyOkResponse()
   }
@@ -167,13 +168,13 @@ object GenMove extends Cmd {
   // TODO: reduce the command execution (For now execute python script every time genmove called)
   def apply(args: Array[String]) = {
       val color = args.head
-      val state = GameState.currentState
+      val state = GameState.lastState
 
-      new File("test3.txt").write(color + " " + state.prevMove.color.opponent)
-      new File("test1.txt").write(state.board.stateAsString(19, 19))
-      new File("test2.txt").write(state.invalidChannel.stateAsString(19, 19))
+      new File("mycolor.txt").append(color + " " + state.prevMove.color.opponent)
+      new File("correntstate.txt").append(state.board.stateAsString(19, 19))
+      new File("invalid.txt").append(state.invalidChannel.stateAsString(19, 19))
 
-      if (!state.legalChannel.exists(_ == '1')) {
+      if (state.invalidChannel.forall(_ == '1')) {
         new File("test.txt").write("pass")
         sendResponse("pass")
       }
@@ -243,10 +244,13 @@ object GameState {
   def updateBy(move: Move) = {
     new File("log.txt").write("update by " + move.toString)
     moves append move
-    states append currentState.nextStateBy(moves.toArray)
+    states append lastState.nextStateBy(moves.toArray)
   }
 
-  def currentState = states.last
+  def whoToPlayNext: Char = lastMove.color.opponent
+
+  def lastState = states.last
+  def lastMove = moves.last
 
   // initiative is black
   def reset() = {
