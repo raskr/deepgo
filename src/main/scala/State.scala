@@ -87,8 +87,8 @@ case class State(board: Array[Char],
   def nextStateBy(moves: Array[Move]): State = {
     val move = moves.last
     val newBoard = if (!move.pass) board.createNextBoardBy(move) else board
-    val ko = if (move.pass) board.findKoBy(move, newBoard) else -1
-    val his = hist.nextHistory(board, newBoard)
+    val ko = if (!move.pass) board.findKoBy(move, newBoard) else -1
+    val his =if (!move.pass) hist.nextHistory(board, newBoard) else hist
     State(newBoard, his, ko, rankW, rankB, moves)
   }
 
