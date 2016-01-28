@@ -249,6 +249,7 @@ object GTP_CmdHandler {
   import scala.io.StdIn.readLine
   import scala.sys.process.ProcessIO
   import scala.io.Source
+  import sys.process._
 
   val pio = new ProcessIO(
 
@@ -257,14 +258,14 @@ object GTP_CmdHandler {
     },
 
     stdOut => {
-      Source.fromInputStream(stdOut).getLines.foreach(line => )
+      Source.fromInputStream(stdOut).getLines.foreach(line => {})
     },
 
     stdErr => ()
 
   )
 
-  pb.run(pio)
+  //"python scripts/predict_move.py".run(pio)
 
   def listenAndServe(): Unit = {
 
@@ -273,8 +274,6 @@ object GTP_CmdHandler {
     // recursive func
     def loop() {
 
-      // exec move prediction script
-      Utils.execCmd("python scripts/predict_move.py")
 
       var line = readLine()
       // read GTP command

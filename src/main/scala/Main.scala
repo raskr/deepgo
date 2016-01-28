@@ -62,7 +62,7 @@ object Main {
     val (states, moves) = res
     val (stLen, mvLen) = (states.size, moves.size)
     assert(stLen == mvLen)
-    if (stLen > 10) Some(Range(0, stLen-step).map( i => (states(i), moves.slice(i, i + step)) ))
+    if (stLen > 10) Some(Range(0, stLen-step).map(i => (states(i), moves.slice(i, i+step))))
     else None
   }
 
