@@ -223,43 +223,10 @@ object GameState {
     states append lastState.nextStateBy(moves.toArray)
   }
 
-<<<<<<< HEAD
-}
-
-// arguments: my own color
-// effects: A stone of the requested color is played where the engine
-// output: vertex
-// comments: Notice that “pass” is a valid vertex and should be returned
-// color color - Color for which to generate a move.
-// chooses. The number of captured stones is updated if
-// needed and the move is added to the move history.
-// vertex|string vertex - Vertex where the move was played or the string “resign”.
-// If the engine wants to pass. Use “resign” if you want to give up the game.
-// The controller is allowed to use this command for either color,
-// regardless who played the last move.
-object GenMove extends Cmd {
-
-  // TODO: reduce the command execution (For now execute python script every time genmove called)
-  def apply(args: Array[String]) = {
-      val color = args.head
-      val state = GameState.currentState
-
-      if (!state.legalChannel.exists(_ == '1')) {
-        new File("test.txt").write("pass")
-        sendResponse("pass")
-      }
-
-      else {
-        val cmd = s"python scripts/predict_move_multi.py -b ${state.toChannels.get} -i ${state.invalidChannel.mkString} -c $color"
-	new File("test.txt").write("" + ((state.toChannels.get.size)/361))
-        val pos = Utils.execCmd(cmd).init.toInt
-        val (x, y) = pos.toCoordinate
-=======
   var whoToPlayNext = Black
 
   def lastState = states.last
   def lastMove = moves.last
->>>>>>> eae991c59a291100ef9e14575008b024661d014e
 
   // initiative is black
   def reset() = {
