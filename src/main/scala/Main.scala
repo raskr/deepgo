@@ -39,7 +39,6 @@ object Main {
                        step: Int, prevStep: Int, limit: Option[Int]=None) = try {
     Config.numPrevMoves = prevStep
     Utils.listFilesIn(dir, limit, Some(".sgf")).par foreach { f =>
-      println(f.getName)
       // getLines() may throw exception
       val parsed = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
       if (parsed.successful) processParseResult(parsed.get, outs.map(_.color)).foreach { pRes =>
@@ -89,11 +88,11 @@ object Main {
           prop match {
             // rank W
             case Property(PropIdent(a: String), List(PropValue(SimpleText(r: String)))) if a == "WR" =>
-              rankW = Some(r).filter(x => x.isValidRank)
+              rankW = Some(r).filter(x => x.isValidRank && x.isStrongRank)
 
             // rank B
             case Property(PropIdent(a: String), List(PropValue(SimpleText(r: String)))) if a == "BR" =>
-              rankB = Some(r).filter(x => x.isValidRank)
+              rankB = Some(r).filter(x => x.isValidRank && x.isStrongRank)
 
             // handicap for W
             case Property(PropIdent(id: String), mvs: List[PropValue]) if id == "AB" =>

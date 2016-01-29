@@ -17,7 +17,7 @@ object Config {
   // -------------- GTP --------------
   // ---------------------------------
   // rank
-  val ownRank = "9d"
+  val ownRank = "2d"
   val opponentRank = "1d"
 
   // color
