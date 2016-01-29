@@ -54,7 +54,7 @@ object Main {
 
   private def commitResult(res: Seq[(State, Seq[Move])], outs: Seq[OutputStorage]) =
     res foreach { case (st, ts) =>
-      outs.foreach{ o => if (o.color == ts.head.color) o.commit(st, ts) }
+      outs.foreach{ o => o.commit(st, ts) }
     }
 
   private def distributeTargetMoves(res: (Seq[State],Seq[Move]), step: Int): Option[Seq[(State, Seq[Move])]] = {
@@ -109,6 +109,7 @@ object Main {
                   board.createNextBoardBy(Move(White, a-'a', b-'a', isValid=true))
               }}
               dummyMv = Move(White, '?', '?', isValid=false)
+
             // others
             case _ =>
           }

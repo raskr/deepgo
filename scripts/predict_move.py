@@ -1,10 +1,12 @@
+# encoding=utf-8
+
 import argparse
+
 from math import exp
 import numpy as np
 import six
 import chainer.functions as F
 import chainer
-
 
 parser = argparse.ArgumentParser(description='eval network')
 parser.add_argument('--board', '-b', default='', type=str, help='current board state in 22 ch')
@@ -12,7 +14,7 @@ parser.add_argument('--invalids', '-i', default='', type=str, help='invalid posi
 parser.add_argument('--color', '-c', default='', type=str, help='my color')
 args = parser.parse_args()
 
-model = six.moves.cPickle.load(open("{}.pkl".format(args.color), "rb"))
+model = six.moves.cPickle.load(open("white.pkl".format(args.color), "rb"))
 n_channel = 3
 
 
@@ -51,8 +53,18 @@ def str2floats(string):
 def str2floats_simple(string):
     return [1.0 if x == '1' else 0.0 for x in string]
 
-result = forward_once(str2floats(args.board), str2floats_simple(args.invalids))
-# with open('test', 'a+') as f:
-#     f.write(str(result))
-# return result to stdout
-print(str(result))
+
+# こいつの print は届いてる。
+# こっちの write を read してくれない
+# この readline が read しない
+# sys.stdout.write("aaaa \n ") # 届かない
+line = sys.stdin.readline()
+while line is not None:
+    inpt = line.split(',')
+    channels, inv = inpt[0], inpt[1]
+    print("{}_{}".format(channels, inv))
+    result = forward_once(str2floats(channels), str2floats_simple(inv))
+    print(str(result))
+    line = sys.stdin.readline()
+
+

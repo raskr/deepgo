@@ -159,15 +159,26 @@ object Implicits {
 
     // 3ch
     // tested
-    def toBoardChannel: String = {
+    def toBoardChannel(forme: Boolean): String = {
       val dst = Utils.zeros(Config.all * 3)
       var i = 0
-      while (i < Config.all) {
-        val color = in(i)
-        if      (color == Empty) dst(i) = '1'
-        else if (color == White) dst(Config.all + i) = '1'
-        else if (color == Black) dst(Config.all * 2 + i) = '1'
-        i += 1
+      if (forme) {
+        while (i < Config.all) {
+          val color = in(i)
+          if      (color == Empty) dst(i) = '1'
+          else if (color == White) dst(Config.all + i) = '1'
+          else if (color == Black) dst(Config.all * 2 + i) = '1'
+          i += 1
+        }
+      } else {
+        while (i < Config.all) {
+          val color = in(i)
+          if      (color == Empty) dst(i) = '1'
+          else if (color == Black) dst(Config.all + i) = '1'
+          else if (color == White) dst(Config.all * 2 + i) = '1'
+          i += 1
+        }
+
       }
       dst.mkString
     }

@@ -72,22 +72,25 @@ case class State(board: Array[Char],
   }
 
   // 23ch
-  def toChannels: Option[String] = ownRank map { rank =>
-    new StringBuilder()
-      .append(prevMovesChannel)       // 2
-      .append(board.toBoardChannel)   // 3
-      .append(board.toBorderChannel)  // 1
-      .append(koPos.toKoChannel)      // 1
-      .append(board.toLibertyChannel) // 6
-      .append(hist.toHistoryChannel)  // 1
-      .toString()
+  def toChannels(color: Char): Option[String] = {
+    val r = if (color == White) rankW else if (color == Black) rankB else None
+    r map { rank =>
+      new StringBuilder()
+        .append(prevMovesChannel)       // 2
+        .append(board.toBoardChannel(color == Config.ownColor))   // 3
+        .append(board.toBorderChannel)  // 1
+        .append(koPos.toKoChannel)      // 1
+        .append(board.toLibertyChannel) // 6
+        .append(hist.toHistoryChannel)  // 1
+        .toString()
+    }
   }
 
   def nextStateBy(moves: Array[Move]): State = {
     val move = moves.last
     val newBoard = if (!move.pass) board.createNextBoardBy(move) else board
     val ko = if (!move.pass) board.findKoBy(move, newBoard) else -1
-    val his =if (!move.pass) hist.nextHistory(board, newBoard) else hist
+    val his = if (!move.pass) hist.nextHistory(board, newBoard) else hist
     State(newBoard, his, ko, rankW, rankB, moves)
   }
 

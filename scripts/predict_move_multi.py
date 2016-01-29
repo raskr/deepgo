@@ -74,6 +74,6 @@ line = sys.stdin.readline()
 while line is not None:
     inpt = line.split(',')
     channels, invalid = inpt[0], inpt[1]
-
     print(str(result))
+    sys.stderr.write("Reply: " + line + "\n")
     line = sys.stdin.readline()
