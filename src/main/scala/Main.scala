@@ -1,4 +1,4 @@
-import java.io.File
+import java.io.{PrintStream, File}
 
 import Implicits._
 import SGF._
@@ -51,7 +51,9 @@ object Main {
     }
   } catch   {
     case e: fmtErr => println("ignore strange file")
-    case e: Exception => new File("log").append(e.getMessage + "\n")
+    case e: Exception =>
+      val ps = new PrintStream(new File("log"))
+      e.printStackTrace(ps)
   } finally { outs foreach (_.close()) }
 
 
