@@ -77,10 +77,10 @@ case class State(board: Array[Char],
     r map { rank =>
       new StringBuilder()
         .append(prevMovesChannel)       // 2
-        .append(board.toBoardChannel(color == Config.ownColor))   // 3
+        .append(board.toBoardChannel(forme = color == Config.ownColor))   // 3
         .append(board.toBorderChannel)  // 1
         .append(koPos.toKoChannel)      // 1
-        .append(board.toLibertyChannel(color == Config.ownColor)) // 6
+        .append(board.toLibertyChannel(forme = color == Config.ownColor)) // 6
         .append(hist.toHistoryChannel)  // 1
         .toString()
     }

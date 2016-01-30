@@ -152,13 +152,13 @@ object Implicits {
       println()
     }
 
-    def findKoBy(move: Move, newBoard: Array[Char]): Int = {
-      val dst = Rules.findKo(move, in, newBoard)
-      dst
-    }
+    def findKoBy(move: Move, newBoard: Array[Char]): Int =
+      Rules.findKo(move, in, newBoard)
 
-    // 3ch
-    // tested
+    /**
+      * @param forme whether i am white or not
+      * @return
+      */
     def toBoardChannel(forme: Boolean): String = {
       val dst = Utils.zeros(Config.all * 3)
       var i = 0

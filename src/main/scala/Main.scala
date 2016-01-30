@@ -1,3 +1,5 @@
+import java.io.File
+
 import Implicits._
 import SGF._
 import Color._
@@ -38,29 +40,25 @@ object Main {
   private def parseSGF(dir: String, outs: Seq[OutputStorage],
                        step: Int, prevStep: Int, limit: Option[Int]=None) = try {
     Config.numPrevMoves = prevStep
-    Utils.listFilesIn(dir, limit, Some(".sgf")).par foreach { f =>
+    Utils.listFiles(dir, limit, Some(".sgf")).par foreach { f =>
       // getLines() may throw exception
-      val parsed = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines().mkString)
-      if (parsed.successful) processParseResult(parsed.get, outs.map(_.color)).foreach { pRes =>
-        val res = distributeTargetMoves(pRes, step)
-        res foreach { x =>
-          //if (outs.isEmpty) TargetDistributionTest(x)
-          commitResult(x, outs)
+      val parsed = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines.mkString)
+      if (parsed.successful) processParseResult(parsed.get) foreach { pRes =>
+        distributeTargetMoves(pRes, step) foreach { results => // res is `one` state and targets
+          for ((st, ts) <- results; out <- outs) out.commit(st, ts)
         }
       }
     }
-  } catch   { case e: fmtErr => println("ignore strange file")
+  } catch   {
+    case e: fmtErr => println("ignore strange file")
+    case e: Exception => new File("log").append(e.toString + "\n")
   } finally { outs foreach (_.close()) }
 
-  private def commitResult(res: Seq[(State, Seq[Move])], outs: Seq[OutputStorage]) =
-    res foreach { case (st, ts) =>
-      outs.foreach{ o => o.commit(st, ts) }
-    }
 
   private def distributeTargetMoves(res: (Seq[State],Seq[Move]), step: Int): Option[Seq[(State, Seq[Move])]] = {
     val (states, moves) = res
-    val (stLen, mvLen) = (states.size, moves.size)
-    assert(stLen == mvLen)
+    val stLen = states.size
+//    assert(stLen == mvLen)
     if (stLen > 10) Some(Range(0, stLen-step).map(i => (states(i), moves.slice(i, i+step))))
     else None
   }
@@ -71,7 +69,7 @@ object Main {
     * @param result result in 'one' file
     * @return (current states, targets wrt those)
     */
-  def processParseResult(result: Collection, colors: Seq[Char]): Option[(Seq[State], Seq[Move])] = {
+  def processParseResult(result: Collection): Option[(Seq[State], Seq[Move])] = {
     result match {
       case Collection(List(GameTree(Sequence(nodes: List[Node]), _))) =>
         if (nodes.isEmpty) return None
@@ -126,7 +124,6 @@ object Main {
         // ============================================
         // moves
         // ============================================
-//        println(nodes.tail)
         nodes.tail.foreach {
           _.props match {
             // a move
