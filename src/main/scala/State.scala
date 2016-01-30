@@ -80,7 +80,7 @@ case class State(board: Array[Char],
         .append(board.toBoardChannel(color == Config.ownColor))   // 3
         .append(board.toBorderChannel)  // 1
         .append(koPos.toKoChannel)      // 1
-        .append(board.toLibertyChannel) // 6
+        .append(board.toLibertyChannel(color == Config.ownColor)) // 6
         .append(hist.toHistoryChannel)  // 1
         .toString()
     }

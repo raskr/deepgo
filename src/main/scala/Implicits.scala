@@ -44,7 +44,7 @@ object Implicits {
         (x.charAt(0).getNumericValue, x.charAt(1)) match {
           case (_, 'k') => false
           case (_, 'p') => true
-          case (r, 'd') => true
+          case (r, 'd') if r > 1 => true
           case _ => throw new RuntimeException("should not happen")
         }
     }
@@ -197,7 +197,7 @@ object Implicits {
     }
 
     // 6ch
-    def toLibertyChannel = {
+    def toLibertyChannel(forme: Boolean) = {
       val liberties = Rules.liberties(in)
       val dst = Array.fill(Config.all * 6)('0')
 
@@ -207,42 +207,74 @@ object Implicits {
         val col = in(i)
         val all = Config.all
 
-        if (col == White) {
-          if (lib == 1) {
-            dst(i) = '1'
+        if (forme) {
+          if (col == White) {
+            if (lib == 1) {
+              dst(i) = '1'
+            }
+            else if (lib == 2) {
+              dst(all + i) = '1'
+            }
+            else if (lib >= 3) {
+              dst(all * 2 + i) = '1'
+            }
+            else {
+              println("something is wrong (liberty)")
+            }
           }
-          else if (lib == 2) {
-            dst(all + i) = '1'
-          }
-          else if (lib >= 3) {
-            dst(all * 2 + i) = '1'
-          }
-          else {
-//            in.printState(19, 19, None, None)
-//            in.printState(19, 19, None, Some(i))
-//            throw new RuntimeException("bbbbbb " + lib)
-          }
-        }
 
-        else if (col == Black) {
-          if (lib == 1) {
-            dst(all * 3 + i) = '1'
+          else if (col == Black) {
+            if (lib == 1) {
+              dst(all * 3 + i) = '1'
+            }
+            else if (lib == 2) {
+              dst(all * 4 + i) = '1'
+            }
+            else if (lib >= 3) {
+              dst(all * 5 + i) = '1'
+            }
+            else {
+              println("something is wrong (liberty)")
+            }
           }
-          else if (lib == 2) {
-            dst(all * 4 + i) = '1'
-          }
-          else if (lib >= 3) {
-            dst(all * 5 + i) = '1'
-          }
-          else {
-//            in.printState(19, 19, None, None)
-//            in.printState(19, 19, None, Some(i))
-//            throw new RuntimeException("aaaaaaa " + lib)
-          }
-        }
 
-        else {
-          // do nothing (remain it zero
+          else {
+            // do nothing (remain it zero
+          }
+        } else {
+          if (col == Black) {
+            if (lib == 1) {
+              dst(i) = '1'
+            }
+            else if (lib == 2) {
+              dst(all + i) = '1'
+            }
+            else if (lib >= 3) {
+              dst(all * 2 + i) = '1'
+            }
+            else {
+              throw new RuntimeException("bbbbbb " + lib)
+            }
+          }
+
+          else if (col == White) {
+            if (lib == 1) {
+              dst(all * 3 + i) = '1'
+            }
+            else if (lib == 2) {
+              dst(all * 4 + i) = '1'
+            }
+            else if (lib >= 3) {
+              dst(all * 5 + i) = '1'
+            }
+            else {
+              throw new RuntimeException("aaaaaaa " + lib)
+            }
+          }
+
+          else {
+            // do nothing (remain it zero
+          }
         }
 
         i += 1
