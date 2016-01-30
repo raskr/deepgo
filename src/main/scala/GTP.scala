@@ -107,7 +107,7 @@ object GenMove extends Cmd {
       val ch = state.toChannels(Config.ownColor).get
       val invalid = state.invalidChannel.mkString
 
-      ////////////////////////
+      //////////////////////// error
 
       writer.write(s"$ch, $invalid\n")
       writer.flush()
@@ -237,7 +237,7 @@ object GameState {
 
   // initiative is black
   def reset() = {
-    states.clear()
+    statesclear()
     moves.clear()
 
     moves.append(Move(Config.opponentColor,'?','?', isValid=false))

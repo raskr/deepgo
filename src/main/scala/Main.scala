@@ -51,7 +51,7 @@ object Main {
     }
   } catch   {
     case e: fmtErr => println("ignore strange file")
-    case e: Exception => new File("log").append(e.toString + "\n")
+    case e: Exception => new File("log").append(e.getMessage + "\n")
   } finally { outs foreach (_.close()) }
 
 
