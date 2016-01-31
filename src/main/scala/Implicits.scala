@@ -45,6 +45,7 @@ object Implicits {
           case (_, 'k') => false
           case (_, 'p') => true
           case (r, 'd') if r > 1 => true
+          case (r, 'd') => false
           case _ => throw new RuntimeException("should not happen")
         }
     }
