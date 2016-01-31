@@ -13,18 +13,18 @@ object Utils {
     val d = new File(dir)
     val dst =
       if (d.exists && d.isDirectory) {
-        val a = d.listFiles.toSeq
+        val a = d.listFiles
         limit match {
           case Some(x) if a.isEmpty =>
             println("There are not sgf files in sgf dir")
-            Seq[File]()
-          case Some(x) if a.size > x => a.take(x)
+            Array[File]()
+          case Some(x) if a.length > x => a.take(x)
           case _ => a
         }
       } else {
         d.mkdir()
-        println("Created new directory. Put files in it and then run again.")
-        Seq[File]()
+        println("Created new directory `sgf`. Put files in it and then run again.")
+        Array[File]()
       }
     extension match {
       case Some(a) => dst.filter(_.getName endsWith a)
