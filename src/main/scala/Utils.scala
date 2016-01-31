@@ -9,7 +9,7 @@ object Utils {
   def ones(size: Int): Array[Char] = Array.fill(size)('1')
   def empties(size: Int): Array[Char] = Array.fill(size)(Color.Empty)
 
-  def listFilesIn(dir: String, limit: Option[Int], extension: Option[String]) = {
+  def listFiles(dir: String, limit: Option[Int], extension: Option[String]) = {
     val d = new File(dir)
     val dst =
       if (d.exists && d.isDirectory) {

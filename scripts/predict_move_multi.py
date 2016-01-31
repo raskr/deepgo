@@ -72,11 +72,3 @@ def str2floats_simple(string):
 
 result =  forward_once(str2floats(args.board), str2floats_simple(args.invalids))
 print(str(result))
-
-#line = sys.stdin.readline()
-#while line is not None:
-#    inpt = line.split(',')
-#    channels, invalid = inpt[0], inpt[1]
-#
-#    print(str(result))
-#    line = sys.stdin.readline()

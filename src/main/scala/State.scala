@@ -71,7 +71,6 @@ case class State(board: Array[Char],
     dst.mkString
   }
 
-  // 23ch
   def toChannels: Option[String] = ownRank map { rank =>
     new StringBuilder()
       .append(prevMovesChannel)       // 1
@@ -87,7 +86,7 @@ case class State(board: Array[Char],
     val move = moves.last
     val newBoard = if (!move.pass) board.createNextBoardBy(move) else board
     val ko = if (!move.pass) board.findKoBy(move, newBoard) else -1
-    val his =if (!move.pass) hist.nextHistory(board, newBoard) else hist
+    val his = if (!move.pass) hist.nextHistory(board, newBoard) else hist
     State(newBoard, his, ko, rankW, rankB, moves)
   }
 

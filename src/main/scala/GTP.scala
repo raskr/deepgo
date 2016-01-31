@@ -1,4 +1,4 @@
-import java.io.File
+import java.io._
 
 import Color._
 import Implicits._
@@ -85,7 +85,11 @@ object Play extends Cmd {
 // regardless who played the last move.
 object GenMove extends Cmd {
 
-  // TODO: reduce the command execution (For now execute python script every time genmove called)
+  val process = Runtime.getRuntime.exec("python scripts/predict_move.py")
+//  val process = new ProcessBuilder("./scripts/predict_move.py").start()
+  val reader = new BufferedReader(new InputStreamReader(process.getInputStream))
+  val writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream))
+
   def apply(args: Array[String]) = {
 
     if (GameState.whoToPlayNext != Config.ownColor) { // opponent passed and then this method called
@@ -97,18 +101,16 @@ object GenMove extends Cmd {
     val color = args.head
     val state = GameState.lastState
 
-    new File("correntstate.txt").append(state.board.stateAsString(19, 19))
-    new File("invalid.txt").append(state.invalidChannel.stateAsString(19, 19))
-
     if (state.invalidChannel.forall(_ == '1')) {
       sendResponse("pass")
-    }
+    } else {
+      val ch = state.toChannels(Config.ownColor).get
+      val invalid = state.invalidChannel.mkString
 
     else {
       val cmd = s"python scripts/predict_move_multi.py -b ${state.toChannels.get} -i ${state.invalidChannel.mkString}"
       val pos = Utils.execCmd(cmd).init.toInt
       val (x, y) = pos.toCoordinate
-
       val move = Move(if (color == "white") White else Black, x, y, isValid=true)
 
       GameState updateBy move
@@ -116,7 +118,6 @@ object GenMove extends Cmd {
       val (xGtp, yGtp) = (if (x.toAlpha < 'i') x.toAlpha else (x+1).toAlpha, Config.dia - y)
 
       val res = s"${Character.toUpperCase(xGtp)}$yGtp"
-      new File("test.txt").write(res)
       sendResponse(res)
     }
   }
@@ -230,7 +231,7 @@ object GameState {
 
   // initiative is black
   def reset() = {
-    states.clear()
+    statesclear()
     moves.clear()
 
     moves.append(Move(Config.opponentColor,'?','?', isValid=false))
@@ -247,26 +248,9 @@ object GameState {
 object GTP_CmdHandler {
 
   import scala.io.StdIn.readLine
-  import scala.sys.process.ProcessIO
-  import scala.io.Source
-  import sys.process._
 
-  val pio = new ProcessIO(
-
-    stdIn => {
-
-    },
-
-    stdOut => {
-      Source.fromInputStream(stdOut).getLines.foreach(line => {})
-    },
-
-    stdErr => ()
-
-  )
 
   //"python scripts/predict_move.py".run(pio)
-
   def listenAndServe(): Unit = {
 
     loop()
@@ -279,8 +263,8 @@ object GTP_CmdHandler {
       // read GTP command
       while (line == null) line = readLine()
 
-      val stdin = line.split(' ')
-      val (cmd, args) = (stdin.head, stdin.tail)
+      val stdIn = line.split(' ')
+      val (cmd, args) = (stdIn.head, stdIn.tail)
 
       if      (cmd == "genmove")          GenMove(args)
       else if (cmd == "version")          Version(args)

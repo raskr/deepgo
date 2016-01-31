@@ -44,7 +44,8 @@ object Implicits {
         (x.charAt(0).getNumericValue, x.charAt(1)) match {
           case (_, 'k') => false
           case (_, 'p') => true
-          case (r, 'd') => true
+          case (r, 'd') if r > 1 => true
+          case (r, 'd') => false
           case _ => throw new RuntimeException("should not happen")
         }
     }
@@ -152,22 +153,33 @@ object Implicits {
       println()
     }
 
-    def findKoBy(move: Move, newBoard: Array[Char]): Int = {
-      val dst = Rules.findKo(move, in, newBoard)
-      dst
-    }
+    def findKoBy(move: Move, newBoard: Array[Char]): Int =
+      Rules.findKo(move, in, newBoard)
 
-    // 3ch
-    // tested
-    def toBoardChannel: String = {
+    /**
+      * @param forme whether i am white or not
+      * @return
+      */
+    def toBoardChannel(forme: Boolean): String = {
       val dst = Utils.zeros(Config.all * 3)
       var i = 0
-      while (i < Config.all) {
-        val color = in(i)
-        if      (color == Empty) dst(i) = '1'
-        else if (color == White) dst(Config.all + i) = '1'
-        else if (color == Black) dst(Config.all * 2 + i) = '1'
-        i += 1
+      if (forme) {
+        while (i < Config.all) {
+          val color = in(i)
+          if      (color == Empty) dst(i) = '1'
+          else if (color == White) dst(Config.all + i) = '1'
+          else if (color == Black) dst(Config.all * 2 + i) = '1'
+          i += 1
+        }
+      } else {
+        while (i < Config.all) {
+          val color = in(i)
+          if      (color == Empty) dst(i) = '1'
+          else if (color == Black) dst(Config.all + i) = '1'
+          else if (color == White) dst(Config.all * 2 + i) = '1'
+          i += 1
+        }
+
       }
       dst.mkString
     }
@@ -186,7 +198,7 @@ object Implicits {
     }
 
     // 6ch
-    def toLibertyChannel = {
+    def toLibertyChannel(forme: Boolean) = {
       val liberties = Rules.liberties(in)
       val dst = Array.fill(Config.all * 6)('0')
 
@@ -196,42 +208,74 @@ object Implicits {
         val col = in(i)
         val all = Config.all
 
-        if (col == White) {
-          if (lib == 1) {
-            dst(i) = '1'
+        if (forme) {
+          if (col == White) {
+            if (lib == 1) {
+              dst(i) = '1'
+            }
+            else if (lib == 2) {
+              dst(all + i) = '1'
+            }
+            else if (lib >= 3) {
+              dst(all * 2 + i) = '1'
+            }
+            else {
+              println("something is wrong (liberty)")
+            }
           }
-          else if (lib == 2) {
-            dst(all + i) = '1'
-          }
-          else if (lib >= 3) {
-            dst(all * 2 + i) = '1'
-          }
-          else {
-//            in.printState(19, 19, None, None)
-//            in.printState(19, 19, None, Some(i))
-//            throw new RuntimeException("bbbbbb " + lib)
-          }
-        }
 
-        else if (col == Black) {
-          if (lib == 1) {
-            dst(all * 3 + i) = '1'
+          else if (col == Black) {
+            if (lib == 1) {
+              dst(all * 3 + i) = '1'
+            }
+            else if (lib == 2) {
+              dst(all * 4 + i) = '1'
+            }
+            else if (lib >= 3) {
+              dst(all * 5 + i) = '1'
+            }
+            else {
+              println("something is wrong (liberty)")
+            }
           }
-          else if (lib == 2) {
-            dst(all * 4 + i) = '1'
-          }
-          else if (lib >= 3) {
-            dst(all * 5 + i) = '1'
-          }
-          else {
-//            in.printState(19, 19, None, None)
-//            in.printState(19, 19, None, Some(i))
-//            throw new RuntimeException("aaaaaaa " + lib)
-          }
-        }
 
-        else {
-          // do nothing (remain it zero
+          else {
+            // do nothing (remain it zero
+          }
+        } else {
+          if (col == Black) {
+            if (lib == 1) {
+              dst(i) = '1'
+            }
+            else if (lib == 2) {
+              dst(all + i) = '1'
+            }
+            else if (lib >= 3) {
+              dst(all * 2 + i) = '1'
+            }
+            else {
+              throw new RuntimeException("bbbbbb " + lib)
+            }
+          }
+
+          else if (col == White) {
+            if (lib == 1) {
+              dst(all * 3 + i) = '1'
+            }
+            else if (lib == 2) {
+              dst(all * 4 + i) = '1'
+            }
+            else if (lib >= 3) {
+              dst(all * 5 + i) = '1'
+            }
+            else {
+              throw new RuntimeException("aaaaaaa " + lib)
+            }
+          }
+
+          else {
+            // do nothing (remain it zero
+          }
         }
 
         i += 1
