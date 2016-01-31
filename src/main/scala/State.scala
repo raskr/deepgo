@@ -74,7 +74,7 @@ case class State(board: Array[Char],
   // 23ch
   def toChannels: Option[String] = ownRank map { rank =>
     new StringBuilder()
-      .append(prevMovesChannel)       // 2
+      .append(prevMovesChannel)       // 1
       .append(board.toBoardChannel)   // 3
       .append(board.toBorderChannel)  // 1
       .append(koPos.toKoChannel)      // 1

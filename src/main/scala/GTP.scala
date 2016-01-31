@@ -105,7 +105,7 @@ object GenMove extends Cmd {
     }
 
     else {
-      val cmd = s"python scripts/predict_move.py -b ${state.toChannels.get} -i ${state.invalidChannel.mkString} -c $color"
+      val cmd = s"python scripts/predict_move_multi.py -b ${state.toChannels.get} -i ${state.invalidChannel.mkString}"
       val pos = Utils.execCmd(cmd).init.toInt
       val (x, y) = pos.toCoordinate
 
