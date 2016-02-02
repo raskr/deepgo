@@ -24,18 +24,18 @@ base_path = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.normpath(os.path.join(base_path, '../deepgo.db'))
 
 # data provider
-data = Data(feat='plane',
-            opt='SGD',
+data = Data(feat='production',
+            opt='adam',
             use_gpu=use_gpu,
             db_path=db_path,
             b_size=256,
             layer_width=128,
-            n_ch=21,
+            n_ch=13,
             n_train_data=15600000,
-            n_test_data=300000,
-            n_y=3,
+            n_test_data=150000,
+            n_y=2,
             n_layer=8,
-            n_epoch=6)
+            n_epoch=8)
 
 
 # Prepare data set
@@ -114,7 +114,7 @@ def train():
         # training loop
         for i_mb in data.mb_indices(True):
             # print
-            if mb_count % 20 == 0:
+            if mb_count % 10 == 0:
                 print('epoch: {} mini batch: {} of {}'.format(epoch, mb_count, data.n_mb_train))
             mb_count += 1
 
@@ -137,7 +137,7 @@ def train():
         sum_accuracy = sum_accuracy_clip = sum_loss = mb_count = 0
         for i_mb in data.mb_indices(False):
             # print
-            if mb_count % 20 == 0: print('epoch{} test mini batch: {} of {}'.format(epoch, mb_count, data.n_mb_test))
+            if mb_count % 10 == 0: print('epoch{} test mini batch: {} of {}'.format(epoch, mb_count, data.n_mb_test))
             mb_count += 1
             x_batch, y_batch, invalid_batch = data(False, i_mb)
 

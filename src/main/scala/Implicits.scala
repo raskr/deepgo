@@ -44,7 +44,8 @@ object Implicits {
         (x.charAt(0).getNumericValue, x.charAt(1)) match {
           case (_, 'k') => false
           case (_, 'p') => true
-          case (_, 'd') => true
+          case (r, 'd') if r > 1 => true
+          case (r, 'd') => false
           case _ => throw new RuntimeException("should not happen")
         }
     }

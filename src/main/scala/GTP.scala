@@ -104,18 +104,8 @@ object GenMove extends Cmd {
     if (state.invalidChannel.forall(_ == '1')) {
       sendResponse("pass")
     } else {
-      val ch = state.toChannels(Config.ownColor).get
-      val invalid = state.invalidChannel.mkString
-
-      //////////////////////// error
-
-      writer.write(s"$ch, $invalid\n")
-      writer.flush()
-      process.waitFor()
-      val a = reader.readLine()
-      val pos = a.init.toInt
-
-      ////////////////////////
+      val cmd = s"python scripts/predict_move_multi.py -b ${state.toChannels.get} -i ${state.invalidChannel.mkString}"
+      val pos = Utils.execCmd(cmd).init.toInt
       val (x, y) = pos.toCoordinate
       val move = Move(if (color == "white") White else Black, x, y, isValid=true)
 
