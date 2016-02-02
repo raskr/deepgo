@@ -45,7 +45,8 @@ final class DB(val color: Char) extends OutputStorage {
   // statement.whatever() is "not" thread safe.
   // mutex is required.
   def commit(state: State, targets: Seq[Move]) = DB.lock.synchronized {
-    state.toChannels(targets.head.color).foreach { ch =>
+    state.toChannels.foreach { ch =>
+      ChannelTest(ch)
       DB.currentRowCount += 1
       statement.setString(1, ch)
       statement.setString(2, targets.map(_.pos).mkString(","))

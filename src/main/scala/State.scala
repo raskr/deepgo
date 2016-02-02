@@ -26,7 +26,7 @@ case class State(board: Array[Char],
       }.reduce(Array.concat(_, _)).mkString
     }
     else if (size > Config.numPrevMoves ){
-      prevMoves.take(Config.numPrevMoves).map { move =>
+      prevMoves.takeRight(Config.numPrevMoves).map { move =>
         val b = Utils.zeros(Config.all)
         if (move.isValid) b(move.pos) = '1'
         b
@@ -38,8 +38,7 @@ case class State(board: Array[Char],
         if (move.isValid) b(move.pos) = '1'
         b
       }.reduce(Array.concat(_, _))
-
-      Array.concat(dst, Utils.zeros((Config.numPrevMoves - size) * Config.all)).mkString
+      Array.concat(Utils.zeros((Config.numPrevMoves - size) * Config.all), dst).mkString
     }
   }
 
@@ -69,6 +68,20 @@ case class State(board: Array[Char],
       i += 1
     }
     dst.mkString
+  }
+
+  // 23ch
+  def toChannels: Option[String] = {
+    ownRank map { rank =>
+      new StringBuilder()
+        .append(prevMovesChannel)       // 2
+        .append(board.toBoardChannel)   // 3
+        .append(board.toBorderChannel)  // 1
+        .append(koPos.toKoChannel)      // 1
+        .append(board.toLibertyChannel) // 6
+        .append(hist.toHistoryChannel)  // 1
+        .toString()
+    }
   }
 
   // 23ch

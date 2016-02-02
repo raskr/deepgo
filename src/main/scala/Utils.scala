@@ -58,42 +58,6 @@ object Utils {
     while (iter1.hasNext) f(iter1.next(), iter2.next())
   }
 
-  def borderPositions(dia: Int) = {
-    val set = mutable.Set[Int]()
-
-    // first row
-    var i = 0
-    while (i < dia) {
-      set.add(i)
-      i += 1
-    }
-
-    // last row
-    val all = dia * dia
-    (all - dia until all) foreach { i => set.add(i) }
-
-
-    { // left side
-      var (i, n) = (dia, 1)
-      while (n <= dia-2) {
-        set.add(i)
-        i += dia
-        n += 1
-      }
-    }
-
-    { // right side
-      var (i, n) = (2*dia-1, 1)
-      while (n <= dia-2) {
-        set.add(i)
-        i += dia
-        n += 1
-      }
-    }
-
-    set
-  }
-
   def createRandomBoard: Array[Char] = {
     import Color._
     val rand = new Random

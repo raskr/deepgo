@@ -211,23 +211,128 @@ object Rules {
     ko21.rectify(from = Config.padDia, to = Config.dia)
   }
 
-  // Currently, not used.
-  // Has side effect. change the padded board in-place.
-  // Idx should be the padded pos
-  def fillEmptyNeighbor(idx: Int, fillColor: Char, paddedBoard: Array[Char]) = {
-    loop(idx)
-    def loop(i: Int): Unit = {
-      if (paddedBoard(i) == Empty) paddedBoard(i) = fillColor
-      Array(i+1, i-1, i+21, i-21).filter(paddedBoard(_) == Empty) foreach loop
+  // separated position version
+  // tested
+  def borderPositions1(dia: Int):
+  (mutable.Set[Int], mutable.Set[Int], mutable.Set[Int], mutable.Set[Int]) = {
+
+    val up = mutable.Set[Int]()
+    val down = mutable.Set[Int]()
+    val left = mutable.Set[Int]()
+    val right = mutable.Set[Int]()
+
+    // first row
+    var i = 0
+    while (i < dia) {
+      up.add(i)
+      i += 1
     }
+
+    // last row
+    val all = dia * dia
+    (all - dia until all) foreach { i => down.add(i) }
+
+
+    { // left side
+    var (i, n) = (0, 0)
+      while (n <= dia-1) {
+        left.add(i)
+        i += dia
+        n += 1
+      }
+    }
+
+    { // right side
+    var (i, n) = (dia-1, 0)
+      while (n <= dia-1) {
+        right.add(i)
+        i += dia
+        n += 1
+      }
+    }
+
+    (up, right, down, left)
+  }
+
+  def borderPositions(dia: Int): mutable.Set[Int] = {
+    val set = mutable.Set[Int]()
+
+    // first row
+    var i = 0
+    while (i < dia) {
+      set.add(i)
+      i += 1
+    }
+
+    // last row
+    val all = dia * dia
+    (all - dia until all) foreach { i => set.add(i) }
+
+
+    { // left side
+    var (i, n) = (dia, 1)
+      while (n <= dia-2) {
+        set.add(i)
+        i += dia
+        n += 1
+      }
+    }
+
+    { // right side
+    var (i, n) = (2*dia-1, 1)
+      while (n <= dia-2) {
+        set.add(i)
+        i += dia
+        n += 1
+      }
+    }
+
+    set
+  }
+
+  def fillEmptyNeighbor(idx: Int, fillColor: Char, paddedBoard: Array[Char]): Array[Char] = {
+
+    // flags stand for the whether a edge was touched or not
+    var (up, right, down, left) = (false, false, false, false)
+    val (ups, rights, downs, lefts) = borderPositions1(Config.dia + 2)
+    val editable =  paddedBoard.clone()
+
+    def touched = Array(up, right, down, left).count(_ == true)
+
+    loop(idx)
+
+    def loop(i: Int): Unit = {
+
+      // update
+      if (editable(i) == Empty) editable(i) = fillColor
+
+      val around = Array(i+1, i-1, i+21, i-21)
+      around.foreach{ x =>
+        // check which edge i is the located in
+        if      (ups.contains(x)) up = true
+        else if (rights.contains(x)) right = true
+        else if (downs.contains(x)) down = true
+        else if (lefts.contains(x)) left = true
+      }
+      if (touched < 3) around.filter{ editable(_) == Empty } foreach loop
+    }
+
+    if (touched >= 3) {
+      // I don't fill. return the original argument because
+      // modification was mistake.
+      paddedBoard.clone()
+    } else { // normal
+      editable
+    }
+
   }
 
   def isSuicideMove(move: Move, board: Array[Char]): Boolean = {
-    val padded = board.pad(Config.dia, Config.dia, 1, Outside)
     val movePos = (move.y+1)*21 + (move.x+1)
+    var padded = board.pad(Config.dia, Config.dia, 1, Outside)
 
     padded(movePos) = move.color
-//    fillEmptyNeighbor(movePos, move.color, padded)
+    padded = fillEmptyNeighbor(movePos, move.color, padded)
 
     val blo = mutable.Set[Int]()
     val lib = new MutableInt(0)

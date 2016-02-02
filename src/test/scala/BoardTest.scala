@@ -7,5 +7,5 @@ object BoardTest extends App {
 
   board.printState(19, 19, None, None)
 
-  board.toBoardChannel.toCharArray.printSelf(3, 361)
+  board.toBoardChannel(true).toCharArray.printSelf(3, 361)
 }

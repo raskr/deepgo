@@ -10,7 +10,7 @@ object LibertyTest extends App {
   liberties(board).printState(19, 19)
 
   // channel test
-  board.toLibertyChannel.toCharArray.printSelf(6, 361)
+  board.toLibertyChannel(true).toCharArray.printSelf(6, 361)
 
   def board =  Array(
     '.', '.', '.', 'O', 'O', 'O', 'X', 'O', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.',

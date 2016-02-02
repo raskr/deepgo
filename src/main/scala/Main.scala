@@ -20,7 +20,7 @@ object Main {
 
     (dir, color, mode, step, prevStep) match {
       case (Some(d), Some(c), Some(m), Some(s), Some(p)) if m._2 == "db" => // use sqlite3
-        parseSGF(d._2, colorsFrom(c._2).map(new DB(_)), s._2.head-'0', p._2.head-'0', None)
+        parseSGF(d._2, colorsFrom(c._2).map(new DB(_)), s._2.head-'0', p._2.head-'0', Some(1))
 
       case (Some(d), Some(c), Some(m), Some(s), Some(p)) if m._2 == "f" => // use text files
         parseSGF(d._2, colorsFrom(c._2).map(new Files(_)), s._2.head-'0', p._2.head-'0')
@@ -45,15 +45,14 @@ object Main {
       val parsed = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines.mkString)
       if (parsed.successful) processParseResult(parsed.get) foreach { pRes =>
         distributeTargetMoves(pRes, step) foreach { results => // res is `one` state and targets
-          for ((st, ts) <- results; out <- outs) out.commit(st, ts)
+          for ((st, ts) <- results; out <- outs)
+            if (ts.head.color == out.color) out.commit(st, ts)
         }
       }
     }
   } catch   {
     case e: fmtErr => println("ignore strange file")
-    case e: Exception =>
-      val ps = new PrintStream(new File("log"))
-      e.printStackTrace(ps)
+    case e: Exception => e.printStackTrace(new PrintStream(new File("log")))
   } finally { outs foreach (_.close()) }
 
 

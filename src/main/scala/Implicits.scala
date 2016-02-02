@@ -44,8 +44,7 @@ object Implicits {
         (x.charAt(0).getNumericValue, x.charAt(1)) match {
           case (_, 'k') => false
           case (_, 'p') => true
-          case (r, 'd') if r > 1 => true
-          case (r, 'd') => false
+          case (_, 'd') => true
           case _ => throw new RuntimeException("should not happen")
         }
     }
@@ -156,6 +155,19 @@ object Implicits {
     def findKoBy(move: Move, newBoard: Array[Char]): Int =
       Rules.findKo(move, in, newBoard)
 
+    def toBoardChannel: String = {
+      val dst = Utils.zeros(Config.all * 3)
+      var i = 0
+      while (i < Config.all) {
+        val color = in(i)
+        if      (color == Empty) dst(i) = '1'
+        else if (color == White) dst(Config.all + i) = '1'
+        else if (color == Black) dst(Config.all * 2 + i) = '1'
+        i += 1
+      }
+      dst.mkString
+    }
+
     /**
       * @param forme whether i am white or not
       * @return
@@ -197,6 +209,55 @@ object Implicits {
       dst.mkString
     }
 
+    // 6ch
+    def toLibertyChannel = {
+      val liberties = Rules.liberties(in)
+      val dst = Array.fill(Config.all * 6)('0')
+
+      var i = 0
+      while (i < Config.all) {
+        val lib = liberties(i)
+        val col = in(i)
+        val all = Config.all
+
+        if (col == White) {
+          if (lib == 1) {
+            dst(i) = '1'
+          }
+          else if (lib == 2) {
+            dst(all + i) = '1'
+          }
+          else if (lib >= 3) {
+            dst(all * 2 + i) = '1'
+          }
+          else {
+            println("something is wrong (liberty)")
+          }
+        }
+
+        else if (col == Black) {
+          if (lib == 1) {
+            dst(all * 3 + i) = '1'
+          }
+          else if (lib == 2) {
+            dst(all * 4 + i) = '1'
+          }
+          else if (lib >= 3) {
+            dst(all * 5 + i) = '1'
+          }
+          else {
+            println("something is wrong (liberty)")
+          }
+        }
+
+        else {
+          // do nothing (remain it zero
+        }
+
+        i += 1
+      }
+      dst.mkString
+    }
     // 6ch
     def toLibertyChannel(forme: Boolean) = {
       val liberties = Rules.liberties(in)
@@ -287,7 +348,7 @@ object Implicits {
     // tested
     def toBorderChannel = {
       val borderState = Utils.zeros(Config.all)
-      Utils.borderPositions(Config.dia) foreach { i =>
+      Rules.borderPositions(Config.dia) foreach { i =>
         val a = in(i)
         if (a != Empty) borderState(i) = '1'
       }

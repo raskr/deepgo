@@ -3,8 +3,9 @@ object FillEmptyTest extends App {
   import Implicits._
 
   val padded = Utils.pad(board, 19, 19, 1, Color.Outside)
-  Rules.fillEmptyNeighbor(22, Color.White, padded)
-  padded.clip(21, 21, 1).printState(19, 19, None, None)
+
+  val dst = Rules.fillEmptyNeighbor(27, Color.White, padded)
+  dst.printState(21, 21, None, None)
 
   def board = Array(
     '.', '.', 'X', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.',

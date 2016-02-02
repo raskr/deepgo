@@ -237,7 +237,7 @@ object GameState {
 
   // initiative is black
   def reset() = {
-    statesclear()
+    states.clear()
     moves.clear()
 
     moves.append(Move(Config.opponentColor,'?','?', isValid=false))

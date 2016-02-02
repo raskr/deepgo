@@ -1,11 +1,14 @@
-// ok
-object BorderTest extends App {
+object Border1Test extends App {
 
   import Implicits._
 
-  val dia = 19
+  val dia = 21
   val a = Array.fill(dia*dia)(0)
-  Rules.borderPositions(dia).foreach{ a(_) = 1 }
+  val (c, d, e, f) = Rules.borderPositions1(dia)
+  c.foreach{ a(_) = 1 }
+//  d.foreach{ a(_) = 1 }
+//  e.foreach{ a(_) = 1 }
+//  f.foreach{ a(_) = 1 }
   a.printState(dia, dia)
 
   // channel
