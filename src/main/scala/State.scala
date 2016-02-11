@@ -2,11 +2,6 @@ import Color._
 import Implicits._
 import Config._
 
-/**
- * @param board current board
- * @param koPos position next player can't play
- * @param prevMoves
- */
 case class State(board: Array[Char],
                  hist: Array[Int] = Array.fill(all)(0),
                  koPos: Int = -1,
@@ -74,10 +69,8 @@ case class State(board: Array[Char],
   def toChannels: Option[String] = {
     ownRank map { rank =>
       new StringBuilder()
-        .append(prevMovesChannel)       // 2
         .append(board.toBoardChannel)   // 3
         .append(board.toBorderChannel)  // 1
-        .append(koPos.toKoChannel)      // 1
         .append(board.toLibertyChannel) // 6
         .append(hist.toHistoryChannel)  // 1
         .toString()
@@ -89,12 +82,11 @@ case class State(board: Array[Char],
     val r = if (color == White) rankW else if (color == Black) rankB else None
     r map { rank =>
       new StringBuilder()
-        .append(prevMovesChannel)       // 2
-        .append(board.toBoardChannel(forme = color == Config.ownColor))   // 3
-        .append(board.toBorderChannel)  // 1
-        .append(koPos.toKoChannel)      // 1
-        .append(board.toLibertyChannel(forme = color == Config.ownColor)) // 6
-        .append(hist.toHistoryChannel)  // 1
+        .append(board.toBoardChannel(flip = color == Config.opponentColor))
+        .append(board.toBorderChannel)
+        .append(koPos.toKoChannel)
+        .append(board.toLibertyChannel(flip = color == Config.opponentColor))
+        .append(hist.toHistoryChannel)
         .toString()
     }
   }

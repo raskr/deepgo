@@ -45,8 +45,7 @@ object Main {
       val parsed = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines.mkString)
       if (parsed.successful) processParseResult(parsed.get) foreach { pRes =>
         distributeTargetMoves(pRes, step) foreach { results => // res is `one` state and targets
-          for ((st, ts) <- results; out <- outs)
-            if (ts.head.color == out.color) out.commit(st, ts)
+          for ((st, ts) <- results; out <- outs) if (ts.head.color == out.color) out.commit(st, ts)
         }
       }
     }

@@ -170,17 +170,21 @@ object Rules {
     dst
   }
 
+  // group size = a.k.a. `Ren`
   def groupSizes(in: Array[Char]): Array[Int] = {
     val padded = in.pad(Config.dia, Config.dia, 1, Outside)
     val dst = Array.fill(Config.padAll)(-1)
 
-    (0 until Config.padAll) foreach { idx =>
+    var idx = 0
+    val all = Config.padAll
+    while (idx < all) {
       if (padded(idx).isStone) {
         val group = mutable.Set[Int]()
         loop(idx, padded(idx), mutable.Set[Int](), group)
         val groupSize = group.size
         group foreach { x => dst(x) = groupSize }
       }
+      idx += 1
     }
 
     // recursive func
@@ -302,10 +306,8 @@ object Rules {
     loop(idx)
 
     def loop(i: Int): Unit = {
-
       // update
       if (editable(i) == Empty) editable(i) = fillColor
-
       val around = Array(i+1, i-1, i+21, i-21)
       around.foreach{ x =>
         // check which edge i is the located in
@@ -354,9 +356,9 @@ object Rules {
       }
     }
     lib.value == 0 && {
-      val a = board.clone()
-      a(move.pos) = move.color
-      positionsCapturedBy(move, a).isEmpty
+      val b = board.clone()
+      b(move.pos) = move.color
+      positionsCapturedBy(move, b).isEmpty
     }
   }
 

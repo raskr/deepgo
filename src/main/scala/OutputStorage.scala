@@ -25,7 +25,6 @@ object DB {
 }
 
 final class DB(val color: Char) extends OutputStorage {
-
   DB.conn.setAutoCommit(false)
   DB.conn.prepareStatement("DROP TABLE IF EXISTS " + color).execute()
   DB.conn.prepareStatement(s"create table $color (" +
@@ -45,8 +44,7 @@ final class DB(val color: Char) extends OutputStorage {
   // statement.whatever() is "not" thread safe.
   // mutex is required.
   def commit(state: State, targets: Seq[Move]) = DB.lock.synchronized {
-    state.toChannels.foreach { ch =>
-      ChannelTest(ch)
+    state.toChannels(color=targets.head.color).foreach { ch =>
       DB.currentRowCount += 1
       statement.setString(1, ch)
       statement.setString(2, targets.map(_.pos).mkString(","))

@@ -28,26 +28,21 @@ data = Data(feat='production',
             opt='adam',
             use_gpu=use_gpu,
             db_path=db_path,
-            b_size=256,
+            b_size=2,
             layer_width=128,
-            n_ch=13,
-            n_train_data=15600000,
-            n_test_data=150000,
-            n_y=2,
+            n_ch=3,
+            n_train_data=50,
+            n_test_data=15,
+            n_y=1,
             n_layer=8,
             n_epoch=8)
 
 
 # Prepare data set
 model = chainer.FunctionSet(
-    conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=64, ksize=5, pad=2),
-    conv2=F.Convolution2D(in_channels=64, out_channels=128, ksize=5, pad=2),
-    conv3=F.Convolution2D(in_channels=128, out_channels=128, ksize=5, pad=2),
-    conv4=F.Convolution2D(in_channels=128, out_channels=128, ksize=5, pad=2),
-    conv5=F.Convolution2D(in_channels=128, out_channels=128, ksize=5, pad=2),
-    conv6=F.Convolution2D(in_channels=128, out_channels=128, ksize=3, pad=1),
-    conv7=F.Convolution2D(in_channels=128, out_channels=128, ksize=3, pad=1),
-    conv8=F.Convolution2D(in_channels=128, out_channels=data.n_y, ksize=3, pad=1),
+    conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=20, ksize=5, pad=2),
+    conv2=F.Convolution2D(in_channels=20, out_channels=20, ksize=5, pad=2),
+    conv3=F.Convolution2D(in_channels=20, out_channels=data.n_y, ksize=3, pad=1),
 )
 
 
@@ -67,12 +62,12 @@ with open(res_filename, 'w+') as f:
 def forward_conv(x):
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
-    h = F.relu(model.conv3(h))
-    h = F.relu(model.conv4(h))
-    h = F.relu(model.conv5(h))
-    h = F.relu(model.conv6(h))
-    h = F.relu(model.conv7(h))
-    return F.relu(model.conv8(h))
+    # h = F.relu(model.conv3(h))
+    # h = F.relu(model.conv4(h))
+    # h = F.relu(model.conv5(h))
+    # h = F.relu(model.conv6(h))
+    # h = F.relu(model.conv7(h))
+    return F.relu(model.conv3(h))
 
 
 def forward_test(x_batch, y_batch, invalid_batch):

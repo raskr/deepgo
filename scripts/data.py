@@ -91,10 +91,11 @@ def split_ys(string, head):
 # his
 def str2floats(string):
     # print(len(string)/361)
-    others = [1.0 if x == '1' else 0.0 for x in string[:-361]]
-    his = [exp(-0.1 * int(c)) for c in string[-361:]]
-    his.extend(others)
-    return his
+    # others = [1.0 if x == '1' else 0.0 for x in string[:-361]]
+    others = [1.0 if x == '1' else 0.0 for x in string[:361*3]]
+    # his = [exp(-0.1 * int(c)) for c in string[-361:]]
+    # his.extend(others)
+    return others
 
 
 def str2floats_simple(string):

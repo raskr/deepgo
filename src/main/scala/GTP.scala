@@ -11,7 +11,6 @@ sealed abstract class Cmd {
   def apply(args: Array[String])
 }
 
-
 // ====================================================================
 //
 //  Implementations of Gtp Commands subset
@@ -34,8 +33,6 @@ object Play extends Cmd {
   // ex) args = [black, B13]
   def apply(args: Array[String]) = {
     GameState.whoToPlayNext = Config.ownColor
-    new File("action.txt").append("Play of opponent")
-    new File("oppo.txt").append(args.mkString + "\n")
     val color = if (args.head == "white") White else Black
 
     if (args(1) startsWith "pass") {
@@ -93,7 +90,9 @@ object GenMove extends Cmd {
   def apply(args: Array[String]) = {
 
     if (GameState.whoToPlayNext != Config.ownColor) { // opponent passed and then this method called
-      GameState updateBy Move(Config.opponentColor, -1, -1, isValid=true, pass=true)
+      val lastMv = GameState.lastMove
+      val (x, y) = (lastMv.x, lastMv.y)
+      GameState updateBy Move(Config.opponentColor, x, y, isValid=false, pass=true)
     } else { // usual
       GameState.whoToPlayNext = Config.opponentColor
     }
@@ -230,8 +229,7 @@ object GameState {
     states.clear()
     moves.clear()
 
-    moves.append(Move(Config.opponentColor,'?','?', isValid=false))
-
+    moves.append(Move(Color.White,'?','?', isValid=false))
     states.append(State(
       board = Rules.genInitialBoard(None), // no handicap
       rankW=Some(Config.ownRank),
@@ -245,7 +243,6 @@ object GTP_CmdHandler {
 
   import scala.io.StdIn.readLine
 
-
   //"python scripts/predict_move.py".run(pio)
   def listenAndServe(): Unit = {
 
@@ -253,7 +250,6 @@ object GTP_CmdHandler {
 
     // recursive func
     def loop() {
-
 
       var line = readLine()
       // read GTP command

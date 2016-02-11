@@ -1,7 +1,7 @@
 import scala.util.Random
 
 // ok maybe ...
-object LifespanTest extends App {
+object HistoryTest extends App {
 
   import Implicits._
 
