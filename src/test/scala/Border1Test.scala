@@ -4,7 +4,7 @@ object Border1Test extends App {
 
   val dia = 21
   val a = Array.fill(dia*dia)(0)
-  val (c, d, e, f) = Rules.borderPositions1(dia)
+  val (c, d, e, f) = Rules.borderPositionsSeparated(dia)
   c.foreach{ a(_) = 1 }
 //  d.foreach{ a(_) = 1 }
 //  e.foreach{ a(_) = 1 }

@@ -100,10 +100,10 @@ object GenMove extends Cmd {
     val color = args.head
     val state = GameState.lastState
 
-    if (state.invalidChannel.forall(_ == '1')) {
+    if (state.illegalPositionsChannel.forall(_ == '1')) {
       sendResponse("pass")
     } else {
-      val cmd = s"python scripts/predict_move_multi.py -b ${state.toChannels.get} -i ${state.invalidChannel.mkString}"
+      val cmd = s"python scripts/predict_move_multi.py -b ${state.toChannels(Config.ownColor).get} -i ${state.illegalPositionsChannel.mkString}"
       val pos = Utils.execCmd(cmd).init.toInt
       val (x, y) = pos.toCoordinate
       val move = Move(if (color == "white") White else Black, x, y, isValid=true)
@@ -214,9 +214,8 @@ object GameState {
   val moves = ArrayBuffer[Move]()
 
   def updateBy(move: Move) = {
-    new File("log.txt").write("update by " + move.toString)
     moves append move
-    states append lastState.nextStateBy(moves.toArray)
+    states append lastState.nextStateBy(move)
   }
 
   var whoToPlayNext = Black
@@ -232,9 +231,10 @@ object GameState {
     moves.append(Move(Color.White,'?','?', isValid=false))
     states.append(State(
       board = Rules.genInitialBoard(None), // no handicap
+      ansColor = Black,
       rankW=Some(Config.ownRank),
-      rankB=Some(Config.opponentRank),
-      prevMoves=moves.toArray))
+      rankB=Some(Config.opponentRank)
+    ))
   }
 }
 

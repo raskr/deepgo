@@ -216,8 +216,7 @@ object Rules {
   }
 
   // separated position version
-  // tested
-  def borderPositions1(dia: Int):
+  def borderPositionsSeparated(dia: Int):
   (mutable.Set[Int], mutable.Set[Int], mutable.Set[Int], mutable.Set[Int]) = {
 
     val up = mutable.Set[Int]()
@@ -294,13 +293,17 @@ object Rules {
     set
   }
 
+  // When we put a stone on place which is legal, that position may be belonging to opponent territory.
+  // If so, we wanna avoid that because that move is useless.
+  // We inspect that by filling around the move with ally stones and check whether those stones is dead or not.
+  // This function is helper for that task.
   def fillEmptyNeighbor(idx: Int, fillColor: Char, paddedBoard: Array[Char]): Array[Char] = {
-
-    // flags stand for the whether a edge was touched or not
+    // flags stand for whether a escape path touched the ``edge`` or not
     var (up, right, down, left) = (false, false, false, false)
-    val (ups, rights, downs, lefts) = borderPositions1(Config.dia + 2)
+    val (ups, rights, downs, lefts) = borderPositionsSeparated(Config.dia + 2)
     val editable =  paddedBoard.clone()
 
+    // This must be ``function``. Not val or var
     def touched = Array(up, right, down, left).count(_ == true)
 
     loop(idx)
@@ -310,16 +313,16 @@ object Rules {
       if (editable(i) == Empty) editable(i) = fillColor
       val around = Array(i+1, i-1, i+21, i-21)
       around.foreach{ x =>
-        // check which edge i is the located in
-        if      (ups.contains(x)) up = true
+        // check which edge i is the located in the set
+        if      (ups.contains(x))    up = true
         else if (rights.contains(x)) right = true
-        else if (downs.contains(x)) down = true
-        else if (lefts.contains(x)) left = true
+        else if (downs.contains(x))  down = true
+        else if (lefts.contains(x))  left = true
       }
       if (touched < 3) around.filter{ editable(_) == Empty } foreach loop
     }
 
-    if (touched >= 3) {
+    if (touched >= 3) { // not die
       // I don't fill. return the original argument because
       // modification was mistake.
       paddedBoard.clone()

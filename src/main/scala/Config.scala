@@ -1,6 +1,7 @@
 object Config {
   import Color._
 
+  var DEBUG = false
 
   // ----------------------------------------
   // -------------- sgf parser --------------

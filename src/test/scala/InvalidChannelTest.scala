@@ -44,7 +44,7 @@ object InvalidChannelTest extends App {
   )
 
   board.printState(19, 19, None, None)
-  val s = State(board, rankB = None, rankW = None, prevMoves = Array(Move(Color.Black, 1, 1, true)))
+  val s = State(board, rankB = None, rankW = None, ansColor = Color.White)
 
-  s.invalidChannel.printState(19, 19, None, None)
+  s.illegalPositionsChannel.printState(19, 19, None, None)
 }

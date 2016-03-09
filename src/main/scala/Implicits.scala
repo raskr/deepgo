@@ -388,8 +388,7 @@ object Implicits {
     }
 
     // tested
-    // (x, y)
-    // top-left is 0. pos is based on this
+    // top-left is zero.
     def toCoordinate: (Int, Int) = {
       val y = value / Config.dia
       val x = value - (Config.dia * y)

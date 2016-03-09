@@ -149,6 +149,10 @@ def train():
         # optimizer.lr /= 1.5
         save_net('white_{}ep_{}'.format(epoch, data.printable()))
 
+    a = (x for x in [1, 2, 3])
+    import nltk
+    nltk.Text(a)
+
     with open(res_filename, 'a+') as f:
         f.write('It took total... {}\n\n'.format(datetime.now() - start_time))
 

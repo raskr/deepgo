@@ -35,6 +35,7 @@ data = Data(feat='plain_test',
             n_layer=3,
             n_epoch=2)
 
+F.embed_id
 # Prepare data set
 model = chainer.FunctionSet(
     conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=16, ksize=5, pad=2),
