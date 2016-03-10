@@ -11,27 +11,19 @@ query_test = "SELECT state, target, invalid FROM O WHERE _id BETWEEN {} AND {} O
 class Data:
 
     def printable(self):
-        return '{}_{}ep_{}train_{}test_{}pred_{}layer_{}width_{}'.format(self.feat,
-                                                                         self.n_epoch,
+        return '{}_{}ep_{}train_{}test_{}pred_{}layer_{}width_{}'.format(self.n_epoch,
                                                                          self.n_train_data,
                                                                          self.n_test_data,
-                                                                         self.n_y,
-                                                                         self.n_layer,
-                                                                         self.layer_width,
-                                                                         self.opt)
+                                                                         self.n_y)
 
-    def __init__(self, layer_width, feat, use_gpu, n_epoch, n_ch, b_size, n_train_data, n_test_data, n_layer, n_y, db_path, opt):
+    def __init__(self, use_gpu, n_epoch, n_ch, b_size, n_train_data, n_test_data, n_y, db_path):
         self.db_path = db_path
-        self.feat = feat
-        self.layer_width = layer_width
         self.use_gpu = use_gpu
         self.xp = cuda.cupy if use_gpu else np
 
         self.n_epoch = n_epoch
         self.n_ch = n_ch
-        self.opt = opt
         self.n_y = n_y
-        self.n_layer = n_layer
         self.n_train_data = n_train_data
         self.n_test_data = n_test_data
         self.b_size = b_size
@@ -45,29 +37,19 @@ class Data:
         conn = db.connect(db_path)
         self.cur = conn.cursor()
 
-    def __call__(self, train, i):
+    # Create mini-batch.
+    # `i` is a mini-batch index which should be chosen randomly.
+    def __call__(self, i):
         xs = self.xp.asarray([], dtype=self.xp.float32)
         ys = self.xp.asarray([], dtype=self.xp.int32)
 
-        if train:
-            self.cur.execute(query.format(self.b_size*i+1, self.b_size*i + self.b_size))
-            for row in self.cur.fetchall():
-                xs = self.xp.concatenate((xs, self.xp.asarray(str2floats(row[0]), self.xp.float32)))
-                ys = self.xp.concatenate((ys, self.xp.asarray(split_ys(row[1], self.n_y == 1), self.xp.int32)))
+        self.cur.execute(query.format(self.b_size*i+1, self.b_size*i + self.b_size))
+        for row in self.cur.fetchall():
+            xs = self.xp.concatenate((xs, self.xp.asarray(str2floats(row[0]), self.xp.float32)))
+            ys = self.xp.concatenate((ys, self.xp.asarray(split_ys(row[1], self.n_y == 1), self.xp.int32)))
 
-            ret_y = ys if self.n_y == 1 else ys.reshape(self.b_size, self.n_y)
-            return xs.reshape(self.b_size, self.n_ch, 19, 19), ret_y
-        else:
-            invalids = self.xp.asarray([], dtype=self.xp.float32)
-            self.cur.execute(query_test.format(self.b_size*i+1, self.b_size*i + self.b_size))
-            for row in self.cur.fetchall():
-                xs = self.xp.concatenate((xs, self.xp.asarray(str2floats(row[0]), self.xp.float32)))
-                ys = self.xp.concatenate((ys, self.xp.asarray(split_ys(row[1], self.n_y == 1), self.xp.int32)))
-                invalids = self.xp.concatenate((invalids, self.xp.asarray(str2floats_simple(row[2]), self.xp.float32)))
-
-            ret_y = ys if self.n_y == 1 else ys.reshape(self.b_size, self.n_y)
-            return xs.reshape(self.b_size, self.n_ch, 19, 19), ret_y,\
-                   invalids.reshape(self.b_size, 361)
+        ret_y = ys if self.n_y == 1 else ys.reshape(self.b_size, self.n_y)
+        return xs.reshape(self.b_size, self.n_ch, 19, 19), ret_y
 
     def mb_indices(self, train):
         if train:
@@ -83,18 +65,12 @@ def split_ys(string, head):
     return ret[0:1] if head else ret
 
 
-# prev
-# board
-# border
-# ko
-# lib
-# his
+# 10ch (= E/W/B 3ch + liberty 6ch + history 1ch)
 def str2floats(string):
     # print(len(string)/361)
-    # others = [1.0 if x == '1' else 0.0 for x in string[:-361]]
-    others = [1.0 if x == '1' else 0.0 for x in string[:361*3]]
-    # his = [exp(-0.1 * int(c)) for c in string[-361:]]
-    # his.extend(others)
+    others = [1.0 if x == '1' else 0.0 for x in string[:361*9]]
+    his = [exp(-0.1 * int(c)) for c in string[-361:]]
+    others.extend(his)
     return others
 
 

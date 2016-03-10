@@ -22,6 +22,9 @@ case class State(board: Array[Char],
     dst
   }
 
+  /**
+    * @param color color of current player
+    */
   def toChannels(color: Char): Option[String] = {
     val r = if (color == White) rankW else if (color == Black) rankB else None
     r map { rank =>

@@ -1,14 +1,16 @@
 import argparse
-from chainer import computational_graph as cg
-from datetime import datetime
-import os
 
+from chainer import computational_graph
+import os
+from datetime import datetime
+
+from modified_functions.softmax_cross_entropy_parallel import softmax_cross_entropy_multi
 import six
 import chainer.functions as F
 import chainer
 from chainer import cuda, optimizers
 
-from data import Data
+from data import Data as Data
 
 parser = argparse.ArgumentParser(description='train Go')
 parser.add_argument('--gpu', '-g', default=-1, type=int, help='GPU ID (negative value indicates CPU)')
@@ -18,30 +20,30 @@ use_gpu = args.gpu >= 0
 if use_gpu:
     cuda.check_cuda_available()
 
-here = os.path.dirname(os.path.abspath(__file__))
-db_path = os.path.normpath(os.path.join(here, '../deepgo.db'))
+base_path = os.path.dirname(os.path.abspath(__file__))
+db_path = os.path.normpath(os.path.join(base_path, '../deepgo.db'))
 
 # data provider
-data = Data(feat='plain_test',
-            opt='SGD',
-            use_gpu=use_gpu,
+data = Data(use_gpu=use_gpu,
             db_path=db_path,
-            b_size=256,
-            layer_width=128,
-            n_ch=25,
-            n_train_data=15600000,
-            n_test_data=100000,
-            n_y=1,
-            n_layer=3,
-            n_epoch=2)
+            b_size=128,
+            n_ch=3,
+            n_train_data=15000000,
+            n_test_data=50000,
+            n_y=3,
+            n_epoch=8)
 
-F.embed_id
-# Prepare data set
+
+# 128 width, 8 layer
 model = chainer.FunctionSet(
-    conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=16, ksize=5, pad=2),
-    conv2=F.Convolution2D(in_channels=16, out_channels=16, ksize=5, pad=2),
-    conv3=F.Convolution2D(in_channels=16, out_channels=1, ksize=5, pad=2),
-    l=F.Linear(361, 361)
+    conv1=F.Convolution2D(in_channels=data.n_ch, out_channels=128, ksize=5, pad=2),
+    conv2=F.Convolution2D(in_channels=128, out_channels=128, ksize=5, pad=2),
+    conv3=F.Convolution2D(in_channels=128, out_channels=128, ksize=5, pad=2),
+    conv4=F.Convolution2D(in_channels=128, out_channels=128, ksize=5, pad=2),
+    conv5=F.Convolution2D(in_channels=128, out_channels=128, ksize=5, pad=2),
+    conv6=F.Convolution2D(in_channels=128, out_channels=128, ksize=3, pad=1),
+    conv7=F.Convolution2D(in_channels=128, out_channels=128, ksize=3, pad=1),
+    conv8=F.Convolution2D(in_channels=128, out_channels=data.n_y, ksize=3, pad=1),
 )
 
 
@@ -49,81 +51,93 @@ if use_gpu:
     cuda.get_device(args.gpu).use()
     model.to_gpu()
 
+
 start_time = datetime.now()
 start_time_str = start_time.strftime('%Y-%m-%d_%H:%M:%S')
 
-res_filename = '{}_{}.txt'.format(data.printable(), start_time_str)
+res_filename = '{}_{}.txt'.format(data.printable(), start_time_str )
 with open(res_filename, 'w+') as f:
-    f.write('************* {}\n'.format(data.printable()))
+    f.write('********** {}\n'.format(data.printable()))
 
 
 def forward_conv(x):
     h = F.relu(model.conv1(x))
     h = F.relu(model.conv2(h))
-    return F.relu(model.conv3(h))
+    h = F.relu(model.conv3(h))
+    h = F.relu(model.conv4(h))
+    h = F.relu(model.conv5(h))
+    h = F.relu(model.conv6(h))
+    h = F.relu(model.conv7(h))
+    return F.relu(model.conv8(h))
 
 
 def forward(x_batch, y_batch):
     x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
-    y = model.l(forward_conv(x))
-    return F.softmax_cross_entropy(y, t), F.accuracy(y, t)
+    y = forward_conv(x)
+    y_reduced_arr = pick_first_channel_y(y.data)
+    return softmax_cross_entropy_multi(y, t),\
+           F.accuracy(chainer.Variable(y_reduced_arr), chainer.Variable(pick_first_channel_test(y_batch)))
 
 
-def forward_test(x_batch, y_batch, invalid_batch):
-    x, t = chainer.Variable(x_batch), chainer.Variable(y_batch)
-    y = y_clip = model.l(forward_conv(x))
-    y_clip = F.softmax(y_clip, use_cudnn=False)
-    y_clip = chainer.Variable(y_clip.data - invalid_batch)
-    return F.softmax_cross_entropy(y, t), F.accuracy(y, t), F.accuracy(y_clip, t)
+# Precisely, not 'channel'
+def pick_first_channel_test(array):
+    return data.xp.hsplit(array, data.n_y)[0].squeeze()
+
+
+def pick_first_channel_y(array):
+    reshaped = array.reshape(data.b_size, data.n_y, 361)
+    return data.xp.hsplit(reshaped, data.n_y)[0].squeeze()
 
 
 def train():
-    optimizer = optimizers.SGD(lr=0.1)
+    optimizer = optimizers.Adam()
     optimizer.setup(model)
     for epoch in six.moves.range(1, data.n_epoch + 1):
         sum_accuracy = sum_loss = mb_count = 0
+
+        # training loop
         for i_mb in data.mb_indices(True):
             # print
-            if mb_count % 20 == 0: print('epoch: {} mini batch: {} of {}'.format(epoch, mb_count, data.n_mb_train))
+            if mb_count % 10 == 0:
+                print('epoch: {} mini batch: {} of {}'.format(epoch, mb_count, data.n_mb_train))
             mb_count += 1
 
             # actual task
             x_batch, y_batch = data(True, i_mb)
             optimizer.zero_grads()
             loss, acc = forward(x_batch, y_batch)
+
             loss.backward()
             optimizer.update()
-
             sum_loss += float(loss.data) * len(y_batch)
             sum_accuracy += float(acc.data) * len(y_batch)
 
             # write result
-        res = 'train epoch {} train loss={}, acc={}\n'.format(epoch, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data)
+        res = ('train epoch {} train loss={}, acc={}\n' .format(epoch, sum_loss / data.n_train_data, sum_accuracy / data.n_train_data))
         print(res)
         with open(res_filename, 'a+') as f: f.write(res)
 
-        # evaluation (test)
+        # test loop
         sum_accuracy = sum_accuracy_clip = sum_loss = mb_count = 0
         for i_mb in data.mb_indices(False):
-            print('test mini batch: {} of {}'.format(mb_count, data.n_mb_test))
+            # print
+            if mb_count % 10 == 0:
+                print('epoch{} test mini batch: {} of {}'.format(epoch, mb_count, data.n_mb_test))
             mb_count += 1
-            x_batch, y_batch, invalid_batch = data(False, i_mb)
+            x_batch, y_batch = data(i_mb)
 
-            loss, acc, acc_clip = forward_test(x_batch, y_batch, invalid_batch)
-
+            # actual task
+            loss, acc, acc_clip = forward(x_batch, y_batch)
             sum_loss += float(loss.data) * len(y_batch)
             sum_accuracy += float(acc.data) * len(y_batch)
             sum_accuracy_clip += float(acc_clip.data) * len(y_batch)
 
-        res = 'test epoch={} loss={}, acc={}, acc_clip={}\n'.format(epoch,
-                                                                    sum_loss / data.n_test_data,
-                                                                    sum_accuracy / data.n_test_data,
-                                                                    sum_accuracy_clip / data.n_test_data)
+        # write result
+        res = 'test epoch={} loss={}, acc={}, acc_clip={}\n'.format(epoch, sum_loss / data.n_test_data, sum_accuracy / data.n_test_data, sum_accuracy_clip / data.n_test_data)
         print(res)
         with open(res_filename, 'a+') as f: f.write(res)
-        optimizer.lr /= 1.5
+        save_net('white_{}ep_{}'.format(epoch, data.printable()))
 
-        save_net('white_{}'.format(data.printable()))
     with open(res_filename, 'a+') as f:
         f.write('It took total... {}\n\n'.format(datetime.now() - start_time))
 

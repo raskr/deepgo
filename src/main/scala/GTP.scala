@@ -53,6 +53,8 @@ sealed abstract class Cmd {
 //
 //  Implementations of Gtp Commands subset
 //
+//  I could'nt implement scorering so modified twogtp.py.
+//
 // ====================================================================
 
 
@@ -136,7 +138,7 @@ object GenMove extends Cmd {
     if (state.illegalPositionsChannel.forall(_ == '1')) {
       sendResponse("pass")
     } else {
-      val cmd = s"python scripts/predict_move_multi.py -b ${state.toChannels(Config.ownColor).get} -i ${state.illegalPositionsChannel.mkString}"
+      val cmd = s"python scripts/predict_move.py -b ${state.toChannels(Config.ownColor).get} -i ${state.illegalPositionsChannel.mkString}"
       val pos = UtilMethods.execCmd(cmd).init.toInt
       val (x, y) = pos.toCoordinate
       val move = Move(if (color == "white") White else Black, x, y, isValid=true)
