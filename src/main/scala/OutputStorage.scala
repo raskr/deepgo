@@ -2,7 +2,17 @@ import java.io.{FileWriter, BufferedWriter, File}
 import java.sql.DriverManager
 import scala.collection.mutable.ArrayBuffer
 
+/**
+  * This represents OutputStorage where feature maps locate. python deep learning codes
+  * use this output storage later.
+  * for example, if we use sql database,
+  *
+  * column0... _id => usual primary key for good performance
+  * column1... state => current feature map
+  * column2... target => answer position that expert actually played
+  */
 sealed abstract class OutputStorage {
+  // if color is `w`, feature maps for white player will saved in this output storage.
   val color: Char
   def commit(state: State, targets: Seq[Move])
   def close()
@@ -26,14 +36,12 @@ object DB {
 final class DB(val color: Char) extends OutputStorage {
   DB.conn.setAutoCommit(false)
   DB.conn.prepareStatement("DROP TABLE IF EXISTS " + color).execute()
-  DB.conn.prepareStatement(s"create table $color (" +
-    "_id Integer PRIMARY KEY AUTOINCREMENT," +
-    "state TEXT," +
-    "target Integer,").execute()
+  DB.conn.prepareStatement(
+    s"create table $color (_id Integer PRIMARY KEY AUTOINCREMENT, state TEXT, target Integer)").execute()
 
   println("created new table: " + color)
 
-  private [this] val statement = DB.conn.prepareStatement(s"INSERT into $color (state, target) values (?, ?, ?)")
+  private [this] val statement = DB.conn.prepareStatement(s"INSERT into $color (state, target) values (?, ?)")
   var currentRowCount = 0
 
   // You don't have to call statement#close and res#close as long as

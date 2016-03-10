@@ -1,16 +1,16 @@
-import java.io.{File, PrintStream}
-import Color._
-import java.nio.charset.{MalformedInputException => fmtErr}
-import SGF._
-import scala.collection.mutable.ArrayBuffer
-import scala.io.Source
-import Implicits._
-
 object TopLevelTask {
+  import java.io.{File, PrintStream}
+  import Color._
+  import java.nio.charset.{MalformedInputException => fmtErr}
+  import SGF._
+  import scala.collection.mutable.ArrayBuffer
+  import scala.io.Source
+  import Implicits._
+
 
   def parseSGF(dir: String, outs: Seq[OutputStorage],
                        step: Int, limit: Option[Int]=None) = try {
-    Utils.listFiles(dir, limit, Some(".sgf")).par foreach { f =>
+    UtilMethods.listSgfFiles(dir, limit).par foreach { f =>
       // getLines() may throw mal format exception
       val parsed = SGF.parseAll(SGF.pAll, Source.fromFile(f).getLines.mkString)
       if (parsed.successful) {
@@ -44,7 +44,7 @@ object TopLevelTask {
       None
     } else {
       val a = Some(Range(0, stLen-step).map(i => (states(i), moves.slice(i, i+step))))
-      if (Config.DEBUG) TargetAssigningTest(a.get)
+      // TargetAssigningTest(a.get)
       a
     }
   }
@@ -64,7 +64,7 @@ object TopLevelTask {
       var rankB: Option[String] = None
 
       // handicap can change these 2 variables
-      var initialBoard = Utils.empties(Config.all)
+      var initialBoard = UtilMethods.empties(Config.all)
       var initialPlayer = Black
 
       // ============================================
@@ -82,7 +82,7 @@ object TopLevelTask {
 
           // handicap for Black
           case Property(PropIdent(id: String), mvs: List[PropValue]) if id == "AB" =>
-            initialBoard = mvs.foldLeft(Utils.empties(361)){ (prevBoard, mv) => mv match {
+            initialBoard = mvs.foldLeft(UtilMethods.empties(361)){ (prevBoard, mv) => mv match {
               case PropValue(Point(a: Char, b: Char)) =>
                 prevBoard.createNextBoardBy(Move(Black, a-'a', b-'a', isValid=true))
             }}
@@ -90,7 +90,7 @@ object TopLevelTask {
 
           // handicap for White.
           case Property(PropIdent(id: String), mvs: List[PropValue]) if id == "AW" =>
-            initialBoard = mvs.foldLeft(Utils.empties(361)){ (prevBoard, mv) => mv match {
+            initialBoard = mvs.foldLeft(UtilMethods.empties(361)){ (prevBoard, mv) => mv match {
               case PropValue(Point(a: Char, b: Char)) =>
                 prevBoard.createNextBoardBy(Move(White, a-'a', b-'a', isValid=true))
             }}
@@ -120,8 +120,7 @@ object TopLevelTask {
             states append states.last.nextStateBy(move)
 
           // pass
-          case List(Property(PropIdent(col: String), List())) =>
-            pass += 1
+          case List(Property(PropIdent(col: String), List())) => pass += 1
 
           // not a move
           case _ =>

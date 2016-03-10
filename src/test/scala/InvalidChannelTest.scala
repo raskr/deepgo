@@ -1,6 +1,6 @@
 // ok
 object InvalidChannelTest extends App {
-  import Utils._
+  import UtilMethods._
   import Implicits._
 
   val board = Array(

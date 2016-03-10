@@ -9,7 +9,7 @@ object BorderTest extends App {
   a.printState(dia, dia)
 
   // channel
-  val b = Utils.createRandomBoard
+  val b = UtilMethods.createRandomBoard
   b.printState(19, 19, None, None)
   b.toBorderChannel.toCharArray.printState(19, 19, None, None)
 

@@ -1,5 +1,5 @@
 object InvalidPositionTest extends App {
-  import Utils._
+  import UtilMethods._
   import Implicits._
   import Color._
 

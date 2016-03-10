@@ -1,5 +1,5 @@
 import Implicits._
-import Utils._
+import UtilMethods._
 
 // internal test.
 object TargetAssigningTest {

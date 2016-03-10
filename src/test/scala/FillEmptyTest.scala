@@ -2,7 +2,7 @@ object FillEmptyTest extends App {
 
   import Implicits._
 
-  val padded = Utils.pad(board, 19, 19, 1, Color.Outside)
+  val padded = UtilMethods.pad(board, 19, 19, 1, Color.Outside)
 
   val dst = Rules.fillEmptyNeighbor(27, Color.White, padded)
   dst.printState(21, 21, None, None)

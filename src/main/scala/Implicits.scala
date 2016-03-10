@@ -1,14 +1,13 @@
-import java.io.{FileWriter, File}
-
 object Implicits {
 
+  import java.io.{FileWriter, File}
   import Color._
 
   implicit class RichSeq(val x: Seq[Move]) extends AnyVal {
     // performance may poor, but it is no matter in this case
     def toPrevMoveChannel = {
       x.map { move =>
-        val a = Utils.zeros(Config.all)
+        val a = UtilMethods.zeros(Config.all)
         if (move.isValid) a(move.pos) = '1'
         a
       }.reduce(Array.concat(_, _)).mkString
@@ -20,12 +19,12 @@ object Implicits {
     // 9ch (tested)
     def toRankChannel: String =
       (x.charAt(0).getNumericValue, x.charAt(1)) match {
-        case (_, 'k') => Utils.zeros(Config.all*9).mkString
-        case (_, 'p') => Utils.ones(Config.all*9).mkString
-        case (r, 'd') if r == 9 => Utils.ones(Config.all*9).mkString
+        case (_, 'k') => UtilMethods.zeros(Config.all*9).mkString
+        case (_, 'p') => UtilMethods.ones(Config.all*9).mkString
+        case (r, 'd') if r == 9 => UtilMethods.ones(Config.all*9).mkString
         case (r, 'd') =>
           val (start, end) = (Config.all*(r-1), Config.all*(r-1) + Config.all)
-          val dst = Utils.zeros(Config.all * 9); (start until end).foreach{ dst(_) = '1' }
+          val dst = UtilMethods.zeros(Config.all * 9); (start until end).foreach{ dst(_) = '1' }
           dst.mkString
         case _ => throw new RuntimeException("should not happen")
       }
@@ -130,16 +129,11 @@ object Implicits {
     }
 
     def clip(row: Int, col: Int, borderWidth: Int): Array[Int] =
-      Utils.clip(x, row, col, borderWidth)
+      UtilMethods.clip(x, row, col, borderWidth)
 
   }
 
   implicit class RichCharArray(val in: Array[Char]) extends AnyVal {
-
-    def printSelf() = {
-      for (x <- in) print(x)
-      println()
-    }
 
     def printSelf(row: Int, col: Int) = {
       assert(in.length == row * col)
@@ -157,7 +151,7 @@ object Implicits {
       Rules.findKo(move, in, newBoard)
 
     def toBoardChannel: String = {
-      val dst = Utils.zeros(Config.all * 3)
+      val dst = UtilMethods.zeros(Config.all * 3)
       var i = 0
       while (i < Config.all) {
         val color = in(i)
@@ -170,7 +164,7 @@ object Implicits {
     }
 
     def toBoardChannel(flip: Boolean): String = {
-      val dst = Utils.zeros(Config.all * 3)
+      val dst = UtilMethods.zeros(Config.all * 3)
       var i = 0
       val all = Config.all
       if (!flip) {
@@ -295,7 +289,7 @@ object Implicits {
     // 1ch
     // tested
     def toBorderChannel = {
-      val borderState = Utils.zeros(Config.all)
+      val borderState = UtilMethods.zeros(Config.all)
       Rules.borderPositions(Config.dia) foreach { i =>
         val a = in(i)
         if (a != Empty) borderState(i) = '1'
@@ -309,7 +303,7 @@ object Implicits {
     }
 
     def pad(row: Int, col: Int, padSize: Int, padElem: Char) =
-      Utils.pad(in, row, col, padSize, padElem)
+      UtilMethods.pad(in, row, col, padSize, padElem)
 
     def stateAsString(row: Int, col: Int) = {
       assert(in.length == row * col)
@@ -331,7 +325,6 @@ object Implicits {
         for (j <- 0 until col) push(x(col * i + j) + " ")
         push("\n")
       }
-//      push("\n\n")
       dst.mkString
     }
 
@@ -359,7 +352,7 @@ object Implicits {
     }
 
     def clip(row: Int, col: Int, borderWidth: Int): Array[Char] =
-      Utils.clip(in, row, col, borderWidth)
+      UtilMethods.clip(in, row, col, borderWidth)
 
   }
 
@@ -402,7 +395,7 @@ object Implicits {
 
     // 1ch
     def toKoChannel = {
-      val dst = Utils.zeros(Config.all)
+      val dst = UtilMethods.zeros(Config.all)
       if (value != -1) dst(value) = 1
       dst.mkString
     }
@@ -410,7 +403,7 @@ object Implicits {
     /**
      * If the side length of the square changed, for example 21 -> 19,
      * position in the square will change. This method return that changed position.
-     * I could'nt come up with the reasonable method name.
+     * I could'nt come up with a reasonable method name.
      *
      * @param from current diameter
      * @param to diameter after clipped

@@ -1,7 +1,7 @@
 object SuicideTest extends App {
 
   import Rules._
-  import Utils._
+  import UtilMethods._
   import Implicits._
 
   assert(!isSuicideMove(Move(Color.Black, 2, 11, isValid=true), board))

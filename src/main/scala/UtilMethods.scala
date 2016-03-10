@@ -3,13 +3,13 @@ import java.io.File
 import scala.collection.mutable
 import scala.util.Random
 
-object Utils {
+object UtilMethods {
 
   def zeros(size: Int): Array[Char] = Array.fill(size)('0')
   def ones(size: Int): Array[Char] = Array.fill(size)('1')
   def empties(size: Int): Array[Char] = Array.fill(size)(Color.Empty)
 
-  def listFiles(dir: String, limit: Option[Int], extension: Option[String]) = {
+  def listSgfFiles(dir: String, limit: Option[Int]) = {
     val d = new File(dir)
     val dst =
       if (d.exists && d.isDirectory) {
@@ -26,31 +26,11 @@ object Utils {
         println("Created new directory `sgf`. Put files in it and then run again.")
         Array[File]()
       }
-    extension match {
-      case Some(a) => dst.filter(_.getName endsWith a)
-      case _  => dst
-    }
+    dst.filter(_.getName endsWith "sgf")
   }
-
-  // internal test
-  //  def testGame(states: List[State], moves: List[Move]) = {
-//    (states.init, moves, states.tail).zipped map {
-//      (oldState, move, newState) => assert(oldState.next(move, "", print=false) == newState)
-//    }
-//  }
 
   def intArr2charArr(x: Array[Int]) = x.map{ a => if (a > 9) '9' else ('0'+a).toChar }
   def charArr2intArr(x: Array[Char]) = x.map{ _.asDigit }
-
-  def zipMap[T, U, V](list1: Seq[T], list2: Seq[U])(f: Function2[T, U, V]) = {
-    val iter1 = list1.iterator
-    val iter2 = list2.iterator
-
-    var dst = List[V]()
-    while (iter1.hasNext) dst = f(iter1.next(), iter2.next()) :: dst
-
-    dst.reverse.toSeq
-  }
 
   def zipEach[T, U](list1: Seq[T], list2: Seq[U])(f: Function2[T, U, Unit]) = {
     val iter1 = list1.iterator
@@ -163,53 +143,4 @@ object Utils {
       dst
     }
 
-
-  //  def pad[@specialized(Int, Char) A](in: Array[A],
-  //                                     row: Int,
-  //                                     col: Int,
-  //                                     padSize: Int,
-  //                                     padElem: A): Array[A] = {
-  //    assert(in.length == row * col)
-  //    val allNum = row * col
-  //
-  //    def fill(n: Int) = Array.fill(n)(padElem)
-  //    def chunk: Array[A] = fill((col + padSize * 2) * padSize)
-  //
-  //    // 1 (chunk + 2)
-  //    var dst = Array.concat(chunk, fill(padSize))
-  //
-  //    var i = 0
-  //    while (i <= allNum - col * 2) {
-  //      // slice one row
-  //      val a = in.slice(i, i + col)
-  //      val b = Array.concat(a, fill(padSize * 2))
-  //      dst = Array.concat(dst, b)
-  //      i += col
-  //    }
-  //    dst = dst ++ (in.slice(i, i + col) ++ (fill(padSize) ++ chunk.clone()))
-  //    dst
-  //  }
-
-  // clip the array with the provided border
-  //  def clip1[@specialized(Int, Char) A](in:Array[A],
-  //                                      row: Int,
-  //                                      col: Int,
-  //                                      borderWidth: Int): Array[A] = {
-  //    assert(in.length == row * col)
-  //    val dstRow = row - borderWidth * 2
-  //    val dstCol = col - borderWidth * 2
-  //    val dst = new Array[A](dstRow * dstCol)
-  //    var i, j = 0
-  //    while (i < dstRow) {
-  //      j = 0
-  //      while (j < dstCol) {
-  //        dst(dstCol*i+ j) = in((i+borderWidth) * col + (j + borderWidth))
-  //        j += 1
-  //      }
-  //      i += 1
-  //    }
-  //    dst
-  //  }
-
-  // clip the array with the provided border
 }

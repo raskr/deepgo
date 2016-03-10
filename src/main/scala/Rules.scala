@@ -76,7 +76,7 @@ object Rules {
 
   // replacing these ugly codes with loop is so difficult maybe...
   def genInitialBoard(ha: Option[Int]) = {
-    val init = Utils.empties(Config.all)
+    val init = UtilMethods.empties(Config.all)
     ha.foreach { h =>
       val ur = 19 * 4 - 3 - 1
       val dl = 19 * 15 + 4 - 1

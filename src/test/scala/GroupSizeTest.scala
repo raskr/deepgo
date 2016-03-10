@@ -2,7 +2,7 @@
 object GroupSizeTest extends App {
 
   import Rules._
-  import Utils._
+  import UtilMethods._
   import Implicits._
 
   val board = createRandomBoard

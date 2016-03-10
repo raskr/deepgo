@@ -10,7 +10,7 @@ object HistoryTest extends App {
 
   // random, so wrong lifespan but i don't mind that
   val prevLifeSpans: Array[Int] = Array.fill(Config.all)(rand.nextInt(9))
-  val prevBoard = Utils.createRandomBoard
+  val prevBoard = UtilMethods.createRandomBoard
 
   val curBoard = prevBoard.clone()
   // mod the board 30 times randomly

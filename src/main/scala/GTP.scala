@@ -1,7 +1,45 @@
-import java.io._
-
 import Color._
 import Implicits._
+
+object GTPCmdHandler {
+
+  import scala.io.StdIn.readLine
+
+  // called from Main.scala
+  // "python scripts/predict_move.py".run(pio)
+  def listenAndServe(): Unit = {
+
+    loop()
+
+    // recursive func
+    def loop() {
+
+      var line = readLine()
+      // read GTP command
+      while (line == null) line = readLine()
+
+      val stdIn = line.split(' ')
+      val (cmd, args) = (stdIn.head, stdIn.tail)
+
+      if      (cmd == "genmove")          GenMove(args)
+      else if (cmd == "version")          Version(args)
+      else if (cmd == "play")             Play(args)
+      else if (cmd == "name")             Name(args)
+      else if (cmd == "clear_board")      ClearBoard(args)
+      else if (cmd == "list_commands")    ListCommands(args)
+      else if (cmd == "protocol_version") ProtocolVersion(args)
+      else if (cmd == "known_command")    KnownCommand(args)
+      else if (cmd == "boardsize")        BoardSize(args)
+      else if (cmd == "showboard")        ShowBoard(args)
+      else if (cmd == "komi")         	  Komi(args)
+      else if (cmd == "quit")            {Quit(args); sys.exit(1)}
+      else throw new RuntimeException("Error!! Unsupported Command: " + cmd + "\n\n")
+      // ok response from script
+      if (readLine().isEmpty) loop()
+    }
+  }
+
+}
 
 sealed abstract class Cmd {
   protected final def sendEmptyOkResponse() = println("= \n")
@@ -82,11 +120,6 @@ object Play extends Cmd {
 // regardless who played the last move.
 object GenMove extends Cmd {
 
-  val process = Runtime.getRuntime.exec("python scripts/predict_move.py")
-//  val process = new ProcessBuilder("./scripts/predict_move.py").start()
-  val reader = new BufferedReader(new InputStreamReader(process.getInputStream))
-  val writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream))
-
   def apply(args: Array[String]) = {
 
     if (GameState.whoToPlayNext != Config.ownColor) { // opponent passed and then this method called
@@ -104,7 +137,7 @@ object GenMove extends Cmd {
       sendResponse("pass")
     } else {
       val cmd = s"python scripts/predict_move_multi.py -b ${state.toChannels(Config.ownColor).get} -i ${state.illegalPositionsChannel.mkString}"
-      val pos = Utils.execCmd(cmd).init.toInt
+      val pos = UtilMethods.execCmd(cmd).init.toInt
       val (x, y) = pos.toCoordinate
       val move = Move(if (color == "white") White else Black, x, y, isValid=true)
 
@@ -137,8 +170,6 @@ object ClearBoard extends Cmd {
   }
 }
 
-// Did'nt support showboard but this is required from protocol.
-// I leave it to the opponent engine...
 object ShowBoard extends Cmd {
   def apply(args: Array[String]) =
     sendResponse(GameState.states.last.board.stateAsString(Config.dia, Config.dia))
@@ -239,41 +270,3 @@ object GameState {
 }
 
 
-object GTP_CmdHandler {
-
-  import scala.io.StdIn.readLine
-
-  //"python scripts/predict_move.py".run(pio)
-  def listenAndServe(): Unit = {
-
-    loop()
-
-    // recursive func
-    def loop() {
-
-      var line = readLine()
-      // read GTP command
-      while (line == null) line = readLine()
-
-      val stdIn = line.split(' ')
-      val (cmd, args) = (stdIn.head, stdIn.tail)
-
-      if      (cmd == "genmove")          GenMove(args)
-      else if (cmd == "version")          Version(args)
-      else if (cmd == "play")             Play(args)
-      else if (cmd == "name")             Name(args)
-      else if (cmd == "clear_board")      ClearBoard(args)
-      else if (cmd == "list_commands")    ListCommands(args)
-      else if (cmd == "protocol_version") ProtocolVersion(args)
-      else if (cmd == "known_command")    KnownCommand(args)
-      else if (cmd == "boardsize")        BoardSize(args)
-      else if (cmd == "showboard")        ShowBoard(args)
-      else if (cmd == "komi")         	  Komi(args)
-      else if (cmd == "quit")            {Quit(args); sys.exit(1)}
-      else throw new RuntimeException("Error!! Unsupported Command: " + cmd + "\n\n")
-      // ok response from script
-      if (readLine().isEmpty) loop()
-    }
-  }
-
-}
