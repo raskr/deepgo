@@ -1,8 +1,13 @@
 # deepgo
 
-deepgo is a toolkit to use Convolutional Neural Network
+deepgo is a toolkit to use Convolutional Neural Network (CNN)
 for board game Go.
+Feature handling is implemented in scala and CNN is python (chainer).
 
-Contains SGF parser and
-minimum subset of GTP(GoTextProtocol) implementation
-in scala for auto play with gnugo
+Contains:
+ - CNN implementation with Chainer
+ - training data (.sgf files) parsing
+ - Feature extractor
+ - Game Rules
+ - GTP commands subset
+
