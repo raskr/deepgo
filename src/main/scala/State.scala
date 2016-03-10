@@ -2,6 +2,8 @@ import Color._
 import Implicits._
 import Config._
 
+// `State` but immutable.
+// Holds game states such as stone placement.
 case class State(board: Array[Char],
                  hist: Array[Int] = Array.fill(all)(0),
                  koPos: Int = -1,
@@ -36,10 +38,16 @@ case class State(board: Array[Char],
     }
   }
 
+  /**
+    * Create next board state by given move and game rules.
+    *
+    * @param move move played
+    * @return next new state
+    */
   def nextStateBy(move: Move): State = {
-    val newBoard = if (!move.pass) board.createNextBoardBy(move) else board
-    val ko = if (!move.pass) board.findKoBy(move, newBoard) else -1
-    val his = if (!move.pass) hist.nextHistory(board, newBoard) else hist
+    val newBoard = board.createNextBoardBy(move)
+    val ko       = board.findKoBy(move, newBoard)
+    val his      = hist.nextHistory(board, newBoard)
     State(newBoard, his, ko, move.color.opponent, rankW, rankB)
   }
 
